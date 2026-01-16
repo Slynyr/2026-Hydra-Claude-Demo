@@ -1,0 +1,38 @@
+{
+    "name": "Chassis",
+    "rotations": [
+      {
+          "axis": "x",
+          "degrees": 180
+        },
+        {
+          "axis": "y",
+          "degrees": 0
+        },
+        {
+          "axis": "z",
+          "degrees": 0
+        }
+    ],
+    "position": [0, 0, 0],
+    "cameras": [
+        {
+          "name": "LIMELIGHT",
+          "rotations": [
+            {
+              "axis": "y",
+              "degrees": 0
+            },
+            {
+              "axis": "z",
+              "degrees": 0
+            }
+          ],
+          "position": [0, 0, 0],
+          "resolution": [1280, 800],
+          "fov": 80
+        }
+    ]
+    
+  }
+  
