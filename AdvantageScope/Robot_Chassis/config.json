@@ -21,14 +21,14 @@
           "rotations": [
             {
               "axis": "y",
-              "degrees": 0
+              "degrees": -4
             },
             {
               "axis": "z",
               "degrees": 0
             }
           ],
-          "position": [0, 0, 0],
+          "position": [-0.254, 0.0, 0.45],
           "resolution": [1280, 800],
           "fov": 80
         }
