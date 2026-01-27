@@ -6,7 +6,6 @@
 // at the root directory of this project.
 
 package frc.robot;
-
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
