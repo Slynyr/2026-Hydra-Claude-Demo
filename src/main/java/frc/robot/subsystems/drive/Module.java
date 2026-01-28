@@ -9,6 +9,7 @@ package frc.robot.subsystems.drive;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -137,5 +138,13 @@ public class Module {
   /** Returns the module velocity in rotations/sec (Phoenix native units). */
   public double getFFCharacterizationVelocity() {
     return Units.radiansToRotations(inputs.driveVelocityRadPerSec);
+  }
+
+  public void driveNeutralMode(NeutralModeValue mode){
+    io.driveNeutralMode(mode);
+  }
+
+  public void steerNeutralMode(NeutralModeValue mode){
+    io.steerNeutralMode(mode);
   }
 }
