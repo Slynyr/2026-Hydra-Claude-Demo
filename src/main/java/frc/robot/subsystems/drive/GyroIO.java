@@ -8,16 +8,36 @@
 package frc.robot.subsystems.drive;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+
 import org.littletonrobotics.junction.AutoLog;
 
 public interface GyroIO {
   @AutoLog
   public static class GyroIOInputs {
-    public boolean connected = false;
+    public boolean isConnected = false;
+
     public Rotation2d yawPosition = Rotation2d.kZero;
-    public double yawVelocityRadPerSec = 0.0;
+    public Rotation2d pitchPosition = Rotation2d.kZero;
+    public Rotation2d rollPosition = Rotation2d.kZero;
+  
+    public AngularVelocity yawVelocityRadPerSec = RadiansPerSecond.of(0.0);
+    public AngularVelocity pitchVelocityRadPerSec = RadiansPerSecond.of(0.0);
+    public AngularVelocity rollVelocityRadPerSec = RadiansPerSecond.of(0.0);
+
     public double[] odometryYawTimestamps = new double[] {};
+    public double[] odometryPitchTimestamps = new double[] {};
+    public double[] odometryRollTimestamps = new double[] {};
+
     public Rotation2d[] odometryYawPositions = new Rotation2d[] {};
+    public Rotation2d[] odometryPitchPositions = new Rotation2d[] {};
+    public Rotation2d[] odometryRollPositions = new Rotation2d[] {};
+
+    public Angle tilt = Degrees.of(0.0);
   }
 
   public default void updateInputs(GyroIOInputs inputs) {}

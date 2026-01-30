@@ -198,7 +198,7 @@ public class Drive extends SubsystemBase {
       }
 
       // Update gyro angle
-      if (gyroInputs.connected) {
+      if (gyroInputs.isConnected) {
         // Use the real gyro angle
         rawGyroRotation = gyroInputs.odometryYawPositions[i];
       } else {
@@ -214,7 +214,7 @@ public class Drive extends SubsystemBase {
     vision.addPoseEstimate(this);
 
     // Update gyro alert
-    gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
+    gyroDisconnectedAlert.set(!gyroInputs.isConnected && Constants.currentMode != Mode.SIM);
   }
 
   /**
@@ -319,6 +319,30 @@ public class Drive extends SubsystemBase {
       output += modules[i].getFFCharacterizationVelocity() / 4.0;
     }
     return output;
+  }
+
+  // Copied from last year
+  /** Returns the field relative measured chassis speeds of the robot */
+  public ChassisSpeeds getFieldRelativeSpeeds() {
+    ChassisSpeeds speeds = kinematics.toChassisSpeeds(getModuleStates());
+    Rotation2d robotRotation = getRotation();
+
+    return new ChassisSpeeds(
+      speeds.vxMetersPerSecond * robotRotation.getCos() - speeds.vyMetersPerSecond * robotRotation.getSin(), 
+      speeds.vxMetersPerSecond * robotRotation.getSin() + speeds.vyMetersPerSecond * robotRotation.getCos(), 
+      speeds.omegaRadiansPerSecond
+    );
+  }
+
+  public ChassisSpeeds getFieldRelativeSpeeds(double omegaRadiansPerSecond){
+    ChassisSpeeds speeds = kinematics.toChassisSpeeds(getModuleStates());
+    Rotation2d robotRotation = getRotation();
+
+    return new ChassisSpeeds(
+      speeds.vxMetersPerSecond * robotRotation.getCos() - speeds.vyMetersPerSecond * robotRotation.getSin(), 
+      speeds.vxMetersPerSecond * robotRotation.getSin() + speeds.vyMetersPerSecond * robotRotation.getCos(), 
+      omegaRadiansPerSecond
+    );
   }
 
   /** Returns the current odometry pose. */

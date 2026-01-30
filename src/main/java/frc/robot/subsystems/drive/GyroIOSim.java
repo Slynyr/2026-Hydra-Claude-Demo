@@ -14,10 +14,10 @@ public class GyroIOSim implements GyroIO {
 
     @Override
     public void updateInputs(GyroIOInputs inputs) {
-        inputs.connected = true;
+        inputs.isConnected = true;
 
         inputs.yawPosition = gyroSim.getGyroReading();
-        inputs.yawVelocityRadPerSec = gyroSim.getMeasuredAngularVelocity().in(RadiansPerSecond);
+        inputs.yawVelocityRadPerSec = RadiansPerSecond.of(gyroSim.getMeasuredAngularVelocity().in(RadiansPerSecond));
         inputs.odometryYawTimestamps = new double[] {};
         inputs.odometryYawPositions = gyroSim.getCachedGyroReadings();
     }

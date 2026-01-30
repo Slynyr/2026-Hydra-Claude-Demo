@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.kBump;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 
@@ -49,8 +50,6 @@ import static edu.wpi.first.units.Units.Meters;
 
 
 
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a "declarative" paradigm, very
  * little robot logic should actually be handled in the {@link Robot} periodic methods (other than the scheduler calls).
@@ -62,6 +61,7 @@ public class RobotContainer {
     protected final   Vision sys_vision;
     protected final   Intake sys_intake;
     protected final   Serializer sys_serializer;
+
 
     public static SwerveDriveSimulation simConfig;
 
@@ -182,34 +182,43 @@ public class RobotContainer {
         Logger.recordOutput(
                 "Simulation/Fuel", SimulatedArena.getInstance().getGamePiecesArrayByType("Fuel"));
     }
+    
+  /**
+   * Use this method to define your button->command mappings. Buttons can be created by
+   * instantiating a {@link GenericHID} or one of its subclasses ({@link
+   * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing it to a {@link
+   * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
+   */
+  private void configureButtonBindings() {
+    // Default command, normal field-relative drive
+    sys_drive.setDefaultCommand(
+        DriveCommands.joystickDrive(
+            sys_drive,
+            () -> -primaryController.getLeftY(),
+            () -> -primaryController.getLeftX(),
+            () -> -(primaryController.getRightTriggerAxis() - primaryController.getLeftTriggerAxis())
+        )
+    );
+    
+    // Switch to X pattern when X button is pressed
+    primaryController.x()
+      .onTrue(
+        Commands.runOnce(sys_drive::stopWithX, sys_drive));
 
-     /**
-     * Use this method to define your button->command mappings. Buttons can be created by instantiating a
-     * {@link GenericHID} or one of its subclasses ({@link edu.wpi.first.wpilibj.Joystick} or {@link XboxController}),
-     * and then passing it to a {@link edu.wpi.first.wpilibj2.command.button.JoystickButton}.
-     */
-    private void configureButtonBindings() {
-        // Default command, normal field-relative drive
-        sys_drive.setDefaultCommand(
-                DriveCommands.joystickDrive(
-                        sys_drive,
-                        () -> -primaryController.getLeftY(),
-                        () -> -primaryController.getLeftX(),
-                        () -> -(primaryController.getRightTriggerAxis() - primaryController.getLeftTriggerAxis())
-                )
-        );
+    // Switch To Bump Speed Modifier
+    primaryController.a()
+      .onTrue(
+        Commands.runOnce(() -> DriveCommands.setSpeed(kBump.BUMP_SPEED_MODIFIER)))
+      .onFalse(
+        Commands.runOnce(() -> DriveCommands.setSpeed(1.0)));
+  }
 
-        // Switch to X pattern when X button is pressed
-        primaryController.x().onTrue(Commands.runOnce(sys_drive::stopWithX, sys_drive));
-
-    }
-
-    /**
-     * Use this to pass the autonomous command to the main {@link Robot} class.
-     *
-     * @return the command to run in autonomous
-     */
-    public Command getAutonomousCommand() {
-        return autoChooser.get();
-    }
+  /**
+   * Use this to pass the autonomous command to the main {@link Robot} class.
+   *
+   * @return the command to run in autonomous
+   */
+  public Command getAutonomousCommand() {
+    return autoChooser.get();
+  }
 }

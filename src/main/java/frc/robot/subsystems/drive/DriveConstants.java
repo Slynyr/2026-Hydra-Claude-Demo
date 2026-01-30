@@ -10,4 +10,5 @@ public final class DriveConstants {
     public static final Mass ROBOT_FULL_MASS = Kilograms.of(62.319);
     public static final MomentOfInertia ROBOT_MOI = KilogramSquareMeters.of(2.881);
     public static final double WHEEL_COF = 1.916;
+    public static final double ODOMETRY_VELOCITY_UPDATE_FREQUENCE = 50;
 }

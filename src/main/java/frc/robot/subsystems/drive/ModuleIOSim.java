@@ -68,26 +68,26 @@ public class ModuleIOSim implements ModuleIO {
     @Override
     public void updateInputs(ModuleIOInputs inputs) {
         // Update drive inputs
-        inputs.driveConnected = true;
-        inputs.drivePositionRad = moduleSim.getDriveWheelFinalPosition().in(Radians);
-        inputs.driveVelocityRadPerSec = moduleSim.getDriveWheelFinalSpeed().in(RadiansPerSecond);
-        inputs.driveAppliedVolts = moduleSim.getDriveMotorAppliedVoltage().in(Volts);
-        inputs.driveCurrentAmps = Math.abs(moduleSim.getDriveMotorStatorCurrent().in(Amps));
+        inputs.isDriveConnected = true;
+        inputs.drivePositionRad = Radians.of(moduleSim.getDriveWheelFinalPosition().in(Radians));
+        inputs.driveVelocityRadPerSec = RadiansPerSecond.of(moduleSim.getDriveWheelFinalSpeed().in(RadiansPerSecond));
+        inputs.driveAppliedVolts = moduleSim.getDriveMotorAppliedVoltage();
+        inputs.driveCurrentAmps = moduleSim.getDriveMotorStatorCurrent();
 
         // Update turn inputs
-        inputs.turnConnected = true;
+        inputs.isTurnConnected = true;
         inputs.turnEncoderConnected = true;
         inputs.turnAbsolutePosition = moduleSim.getSteerAbsoluteFacing();
         inputs.turnPosition = moduleSim.getSteerAbsoluteFacing();
-        inputs.turnVelocityRadPerSec = moduleSim.getSteerAbsoluteEncoderSpeed().in(RadiansPerSecond);
-        inputs.turnAppliedVolts = moduleSim.getSteerMotorAppliedVoltage().in(Volts);
-        inputs.turnCurrentAmps = Math.abs(moduleSim.getSteerMotorStatorCurrent().in(Amps));
+        inputs.turnVelocityRadPerSec = RadiansPerSecond.of(moduleSim.getSteerAbsoluteEncoderSpeed().in(RadiansPerSecond));
+        inputs.turnAppliedVolts = moduleSim.getSteerMotorAppliedVoltage();
+        inputs.turnCurrentAmps = moduleSim.getSteerMotorStatorCurrent();
 
         inputs.magnetHealth = MagnetHealthValue.Magnet_Green;
 
         // Update odometry inputs (50Hz because high-frequency odometry in sim doesn't matter)
         inputs.odometryTimestamps = new double[] {Timer.getFPGATimestamp()};
-        inputs.odometryDrivePositionsRad = new double[] {inputs.drivePositionRad};
+        inputs.odometryDrivePositionsRad = new double[] {inputs.drivePositionRad.in(Radians)};
         inputs.odometryTurnPositions = new Rotation2d[] {inputs.turnPosition};
     }
 

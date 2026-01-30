@@ -7,6 +7,10 @@
 
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Volts;
 import static frc.robot.util.PhoenixUtil.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -194,20 +198,20 @@ public class ModuleIOTalonFX implements ModuleIO {
     var turnEncoderStatus = BaseStatusSignal.refreshAll(turnAbsolutePosition);
 
     // Update drive inputs
-    inputs.driveConnected = driveConnectedDebounce.calculate(driveStatus.isOK());
-    inputs.drivePositionRad = Units.rotationsToRadians(drivePosition.getValueAsDouble());
-    inputs.driveVelocityRadPerSec = Units.rotationsToRadians(driveVelocity.getValueAsDouble());
-    inputs.driveAppliedVolts = driveAppliedVolts.getValueAsDouble();
-    inputs.driveCurrentAmps = driveCurrent.getValueAsDouble();
+    inputs.isDriveConnected = driveConnectedDebounce.calculate(driveStatus.isOK());
+    inputs.drivePositionRad = Radians.of(Units.rotationsToRadians(drivePosition.getValueAsDouble()));
+    inputs.driveVelocityRadPerSec = RadiansPerSecond.of(Units.rotationsToRadians(driveVelocity.getValueAsDouble()));
+    inputs.driveAppliedVolts = Volts.of(driveAppliedVolts.getValueAsDouble());
+    inputs.driveCurrentAmps = Amps.of(driveCurrent.getValueAsDouble());
 
     // Update turn inputs
-    inputs.turnConnected = turnConnectedDebounce.calculate(turnStatus.isOK());
+    inputs.isTurnConnected = turnConnectedDebounce.calculate(turnStatus.isOK());
     inputs.turnEncoderConnected = turnEncoderConnectedDebounce.calculate(turnEncoderStatus.isOK());
     inputs.turnAbsolutePosition = Rotation2d.fromRotations(turnAbsolutePosition.getValueAsDouble());
     inputs.turnPosition = Rotation2d.fromRotations(turnPosition.getValueAsDouble());
-    inputs.turnVelocityRadPerSec = Units.rotationsToRadians(turnVelocity.getValueAsDouble());
-    inputs.turnAppliedVolts = turnAppliedVolts.getValueAsDouble();
-    inputs.turnCurrentAmps = turnCurrent.getValueAsDouble();
+    inputs.turnVelocityRadPerSec = RadiansPerSecond.of(Units.rotationsToRadians(turnVelocity.getValueAsDouble()));
+    inputs.turnAppliedVolts = Volts.of(turnAppliedVolts.getValueAsDouble());
+    inputs.turnCurrentAmps = Amps.of(turnCurrent.getValueAsDouble());
 
     // Update odometry inputs
     inputs.odometryTimestamps =
