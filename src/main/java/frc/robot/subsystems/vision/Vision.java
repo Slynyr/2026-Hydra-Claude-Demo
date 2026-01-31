@@ -120,7 +120,7 @@ public class Vision extends SubsystemBase {
         io.updateInputs(inputs);
         Logger.processInputs("Vision", inputs);
 
-        disconnectedAlert.set(!inputs.isConnected && Constants.currentMode != Constants.Mode.SIM);
+        disconnectedAlert.set(!inputs.isConnected && Constants.CURRENT_MODE != Constants.Mode.SIM);
         tempAlert.set(inputs.sysTemp >= 70.0);
     }
 

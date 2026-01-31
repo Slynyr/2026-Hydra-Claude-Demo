@@ -63,7 +63,7 @@ public class PhoenixOdometryThread extends Thread {
   public Queue<Double> registerSignal(StatusSignal<Angle> signal) {
     Queue<Double> queue = new ArrayBlockingQueue<>(20);
     signalsLock.lock();
-    Drive.odometryLock.lock();
+    Drive.ODOMETRY_LOCK.lock();
     try {
       BaseStatusSignal[] newSignals = new BaseStatusSignal[phoenixSignals.length + 1];
       System.arraycopy(phoenixSignals, 0, newSignals, 0, phoenixSignals.length);
@@ -72,7 +72,7 @@ public class PhoenixOdometryThread extends Thread {
       phoenixQueues.add(queue);
     } finally {
       signalsLock.unlock();
-      Drive.odometryLock.unlock();
+      Drive.ODOMETRY_LOCK.unlock();
     }
     return queue;
   }
@@ -81,13 +81,13 @@ public class PhoenixOdometryThread extends Thread {
   public Queue<Double> registerSignal(DoubleSupplier signal) {
     Queue<Double> queue = new ArrayBlockingQueue<>(20);
     signalsLock.lock();
-    Drive.odometryLock.lock();
+    Drive.ODOMETRY_LOCK.lock();
     try {
       genericSignals.add(signal);
       genericQueues.add(queue);
     } finally {
       signalsLock.unlock();
-      Drive.odometryLock.unlock();
+      Drive.ODOMETRY_LOCK.unlock();
     }
     return queue;
   }
@@ -95,11 +95,11 @@ public class PhoenixOdometryThread extends Thread {
   /** Returns a new queue that returns timestamp values for each sample. */
   public Queue<Double> makeTimestampQueue() {
     Queue<Double> queue = new ArrayBlockingQueue<>(20);
-    Drive.odometryLock.lock();
+    Drive.ODOMETRY_LOCK.lock();
     try {
       timestampQueues.add(queue);
     } finally {
-      Drive.odometryLock.unlock();
+      Drive.ODOMETRY_LOCK.unlock();
     }
     return queue;
   }
@@ -126,7 +126,7 @@ public class PhoenixOdometryThread extends Thread {
       }
 
       // Save new data to queues
-      Drive.odometryLock.lock();
+      Drive.ODOMETRY_LOCK.lock();
       try {
         // Sample timestamp is current FPGA time minus average CAN latency
         // Default timestamps from Phoenix are NOT compatible with
@@ -151,7 +151,7 @@ public class PhoenixOdometryThread extends Thread {
           timestampQueues.get(i).offer(timestamp);
         }
       } finally {
-        Drive.odometryLock.unlock();
+        Drive.ODOMETRY_LOCK.unlock();
       }
     }
   }

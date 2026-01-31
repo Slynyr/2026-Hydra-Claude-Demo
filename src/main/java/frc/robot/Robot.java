@@ -31,8 +31,8 @@ public class Robot extends LoggedRobot {
     private       Command        autonomousCommand;
     private final RobotContainer robotContainer;
 
-    private double matchTime = -1;
-
+    // build constants are defined at compile-time, thus IntelliSense thinks "GitDirty" is unreachable.
+    @SuppressWarnings("DataFlowIssue")
     public Robot() {
         // Record metadata
         Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
@@ -49,7 +49,7 @@ public class Robot extends LoggedRobot {
                 });
 
         // Set up data receivers & replay source
-        switch (Constants.currentMode) {
+        switch (Constants.CURRENT_MODE) {
             case REAL:
                 // Running on a real robot, log to a USB stick ("/U/logs")
                 Logger.addDataReceiver(new WPILOGWriter());
@@ -100,8 +100,8 @@ public class Robot extends LoggedRobot {
         // Return to non-RT thread priority (do not modify the first argument)
         Threads.setCurrentThreadPriority(false, 10);
 
-        matchTime = DriverStation.getMatchTime();
-        SmartDashboard.putNumber("Time", matchTime);
+        // put match time in smart dashboard
+        SmartDashboard.putNumber("Time", DriverStation.getMatchTime());
     }
 
     /** This function is called once when the robot is disabled. */
@@ -123,7 +123,7 @@ public class Robot extends LoggedRobot {
         if (autonomousCommand != null)
             CommandScheduler.getInstance().schedule(autonomousCommand);
 
-        if (Constants.currentMode == Constants.Mode.SIM)
+        if (Constants.CURRENT_MODE == Constants.Mode.SIM)
             SimulatedArena.getInstance().resetFieldForAuto();
     }
 
@@ -166,7 +166,7 @@ public class Robot extends LoggedRobot {
     /** This function is called periodically whilst in simulation. */
     @Override
     public void simulationPeriodic() {
-        if (Constants.currentMode == Constants.Mode.SIM)
+        if (Constants.CURRENT_MODE == Constants.Mode.SIM)
             robotContainer.updateSim();
     }
 }
