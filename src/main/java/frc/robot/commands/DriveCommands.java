@@ -277,8 +277,8 @@ public class DriveCommands {
             );
 
 
-        double speedX = speed * (xDiff/totalDiff); // Essentiall Speed * cos(theta) to get x velocity magnitude (kinematics)
-        double speedY = speed * (yDiff/totalDiff); // Essentiall Speed * sin(theta) to get y velocity magnitude (kinematics)
+        double speedX = speed * (xDiff/totalDiff); // Essentially Speed * cos(theta) to get x velocity magnitude (kinematics)
+        double speedY = speed * (yDiff/totalDiff); // Essentially Speed * sin(theta) to get y velocity magnitude (kinematics)
 
         drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speedX, speedY, omega, drive.getRotation()));
         
@@ -315,6 +315,101 @@ public class DriveCommands {
           return distance.lte(kAutoAlign.TRANSLATION_TOLERANCE)
                  && difference.lte(kAutoAlign.ROTATION_TOLERANCE)
                  && robotSpeed.lte(kAutoAlign.VELOCITY_TOLERANCE);
+
+      }
+    ).andThen(
+        Commands.runOnce(() -> {
+          drive.stop();
+          isAligned = true;
+        }, drive)
+    );
+  }
+
+  @SuppressWarnings("resource")
+  public static Command alignToPoint(Drive drive, Supplier<Pose2d> target, Supplier<LinearVelocity> maxVelocity, Supplier<LinearAcceleration> maxAcceleration, Distance translationTolerance, Angle rotationTolerance, LinearVelocity velocityTolerance ){
+    ProfiledController translationController = 
+        new ProfiledController(
+          kAutoAlign.ALIGN_PID,
+          maxVelocity.get().in(MetersPerSecond),
+          maxAcceleration.get().in(MetersPerSecondPerSecond)
+        );
+
+    PIDController headingController = 
+        new PIDController(
+            ANGLE_KP,
+            0.0,
+            ANGLE_KD
+        );
+
+    headingController.enableContinuousInput(-Math.PI, Math.PI);
+
+    return Commands.sequence(
+      Commands.runOnce(() -> {
+          isAligned = false;
+
+          ChassisSpeeds speeds = drive.getFieldRelativeSpeeds();
+
+          translationController.reset(-Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond));
+          headingController.reset();
+      }),
+      Commands.run(() -> {
+
+        translationController.setContraints(maxVelocity.get().in(MetersPerSecond), maxAcceleration.get().in(MetersPerSecondPerSecond));
+
+        Pose2d robotPose = drive.getPose();
+        Pose2d targetPose = target.get();
+
+        if (AutoBuilder.shouldFlip()){
+          targetPose = FlippingUtil.flipFieldPose(targetPose);
+        }
+
+        double xDiff = targetPose.getX() - robotPose.getX();
+        double yDiff = targetPose.getY() - robotPose.getY();
+
+        double totalDiff = Math.hypot(xDiff, yDiff);
+
+        double speed = Math.abs(translationController.calculate(totalDiff, 0.0));
+
+        double omega = 
+            headingController.calculate(
+              robotPose.getRotation().getRadians(), targetPose.getRotation().getRadians()
+            );
+
+
+        double speedX = speed * (xDiff/totalDiff); // Essentially Speed * cos(theta) to get x velocity magnitude (kinematics)
+        double speedY = speed * (yDiff/totalDiff); // Essentially Speed * sin(theta) to get y velocity magnitude (kinematics)
+
+        drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speedX, speedY, omega, drive.getRotation()));
+        
+        
+        Logger.recordOutput("AutoAlign/Target", targetPose);
+        Logger.recordOutput("AutoAlign/SpeedOutput", speed);
+        Logger.recordOutput("AutoAlign/OmegaOutput", omega);
+        Logger.recordOutput("AutoAlign/MaxVelocity [m per s]", maxVelocity.get());
+        Logger.recordOutput("AutoAlign/MaxAcceleration [m per s^2]", maxAcceleration.get());
+
+      }, drive)
+    ).until(() -> {
+        Pose2d robotPose = drive.getPose();
+        Pose2d targetPose = target.get();
+        if(AutoBuilder.shouldFlip())
+            targetPose =  FlippingUtil.flipFieldPose(targetPose);
+
+        Angle difference = AlignHelper.rotationDifference(targetPose.getRotation(), robotPose.getRotation());
+
+        Distance distance = Meters.of(Math.hypot(robotPose.getX() - targetPose.getX(), robotPose.getY() - targetPose.getY()));
+
+        ChassisSpeeds speeds = drive.getChassisSpeeds();
+        LinearVelocity robotSpeed = MetersPerSecond.of(Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond));
+
+        Logger.recordOutput("AutoAlign/Distance To Alignment [cm]", distance.in(Centimeters));
+        Logger.recordOutput("AutoAlign/Angle To Alignment [degrees]", difference.in(Degrees));
+        Logger.recordOutput("AutoAlign/Velocity [m per s]", robotSpeed.in(MetersPerSecond));
+
+        
+        return distance.lte(translationTolerance)
+                 && difference.lte(rotationTolerance)
+                 && robotSpeed.lte(velocityTolerance);
 
       }
     ).andThen(
@@ -387,6 +482,21 @@ public class DriveCommands {
           drive.stop();
           isAligned = true;
         }, drive)
+    );
+  }
+
+  /*
+   * Gets Rotation2d to target pose from drive pose
+   */
+  public static Rotation2d getRotation2d(Drive drive, Pose2d targetPose){
+
+    if (AutoBuilder.shouldFlip()){
+      targetPose = FlippingUtil.flipFieldPose(targetPose);
+    }
+
+    return new Rotation2d(
+      targetPose.getX() - drive.getPose().getX(),
+      targetPose.getY() - drive.getPose().getY()
     );
   }
 

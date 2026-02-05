@@ -10,6 +10,7 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
@@ -17,6 +18,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.ClimbingPositions;
+import frc.robot.Constants.PassingPositions;
+import frc.robot.Constants.kAutoAlign;
 import frc.robot.Constants.kBump;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -33,6 +37,8 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOSim;
+import frc.robot.util.FieldConstants.Hub;
+
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.COTS;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -57,6 +63,10 @@ public class RobotContainer {
     protected final Hopper     sys_hopper;
 
     public static SwerveDriveSimulation simConfig;
+
+    private PassingPositions selectedPassingPosition = PassingPositions.MIDDLE;
+    private ClimbingPositions selectedClimbingPosition = ClimbingPositions.LEFT;
+    private ClimbingPositions selectedClimibingPrepPosition = ClimbingPositions.LEFT_PREP;
 
     // Controllers
     private final CommandXboxController primaryController   = new CommandXboxController(0);
@@ -217,6 +227,96 @@ public class RobotContainer {
         primaryController.a()
                          .onTrue(Commands.runOnce(() -> DriveCommands.setSpeed(kBump.BUMP_SPEED_MODIFIER)))
                          .onFalse(Commands.runOnce(() -> DriveCommands.setSpeed(1.0)));
+
+        primaryController.rightBumper()
+                         .whileTrue(
+                              DriveCommands.alignToHeading(
+                                sys_drive, 
+                                () -> DriveCommands.getRotation2d(
+                                  sys_drive, 
+                                  new Pose2d(
+                                    new Translation2d(Hub.topCenterPoint.getMeasureX(), Hub.topCenterPoint.getMeasureY()), 
+                                    Rotation2d.kZero
+                                  )
+                                )
+                              )
+                         );
+
+        primaryController.leftBumper()
+                        .whileTrue(
+                          DriveCommands.joystickDriveAtAngle(
+                            sys_drive,
+                            () -> -primaryController.getLeftY(),
+                            () -> -primaryController.getLeftX(),
+                            () -> DriveCommands.getRotation2d(sys_drive, selectedPassingPosition.pose)
+                          )
+                        );
+
+        primaryController.x()
+                        .whileTrue(
+                            Commands.sequence(
+                              DriveCommands.alignToPoint(
+                                sys_drive, 
+                                () -> selectedClimibingPrepPosition.pose, 
+                                () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
+                                () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION,
+                                kAutoAlign.TRANSLATION_TOLERANCE_CLIMB_PREP,
+                                kAutoAlign.ROTATION_TOLERANCE_CLIMB_PREP,
+                                kAutoAlign.VELOCITY_TOLERANCE_CLIMB_PREP
+
+                              ),
+                              DriveCommands.alignToPoint(
+                                sys_drive, 
+                                () -> selectedClimbingPosition.pose, 
+                                () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_CLIMB, 
+                                () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_CLIMB
+                              )
+                            )
+                        );
+
+        secondaryController.x()
+                        .onTrue(prepPassingPositionCommand(PassingPositions.RIGHT));
+        secondaryController.b()
+                        .onTrue(prepPassingPositionCommand(PassingPositions.LEFT));
+        secondaryController.a()
+                        .onTrue(prepPassingPositionCommand(PassingPositions.MIDDLE));
+
+        secondaryController.povLeft()
+                        .onTrue(prepClimberPositionCommand(ClimbingPositions.LEFT));
+        secondaryController.povRight()
+                        .onTrue(prepClimberPositionCommand(ClimbingPositions.RIGHT));
+  
+    }
+
+    private Command prepClimberPositionCommand(ClimbingPositions climbingPosition){
+        return Commands.runOnce(
+                () -> {
+                        if (climbingPosition == ClimbingPositions.LEFT)
+                          selectedClimibingPrepPosition = ClimbingPositions.LEFT_PREP;
+                        else
+                          selectedClimibingPrepPosition = ClimbingPositions.RIGHT_PREP;
+                          
+                        Logger.recordOutput("Climbing Position", climbingPosition);
+
+                        selectedClimbingPosition = climbingPosition; 
+                        
+                        Logger.recordOutput("Climbing Selected Pose", selectedClimbingPosition.pose);
+
+                }
+        );
+    };
+
+    private Command prepPassingPositionCommand(PassingPositions passingPosition){
+        return Commands.runOnce(
+                () -> {
+                        Logger.recordOutput("Passing Position", passingPosition);
+
+                        selectedPassingPosition = passingPosition;
+
+                        Logger.recordOutput("Passing Selected Pose", selectedPassingPosition.pose);
+
+                }
+        );
     }
 
     /**

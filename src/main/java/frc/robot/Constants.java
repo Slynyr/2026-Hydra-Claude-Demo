@@ -8,11 +8,18 @@
 package frc.robot;
 
 import com.pathplanner.lib.config.PIDConstants;
+
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.RobotBase;
+import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.util.FieldConstants.Tower;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -39,11 +46,21 @@ public final class Constants {
     public static final class kAutoAlign {
         public static final PIDConstants ALIGN_PID = new PIDConstants(4.9, 0.0, 0.28);
 
+        // Blue HUB Position relative to a blue alliance origin
+        public static final Pose2d HUB_POSE = new Pose2d(new Translation2d(Meters.of(4.620), Meters.of(4.030)), Rotation2d.kZero);
+
         public static final Distance TRANSLATION_TOLERANCE;
         public static final Angle    ROTATION_TOLERANCE;
+        
+        public static final Distance TRANSLATION_TOLERANCE_CLIMB_PREP;
+        public static final Angle    ROTATION_TOLERANCE_CLIMB_PREP;
 
         public static final LinearVelocity  VELOCITY_TOLERANCE              = MetersPerSecond.of(0.18);
         public static final LinearVelocity  AUTO_VELOCITY_TOLERANCE         = MetersPerSecond.of(0.15);
+        //Tune to allow the climber prep pose to only affect approach angle + keep velocity
+        public static final LinearVelocity  VELOCITY_TOLERANCE_CLIMB_PREP   = MetersPerSecond.of(1);
+
+
         public static final AngularVelocity AUTO_ANGULAR_VELOCITY_TOLERANCE = DegreesPerSecond.of(0.15);
         public static final AngularVelocity ANGULAR_VELOCITY_TOLERANCE      = DegreesPerSecond.of(0.18);
 
@@ -51,14 +68,80 @@ public final class Constants {
             if (IS_TUNING) {
                 TRANSLATION_TOLERANCE = Centimeters.of(0.00);
                 ROTATION_TOLERANCE = Degrees.of(0.00);
+            
+                TRANSLATION_TOLERANCE_CLIMB_PREP = Centimeter.of(0.0);
+                ROTATION_TOLERANCE_CLIMB_PREP = Degrees.of(0.00);
             } else {
                 TRANSLATION_TOLERANCE = Centimeters.of(2.00);
                 ROTATION_TOLERANCE = Degrees.of(1.25);
+            
+                //Tune to allow the climber prep pose to only affect approach angle
+                TRANSLATION_TOLERANCE_CLIMB_PREP = Centimeters.of(2.00);
+                ROTATION_TOLERANCE_CLIMB_PREP = Degrees.of(1.25);            
             }
+        }
+
+        public static final LinearVelocity     MAX_AUTO_ALIGN_VELOCITY      = MetersPerSecond.of(2.75);
+        public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION  = MetersPerSecondPerSecond.of(16);
+
+        public static final LinearVelocity     MAX_AUTO_ALIGN_VELOCITY_CLIMB      = MetersPerSecond.of(1);
+        public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION_CLIMB  = MetersPerSecondPerSecond.of(8);
+
+        // Distance from the upright to the robot climber
+        public static final Distance            CLIMBER_DISTANCE_FROM_UPRIGHT     = Meters.of((Tower.width - Tower.innerOpeningWidth)/2);
+    }
+        
+    /*
+    * Passing positon if looking from alliance driver station
+    */
+    public static enum PassingPositions {
+        RIGHT   (new Pose2d(new Translation2d(Meters.of(2.5), Meters.of(1.26)), Rotation2d.kZero)),
+        MIDDLE  (new Pose2d(new Translation2d(Meters.of(2.1), Meters.of(3.95)), Rotation2d.kZero)),
+        LEFT    (new Pose2d(new Translation2d(Meters.of(2.5), Meters.of(6.8)), Rotation2d.kZero));
+
+        Pose2d pose;
+
+        private PassingPositions(Pose2d pose){
+            this.pose = pose;
+        }
+    }
+
+    /*
+     * Climibing position if looking from alliance driver station
+     */
+    public static enum ClimbingPositions {
+        // RIGHT   (new Pose2d(new Translation2d(Meters.of(1.15), Meters.of(2.66)), Rotation2d.kZero)),
+        // LEFT    (new Pose2d(new Translation2d(Meters.of(1.15), Meters.of(4.84)), Rotation2d.k180deg)),
+        RIGHT       (new Pose2d(
+                        new Translation2d(
+                            Meters.of(Tower.rightUpright.getX()), 
+                            Meters.of(
+                                Tower.rightUpright.getY() - (DriveConstants.ROBOT_WIDTH.in(Meters) / 2) - kAutoAlign.CLIMBER_DISTANCE_FROM_UPRIGHT.in(Meters)
+                            )
+                        ), 
+                        Rotation2d.kZero)),
+        LEFT        (new Pose2d(
+                        new Translation2d(
+                            Meters.of(Tower.leftUpright.getX()), 
+                            Meters.of(
+                                Tower.leftUpright.getY() + (DriveConstants.ROBOT_WIDTH.in(Meters) / 2) + kAutoAlign.CLIMBER_DISTANCE_FROM_UPRIGHT.in(Meters)
+                            )
+                        ), 
+                        Rotation2d.k180deg)
+                    ),
+
+        LEFT_PREP   (new Pose2d(new Translation2d(Meters.of(Tower.leftUpright.getX()), Meters.of(5.00)), Rotation2d.k180deg)),
+        RIGHT_PREP  (new Pose2d(new Translation2d(Meters.of(Tower.rightUpright.getX()), Meters.of(2.450)), Rotation2d.kZero));
+
+        Pose2d pose;
+
+        private ClimbingPositions(Pose2d pose){
+            this.pose = pose;
         }
     }
 
     public static final class kBump {
-        public static final double BUMP_SPEED_MODIFIER = 0.33;
+        // Percentage of max speed
+        public static final double BUMP_SPEED_MODIFIER = 0.4;
     }
 }
