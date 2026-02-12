@@ -1,12 +1,16 @@
 package frc.robot.subsystems.intake;
 import static edu.wpi.first.units.Units.*;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
@@ -44,13 +48,14 @@ public final class IntakeIOTalonFX implements IntakeIO {
         positionControl = new PositionVoltage(0.0);
         positionControl.withSlot(0);
 
-        TalonFXConfiguration extensionConfigurator = new TalonFXConfiguration();
+        TalonFXConfiguration extensionConfigurator = new TalonFXConfiguration()
+        .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(Extension.GEARING));
 
         extensionConfigurator.Slot0 = new Slot0Configs()
             .withKP(Extension.TALONFX_PID.kP)
             .withKI(Extension.TALONFX_PID.kI)
             .withKD(Extension.TALONFX_PID.kD);
-
+            
         extensionMotor.getConfigurator().apply(extensionConfigurator);
 
         extensionPositionSignal    = extensionMotor.getPosition();
@@ -85,36 +90,35 @@ public final class IntakeIOTalonFX implements IntakeIO {
     }
 
     public void setRollerVoltage(double voltage) {
-
         rollerMotor.setVoltage(voltage);
-
     }
 
     public void setExtensionVoltage(double voltage) {
-
         extensionMotor.setVoltage(voltage);
-
     }
 
     public void setSetpoint(Distance position) {
-
         extensionMotor.setControl(positionControl.withPosition(position.in(Meters)));
-
     }
 
     public void coastMode() {
-
         rollerMotor.setNeutralMode(NeutralModeValue.Coast);
         extensionMotor.setNeutralMode(NeutralModeValue.Coast);
-
     }
 
     public void brakeMode() {
-
         rollerMotor.setNeutralMode(NeutralModeValue.Brake);
         extensionMotor.setNeutralMode(NeutralModeValue.Brake);
-
     }   
+
+    public void stopMotor() {
+        rollerMotor.set(0.0);
+        extensionMotor.set(0.0);
+    }
+
+    public Distance getPosition() {
+        return Meters.of(extensionPositionSignal.getValueAsDouble());
+    }
 
     @Override
     public void updateInputs(IntakeIO.IntakeInputs inputs) {
@@ -123,9 +127,9 @@ public final class IntakeIOTalonFX implements IntakeIO {
         inputs.extensionVolts = Volts.of(extensionVoltageSignal.getValueAsDouble());
         inputs.extensionCurrent = Amps.of(extensionCurrentSignal.getValueAsDouble());
         inputs.extensionTemp = 0.0;
-        inputs.extensionPosition = extensionPositionSignal.getValueAsDouble();
+        inputs.extensionPosition =  Units.rotationsToRadians(extensionPositionSignal.getValueAsDouble());
         inputs.extensionVelocity = MetersPerSecond.of(extensionVelocitySignal.getValueAsDouble());
-        inputs.extensionRunning = Math.abs(extensionVoltageSignal.getValueAsDouble()) > 0.01;
+        inputs.isExtensionRunning = Math.abs(extensionVoltageSignal.getValueAsDouble()) > 0.1;
         inputs.isExtended = inputs.extensionPosition >= Extension.EXTENSION_MAX_DISTANCE.in(Meters) - 0.01;
         inputs.isRetracted = inputs.extensionPosition <= Extension.EXTENSION_MIN_DISTANCE.in(Meters) + 0.01;
 
@@ -133,7 +137,7 @@ public final class IntakeIOTalonFX implements IntakeIO {
         inputs.rollerVolts = Volts.of(rollerVoltageSignal.getValueAsDouble());
         inputs.rollerCurrent = Amps.of(rollerCurrentSignal.getValueAsDouble());
         inputs.rollerTemp = 0.0;
-        inputs.rollerVelocity = MetersPerSecond.of(rollerVelocitySignal.getValueAsDouble());
+        inputs.rollerVelocity = RotationsPerSecond.of(rollerVelocitySignal.getValueAsDouble());
 
     }
 }

@@ -1,52 +1,96 @@
 package frc.robot.subsystems.intake;
+
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Meters;
+
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.intake.IntakeInputsAutoLogged;
+import frc.robot.subsystems.intake.IntakeConstants.Extension;
+import frc.robot.utils.Checkmate;
+import frc.robot.utils.Checkmate.TestResult;
 import edu.wpi.first.wpilibj2.command.Commands;
-import static edu.wpi.first.units.Units.Meters;
 import org.littletonrobotics.junction.Logger;
 
 public class Intake extends SubsystemBase {
 
     private final IntakeIO intakeIO;
     private final IntakeInputsAutoLogged inputs;
-    
+
     public Intake(IntakeIO intakeIO) {
 
         this.intakeIO = intakeIO;
-        inputs = new IntakeInputsAutoLogged();
+        this.inputs = new IntakeInputsAutoLogged();
+
+        Checkmate.register("Extension extend test", () -> {
+
+            double extendTarget = Extension.EXTENSION_DISTANCE.in(Meters);
+
+            intakeIO.setSetpoint(Extension.EXTENSION_DISTANCE);
+
+            Timer.delay(2.0);
+
+            if (Math.abs(inputs.extensionPosition - extendTarget) > 0.02) {
+                return TestResult.fail("Intake extension failed to extend, position: " + inputs.extensionPosition);
+            }
+            return TestResult.success("Intake extension ok, position: " + inputs.extensionPosition);
+        });
+
+        Checkmate.register("Retraction retract test", () -> {
+
+            double retractTarget = Extension.EXTENSION_MIN_DISTANCE.in(Meters);
+
+            intakeIO.setSetpoint(Extension.EXTENSION_MIN_DISTANCE);
+
+            Timer.delay(2.0);
+
+            if (Math.abs(inputs.extensionPosition - retractTarget) > 0.02) {
+                return TestResult.fail("Intake extension failed to retract, position: " + inputs.extensionPosition);
+            }
+            return TestResult.success("Intake extension ok, position: " + inputs.extensionPosition);
+        });
+
+
+        Checkmate.register("Intake roller spin test", () -> {
+
+            intakeIO.setRollerVoltage(6.0);
+
+            Timer.delay(2.0);
+
+            double current = inputs.rollerCurrent.in(Amps);
+            intakeIO.setRollerVoltage(0.0);
+            if (Math.abs(current) < 1.0) {
+                return TestResult.fail("Intake roller failed to spin up, current: " + current);
+            }
+            return TestResult.success("Intake roller ok, current: " + current);
+        });
+        ;
 
     }
 
-    public Command intakeCommand(double voltage) {
-
+    public Command intake(double voltage) {
         return Commands.runOnce(() -> intakeIO.setRollerVoltage(voltage), this);
-
     }
 
-    public Command brakemodeCommand() {
-
+    public Command brakemode() {
         return Commands.runOnce(() -> intakeIO.brakeMode(), this);
-
     }
 
-    public Command extendCommand() {
-
-         return Commands.runOnce(() -> intakeIO.setSetpoint(Meters.of(0.5)), this);
-
+    public Command extend() {
+        return Commands.runOnce(() -> intakeIO.setSetpoint(Extension.EXTENSION_DISTANCE), this);
     }
 
-    public Command retractCommand() {
+    public Command retract() {
+        return Commands.runOnce(() -> intakeIO.setSetpoint(Extension.EXTENSION_MIN_DISTANCE), this);
+    }
 
-        return Commands.runOnce(() -> intakeIO.setSetpoint(Meters.of(0.0)), this);
-
+    public Command stopMotor() {
+        return Commands.runOnce(() -> intakeIO.stopMotor(), this);
     }
 
     @Override
     public void periodic() {
-
         intakeIO.updateInputs(inputs);
         Logger.processInputs("Intake", inputs);
-
     }
 }
