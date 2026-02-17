@@ -46,7 +46,15 @@ import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.Arena2026Rebuilt;
 import org.littletonrobotics.junction.Logger;
+
+import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorIO;
+import frc.robot.subsystems.elevator.ElevatorIOSim;
+import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
+import frc.robot.subsystems.elevator.ElevatorConstants;
+
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+
 
 import static edu.wpi.first.units.Units.Meters;
 
@@ -65,6 +73,7 @@ public class RobotContainer {
     protected final Hopper     sys_hopper;
 
     public static SwerveDriveSimulation simConfig;
+    private final Elevator sys_elevator;
 
     private PassingPositions selectedPassingPosition = PassingPositions.MIDDLE;
     private ClimbingPositions selectedClimbingPosition = ClimbingPositions.LEFT;
@@ -92,6 +101,8 @@ public class RobotContainer {
                         new SerializerIOTalonFX(SerializerConstants.INDEXER_ID));
                 sys_feeder = new Feeder(new FeederIOTalonFX(FeederConstants.FEEDER_ID));
                 sys_vision = new Vision(new VisionIOLimelight());
+                sys_elevator = new Elevator(new ElevatorIOTalonFX(ElevatorConstants.MAIN_MOTOR_ID));
+
 
                 sys_drive = new Drive(
                         new GyroIOPigeon2(),
@@ -107,6 +118,7 @@ public class RobotContainer {
                 sys_hopper = new Hopper(new HopperIOSim());
                 sys_intake = new Intake(new IntakeIOSim());
                 sys_serializer = new Serializer(new SerializerIOSim());
+                sys_elevator = new Elevator(new ElevatorIOSim());
                 sys_feeder = new Feeder(new FeederIOSim());
 
                 final DriveTrainSimulationConfig driveConfig = DriveTrainSimulationConfig
@@ -157,6 +169,7 @@ public class RobotContainer {
                 sys_hopper = new Hopper(new HopperIO() {});
                 sys_intake = new Intake(new IntakeIO() {});
                 sys_serializer = new Serializer(new SerializerIO() {});
+                sys_elevator = new Elevator(new ElevatorIO() {});
                 sys_feeder = new Feeder(new FeederIO() {});
             }
         }
@@ -233,6 +246,9 @@ public class RobotContainer {
         primaryController.a()
                          .onTrue(Commands.runOnce(() -> DriveCommands.setSpeed(kBump.BUMP_SPEED_MODIFIER)))
                          .onFalse(Commands.runOnce(() -> DriveCommands.setSpeed(1.0)));
+    
+        primaryController.povUp().onTrue(Commands.runOnce(() -> sys_elevator.startManualMove(3)));
+        primaryController.povDown().onTrue(Commands.runOnce(() -> sys_elevator.startManualMove(-3)));
 
         primaryController.rightBumper()
                          .whileTrue(
