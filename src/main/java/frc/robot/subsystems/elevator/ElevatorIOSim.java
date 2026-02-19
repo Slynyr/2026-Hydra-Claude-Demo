@@ -1,5 +1,6 @@
 package frc.robot.subsystems.elevator;
 
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
 import edu.wpi.first.units.Units;
@@ -25,11 +26,11 @@ public class ElevatorIOSim implements ElevatorIO {
             DCMotor.getFalcon500(2), 
             ElevatorConstants.GEARING, 
             ElevatorConstants.ELEVATOR_MASS.in(Kilograms), 
-            ElevatorConstants.ELEVATOR_DRUMRADIUS.in(Meters), 
-            ElevatorConstants.ELEVATOR_MIN_HEIGHT, 
-            ElevatorConstants.ELEVATOR_MAX_HEIGHT, 
+            ElevatorConstants.ELEVATOR_DRUMRADIUS.in(Inches), 
+            ElevatorConstants.ELEVATOR_MIN_HEIGHT.in(Inches), 
+            ElevatorConstants.ELEVATOR_MAX_HEIGHT.in(Inches), 
             true, 
-            ElevatorConstants.ELEVATOR_MIN_HEIGHT
+            ElevatorConstants.ELEVATOR_MIN_HEIGHT.in(Inches)
         );
         PID = new PIDController(ElevatorConstants.SIM_PID.kP, ElevatorConstants.SIM_PID.kI, ElevatorConstants.SIM_PID.kD);
         running = false;

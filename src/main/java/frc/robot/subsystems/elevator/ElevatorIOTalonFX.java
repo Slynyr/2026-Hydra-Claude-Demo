@@ -53,7 +53,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
         m_motorConfig.apply(m_currentConfig);
 
         m_encoderConfigs = new FeedbackConfigs()
-            .withSensorToMechanismRatio(1.0 / ElevatorConstants.kRotationConverter);
+            .withSensorToMechanismRatio(ElevatorConstants.GEARING);
         m_motorConfig.apply(m_encoderConfigs);
 
         m_pidConfig = new Slot0Configs()
