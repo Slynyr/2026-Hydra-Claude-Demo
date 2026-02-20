@@ -10,8 +10,5 @@ public final class SerializerConstants {
      
     public static final Current TALON_FX_CURRENT_LIMIT = Amps.of(30);
     public static final int INDEXER_ID = 1;
-    
-
-    
 
 }

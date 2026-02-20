@@ -28,9 +28,6 @@ public class SerializerIOTalonFX implements SerializerIO {
     private StatusSignal<Current> deviceCurrent;
     private StatusSignal<Temperature> deviceTemp;
 
-    
-
-
     public SerializerIOTalonFX(int motorId) {
         m_motor = new TalonFX(motorId);
 

@@ -3,6 +3,8 @@ package frc.robot.subsystems.intake;
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Meters;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -18,10 +20,13 @@ public class Intake extends SubsystemBase {
     private final IntakeIO intakeIO;
     private final IntakeInputsAutoLogged inputs;
 
+    private static Pose3d extenderPose;
+
     public Intake(IntakeIO intakeIO) {
 
         this.intakeIO = intakeIO;
         this.inputs = new IntakeInputsAutoLogged();
+        extenderPose = new Pose3d();
 
         Checkmate.register("Should fully extend Intake", () -> {
 
@@ -97,5 +102,15 @@ public class Intake extends SubsystemBase {
     public void periodic() {
         intakeIO.updateInputs(inputs);
         Logger.processInputs("Intake", inputs);
+        extenderPose = new Pose3d(
+
+            inputs.extensionPosition, 0.0, 0.0,
+            new Rotation3d(0.0, 0.0, Math.toRadians(0.0))
+
+        );
+
+        Logger.recordOutput("Components/Intake", extenderPose);
+
     }
+
 }

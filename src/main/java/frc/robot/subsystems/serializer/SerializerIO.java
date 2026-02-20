@@ -31,7 +31,6 @@ public interface SerializerIO {
 
     public default void setMotorVoltage(double voltage) {}
 
-
     public default void stopMotor() {}
 
     public default void zeroEncoder() {}
