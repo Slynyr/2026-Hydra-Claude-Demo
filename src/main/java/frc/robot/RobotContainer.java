@@ -7,6 +7,8 @@
 
 package frc.robot;
 
+import frc.robot.Constants.DeviceID;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -101,7 +103,7 @@ public class RobotContainer {
                         new SerializerIOTalonFX(SerializerConstants.INDEXER_ID));
                 sys_feeder = new Feeder(new FeederIOTalonFX(FeederConstants.FEEDER_ID));
                 sys_vision = new Vision(new VisionIOLimelight());
-                sys_elevator = new Elevator(new ElevatorIOTalonFX(ElevatorConstants.MAIN_MOTOR_ID));
+                sys_elevator = new Elevator(new ElevatorIOTalonFX(DeviceID.CLIMBER_MOTOR));
 
 
                 sys_drive = new Drive(

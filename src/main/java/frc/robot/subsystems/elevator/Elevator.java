@@ -4,6 +4,8 @@ import static edu.wpi.first.units.Units.*;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.google.flatbuffers.Constants;
+
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.units.Units;
@@ -13,7 +15,7 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.elevator.ElevatorConstants;
+import frc.robot.Constants.DeviceID;
 
 public class Elevator extends SubsystemBase{
 
@@ -23,7 +25,7 @@ public class Elevator extends SubsystemBase{
     private static Pose3d elevatorPose;
 
     // Setup alerts for elevator motors connection
-    private final Alert ElevatorAlert  = new Alert("The Left Elevator Motor is Disconnected " + ElevatorConstants.MAIN_MOTOR_ID, AlertType.kError);
+    private final Alert ElevatorAlert  = new Alert("The Left Elevator Motor is Disconnected " + DeviceID.CLIMBER_MOTOR, AlertType.kError);
 
     public Elevator(ElevatorIO io) {
         this.io = io;
