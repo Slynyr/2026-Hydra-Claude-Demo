@@ -29,9 +29,11 @@ public interface IntakeIO {
         public double extensionTemp = 0.0;
         public LinearVelocity extensionVelocity = MetersPerSecond.of(0.0);
         public double extensionPosition = 0.0;
+        public Current extensionTorqueCurrent = Amps.of(0.0);
 
         public boolean isExtended = false;
         public boolean isRetracted = true;
+        public boolean isCrashDetected = false;
 
     }
     
