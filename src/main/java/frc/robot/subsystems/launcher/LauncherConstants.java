@@ -4,8 +4,11 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Per;
+import frc.robot.subsystems.launcher.interpolator.BilinearStrategy;
+import frc.robot.subsystems.launcher.interpolator.LaunchStrategy;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -19,6 +22,9 @@ public class LauncherConstants {
 
         public static final double MOTOR_ENCODER_GEAR_RATIO = 1.0 / 1.5;
         public static final int    SUPPLY_CURRENT_LIMIT     = 60;
+
+        public static final AngularVelocity LAUNCH_SPEED_OFFSET_INCREMENT = RPM.of(1);
+        public static final LaunchStrategy  DEFAULT_LAUNCH_STRATEGY       = new BilinearStrategy();
     }
 
     public static class Hood {
