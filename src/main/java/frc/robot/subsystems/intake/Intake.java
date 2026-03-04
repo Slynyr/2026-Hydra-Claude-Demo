@@ -4,6 +4,8 @@ import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
+import java.util.function.Supplier;
+
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.units.measure.Distance;
@@ -94,6 +96,10 @@ public class Intake extends SubsystemBase {
         return Commands.runOnce(() -> intakeIO.setSetpoint(Extension.EXTENSION_DISTANCE), this);
     }
 
+    public Command move(Supplier<Distance> setpoint) {
+        return Commands.runOnce(() -> intakeIO.setSetpoint(Meters.of(setpoint.get().in(Meters))), this);
+    }
+
     public Command retract() {
         return Commands.runOnce(() -> intakeIO.setSetpoint(Extension.EXTENSION_MIN_DISTANCE), this);
     }
@@ -103,6 +109,7 @@ public class Intake extends SubsystemBase {
     }
 
     public Command stopMotor() {
+        // intakeIO.stopMotor();
         return Commands.runOnce(() -> intakeIO.stopMotor(), this);
     }
 

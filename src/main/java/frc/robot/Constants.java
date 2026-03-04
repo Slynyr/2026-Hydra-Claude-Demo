@@ -60,8 +60,7 @@ public final class Constants {
         public static final int FEEDER_MOTOR_BOTTOM = 0;
 
         // HOPPER
-        public static final int HOPPER_MAIN_MOTOR_ID     = 20;
-        public static final int HOPPER_FOLLOWER_MOTOR_ID = 21;
+        public static final int HOPPER_MOTOR_ID     = 20;
 
         // SERIALIZER
         public static final int SERIALIZER_MOTOR = 31;

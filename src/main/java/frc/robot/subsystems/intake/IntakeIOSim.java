@@ -65,8 +65,10 @@ public class IntakeIOSim implements IntakeIO {
 
     @Override
     public void stopMotor() {
+      pid.reset();
       running = false;
       rollerVoltage = 0.0;
+      setExtensionVoltage(0);
     }
 
     @Override

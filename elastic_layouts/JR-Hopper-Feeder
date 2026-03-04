@@ -1,0 +1,59 @@
+{
+  "version": 1.0,
+  "grid_size": 128,
+  "tabs": [
+    {
+      "name": "Teleoperated",
+      "grid_layout": {
+        "layouts": [],
+        "containers": [
+          {
+            "title": "PID",
+            "x": 512.0,
+            "y": 0.0,
+            "width": 256.0,
+            "height": 384.0,
+            "type": "PIDController",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/PID",
+              "period": 0.06
+            }
+          },
+          {
+            "title": "PID",
+            "x": 896.0,
+            "y": 0.0,
+            "width": 256.0,
+            "height": 384.0,
+            "type": "PIDController",
+            "properties": {
+              "topic": "/SmartDashboard/Feeder/PID",
+              "period": 0.06
+            }
+          },
+          {
+            "title": "RPS",
+            "x": 1024.0,
+            "y": 384.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Feeder/RPS",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Autonomous",
+      "grid_layout": {
+        "layouts": [],
+        "containers": []
+      }
+    }
+  ]
+}
