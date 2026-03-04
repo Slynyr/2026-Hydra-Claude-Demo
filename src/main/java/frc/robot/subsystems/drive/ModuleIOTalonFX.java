@@ -10,6 +10,7 @@ package frc.robot.subsystems.drive;
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 import static frc.robot.util.PhoenixUtil.*;
 
@@ -266,6 +267,22 @@ public class ModuleIOTalonFX implements ModuleIO {
               positionTorqueCurrentRequest.withPosition(rotation.getRotations());
         });
   }
+
+    @Override
+    public void setTurnVoltage(double voltage){
+        turnTalon.setVoltage(voltage);
+    }
+
+    @Override
+    public void setTurnVelocity(AngularVelocity velocityRadPerSec){
+        turnTalon.setControl(
+            switch (constants.SteerMotorClosedLoopOutput) {
+          case Voltage -> velocityVoltageRequest.withVelocity(velocityRadPerSec.in(RotationsPerSecond));
+          case TorqueCurrentFOC -> velocityTorqueCurrentRequest.withVelocity(velocityRadPerSec.in(RotationsPerSecond));
+        });
+    }
+
+    
 
   @Override
   public void driveNeutralMode(NeutralModeValue mode){

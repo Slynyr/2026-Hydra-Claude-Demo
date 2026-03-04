@@ -15,7 +15,10 @@ public final class ElevatorConstants {
     public static final Distance ELEVATOR_DRUMRADIUS = Units.Inches.of(20.0);
     public static final Distance ELEVATOR_DRUMCIRCUMFERENCE = Units.Inches.of(2 * Math.PI * ELEVATOR_DRUMRADIUS.in(Inches));
     public static final Distance ROTATION_CONVERTER = ELEVATOR_DRUMCIRCUMFERENCE.div(GEARING);
-    public static final PIDConstants TALONFX_PID = new PIDConstants(0, 0, 0); 
+
+    public static final Current SPIKE_CURRENT = Amps.of(70);
+
+    public static final PIDConstants TALONFX_PID = new PIDConstants(6.0, 0.67, 0.0); 
     public static final PIDConstants SIM_PID = new PIDConstants(10, 0, 0);
     public static final Mass ELEVATOR_MASS = Pound.of(1);
     public static final Distance ELEVATOR_MIN_HEIGHT = Units.Inches.of(23.2);

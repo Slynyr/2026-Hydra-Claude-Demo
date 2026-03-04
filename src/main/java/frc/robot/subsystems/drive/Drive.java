@@ -31,10 +31,14 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -45,6 +49,7 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.LocalADStarAK;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
+
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -105,6 +110,8 @@ public class Drive extends SubsystemBase {
             new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
     private final Vision vision;
+    private final Field2d field2d;
+
 
     public Drive(
             GyroIO gyroIO,
@@ -144,6 +151,9 @@ public class Drive extends SubsystemBase {
         PathPlannerLogging.setLogTargetPoseCallback(
                 (targetPose) -> Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose));
 
+        field2d = new Field2d();
+        SmartDashboard.putData("Robot Field", field2d);
+
         // Configure SysId
         sysId =
                 new SysIdRoutine(
@@ -165,6 +175,8 @@ public class Drive extends SubsystemBase {
             module.periodic();
         }
         ODOMETRY_LOCK.unlock();
+        
+        field2d.setRobotPose(getPose());
 
         // Stop moving when disabled
         if (DriverStation.isDisabled()) {
@@ -239,6 +251,23 @@ public class Drive extends SubsystemBase {
 
         // Log optimized setpoints (runSetpoint mutates each state)
         Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStates);
+    }
+
+    public void runTurnVelocity(AngularVelocity velocity){
+        for (int i = 0; i < 4; i++){
+            modules[i].setTurnVelocity(velocity);
+        }
+    }
+    public void runTurnVoltage(double voltage){
+        for (int i = 0; i < 4; i++){
+            modules[i].setTurnVoltage(voltage);
+        }
+    }
+
+    public void runTurnSetpoint(Rotation2d setpoint){
+        for (int i = 0; i < 4; i++){
+            modules[i].setTurnPosition(setpoint);
+        }
     }
 
     /** Runs the drive in a straight line with the specified drive output. */
@@ -355,6 +384,10 @@ public class Drive extends SubsystemBase {
     /** Returns the current odometry rotation. */
     public Rotation2d getRotation() {
         return getPose().getRotation();
+    }
+
+    public Angle getTilt(){
+        return gyroInputs.tilt;
     }
 
     /** Resets the current odometry pose. */

@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.*;
 import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
@@ -18,6 +17,7 @@ public interface ElevatorIO {
         public Current mainAppliedCurrent = Units.Amps.of(0.0);
         public double mainMotorTemperature = 0.0; // Celsius
         public Distance mainMotorPosition = Units.Meters.of(0.0);
+        public Current mainMotorTorqueCurrent = Units.Amps.of(0.0);
     }
 
     public default void updateInputs(ElevatorInputs inputs) {}

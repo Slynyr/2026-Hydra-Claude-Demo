@@ -23,30 +23,28 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants;
+import frc.robot.Constants.Mode;
 import frc.robot.Constants.kAutoAlign;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.AlignHelper;
 import frc.robot.util.ProfiledController;
 
-import static edu.wpi.first.units.Units.Centimeters;
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.DegreesPerSecond;
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
+import static edu.wpi.first.units.Units.*;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -58,7 +56,7 @@ import com.pathplanner.lib.util.FlippingUtil;
 public class DriveCommands {
   private static final double DEADBAND = 0.1;
   private static final double TRIGGER_DEADBAND = 0.01;
-  private static final double ANGLE_KP = 5.0;
+  private static final double ANGLE_KP = 7.0;
   private static final double ANGLE_KD = 0.4;
   private static final double ANGLE_MAX_VELOCITY = 8.0;
   private static final double ANGLE_MAX_ACCELERATION = 20.0;
@@ -68,6 +66,15 @@ public class DriveCommands {
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
   private static double speedModifier = 1.0;
   private static boolean isAligned = false;
+
+  /**
+   * used for the {@link DriveCommands#crossBump(Drive, Vision, Supplier, Supplier, Time)} command to only start counting
+   * the timer once the robot initially leaves the ground
+  */
+  public static final AtomicBoolean DID_GET_OFF_GROUND = new AtomicBoolean();
+
+  private static AtomicLong lastTime = new AtomicLong(System.currentTimeMillis());
+
 
   private DriveCommands() {}
 
@@ -88,17 +95,13 @@ public class DriveCommands {
   // Increase drive speed
   public static Command setSpeedHigh(Drive drive) {
     return Commands.run(
-            () -> {
-              speedModifier = 1.0;
-            });
+            () -> speedModifier = 1.0);
   }
 
   // Decrease drive speed
   public static Command setSpeedLow(Drive drive) {
     return Commands.run(
-            () -> {
-              speedModifier = 0.5;
-            });
+            () -> speedModifier = 0.5);
     }
 
   public static void setSpeed(double speed){
@@ -215,8 +218,6 @@ public class DriveCommands {
               Logger.recordOutput("AutoAlign/MaxAcceleration [Rotations per s^2]", RotationsPerSecondPerSecond.of(ANGLE_MAX_ACCELERATION));
               Logger.recordOutput("AutoAlign/Angle to Alignment [Degrees]", difference.in(Degrees));
 
-
-
               if (drive.getRotation().getRadians() == rotationSupplier.get().getRadians())
                   isAligned = true;
             },
@@ -226,103 +227,8 @@ public class DriveCommands {
         .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
   }
 
-  @SuppressWarnings("resource")
   public static Command alignToPoint(Drive drive, Supplier<Pose2d> target, Supplier<LinearVelocity> maxVelocity, Supplier<LinearAcceleration> maxAcceleration ){
-    ProfiledController translationController = 
-        new ProfiledController(
-          kAutoAlign.ALIGN_PID,
-          maxVelocity.get().in(MetersPerSecond),
-          maxAcceleration.get().in(MetersPerSecondPerSecond)
-        );
-
-    PIDController headingController = 
-        new PIDController(
-            ANGLE_KP,
-            0.0,
-            ANGLE_KD
-        );
-
-    headingController.enableContinuousInput(-Math.PI, Math.PI);
-
-    return Commands.sequence(
-      Commands.runOnce(() -> {
-          isAligned = false;
-
-          ChassisSpeeds speeds = drive.getFieldRelativeSpeeds();
-
-          translationController.reset(-Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond));
-          headingController.reset();
-      }),
-      Commands.run(() -> {
-
-        translationController.setContraints(maxVelocity.get().in(MetersPerSecond), maxAcceleration.get().in(MetersPerSecondPerSecond));
-
-        Pose2d robotPose = drive.getPose();
-        Pose2d targetPose = target.get();
-
-        if (AutoBuilder.shouldFlip()){
-          targetPose = FlippingUtil.flipFieldPose(targetPose);
-        }
-
-        double xDiff = targetPose.getX() - robotPose.getX();
-        double yDiff = targetPose.getY() - robotPose.getY();
-
-        double totalDiff = Math.hypot(xDiff, yDiff);
-
-        double speed = Math.abs(translationController.calculate(totalDiff, 0.0));
-
-        double omega = 
-            headingController.calculate(
-              robotPose.getRotation().getRadians(), targetPose.getRotation().getRadians()
-            );
-
-
-        double speedX = speed * (xDiff/totalDiff); // Essentially Speed * cos(theta) to get x velocity magnitude (kinematics)
-        double speedY = speed * (yDiff/totalDiff); // Essentially Speed * sin(theta) to get y velocity magnitude (kinematics)
-
-        drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speedX, speedY, omega, drive.getRotation()));
-        
-        
-        Logger.recordOutput("AutoAlign/Target", targetPose);
-        Logger.recordOutput("AutoAlign/SpeedOutput", speed);
-        Logger.recordOutput("AutoAlign/OmegaOutput", omega);
-        Logger.recordOutput("AutoAlign/MaxVelocity [m per s]", maxVelocity.get());
-        Logger.recordOutput("AutoAlign/MaxAcceleration [m per s^2]", maxAcceleration.get());
-
-      }, drive)
-    ).until(() -> {
-        Pose2d robotPose = drive.getPose();
-        Pose2d targetPose = target.get();
-        if(AutoBuilder.shouldFlip())
-            targetPose =  FlippingUtil.flipFieldPose(targetPose);
-
-        Angle difference = AlignHelper.rotationDifference(targetPose.getRotation(), robotPose.getRotation());
-
-        Distance distance = Meters.of(Math.hypot(robotPose.getX() - targetPose.getX(), robotPose.getY() - targetPose.getY()));
-
-        ChassisSpeeds speeds = drive.getChassisSpeeds();
-        LinearVelocity robotSpeed = MetersPerSecond.of(Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond));
-
-        Logger.recordOutput("AutoAlign/Distance To Alignment [cm]", distance.in(Centimeters));
-        Logger.recordOutput("AutoAlign/Angle To Alignment [degrees]", difference.in(Degrees));
-        Logger.recordOutput("AutoAlign/Velocity [m per s]", robotSpeed.in(MetersPerSecond));
-
-        if (DriverStation.isAutonomous())
-          return distance.lte(kAutoAlign.TRANSLATION_TOLERANCE)
-                 && difference.lte(kAutoAlign.ROTATION_TOLERANCE)
-                 && robotSpeed.lte(kAutoAlign.AUTO_VELOCITY_TOLERANCE);
-        else 
-          return distance.lte(kAutoAlign.TRANSLATION_TOLERANCE)
-                 && difference.lte(kAutoAlign.ROTATION_TOLERANCE)
-                 && robotSpeed.lte(kAutoAlign.VELOCITY_TOLERANCE);
-
-      }
-    ).andThen(
-        Commands.runOnce(() -> {
-          drive.stop();
-          isAligned = true;
-        }, drive)
-    );
+    return alignToPoint(drive, target, maxVelocity, maxAcceleration, kAutoAlign.TRANSLATION_TOLERANCE, kAutoAlign.ROTATION_TOLERANCE, kAutoAlign.VELOCITY_TOLERANCE);
   }
 
   @SuppressWarnings("resource")
@@ -375,9 +281,8 @@ public class DriveCommands {
               robotPose.getRotation().getRadians(), targetPose.getRotation().getRadians()
             );
 
-
-        double speedX = speed * (xDiff/totalDiff); // Essentially Speed * cos(theta) to get x velocity magnitude (kinematics)
-        double speedY = speed * (yDiff/totalDiff); // Essentially Speed * sin(theta) to get y velocity magnitude (kinematics)
+        double speedX = speed * (xDiff/totalDiff);
+        double speedY = speed * (yDiff/totalDiff);
 
         drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speedX, speedY, omega, drive.getRotation()));
         
@@ -407,9 +312,9 @@ public class DriveCommands {
         Logger.recordOutput("AutoAlign/Velocity [m per s]", robotSpeed.in(MetersPerSecond));
 
         
-        return distance.lte(translationTolerance)
-                 && difference.lte(rotationTolerance)
-                 && robotSpeed.lte(velocityTolerance);
+        return 		distance.lte(translationTolerance)
+                && 	difference.lte(rotationTolerance)
+                && 	robotSpeed.lte(velocityTolerance);
 
       }
     ).andThen(
@@ -431,7 +336,6 @@ public class DriveCommands {
 
     headingController.enableContinuousInput(-Math.PI, Math.PI);
 
-
     return Commands.sequence(
       Commands.runOnce(() -> {
 
@@ -444,10 +348,6 @@ public class DriveCommands {
         Rotation2d robotRotation = drive.getRotation();
         Rotation2d targetRotation = target.get();
 
-        // if (AutoBuilder.shouldFlip()){
-        //   targetRotation = FlippingUtil.flipFieldRotation(targetRotation);
-        // }
-
         double omega = 
           headingController.calculate(robotRotation.getRadians(), targetRotation.getRadians());
 
@@ -457,12 +357,9 @@ public class DriveCommands {
         Logger.recordOutput("AutoAlign/OmegaOutput", omega);
 
       }, drive)
-      
     ).until(() -> {
         Rotation2d robotRotation = drive.getRotation();
         Rotation2d targetRotation = target.get();
-        // if(AutoBuilder.shouldFlip())
-        //     targetRotation =  FlippingUtil.flipFieldRotation(targetRotation);
 
         Angle difference = AlignHelper.rotationDifference(targetRotation, robotRotation);
 
@@ -471,13 +368,9 @@ public class DriveCommands {
         Logger.recordOutput("AutoAlign/Angle To Alignment [degrees]", difference.in(Degrees));
         Logger.recordOutput("AutoAlign/Velocity [degrees per s]", rotationSpeed.in(DegreesPerSecond));
 
-        if (DriverStation.isAutonomous())
-          return difference.lte(kAutoAlign.ROTATION_TOLERANCE);
-        else 
-          return difference.lte(kAutoAlign.ROTATION_TOLERANCE);
+        return difference.lte(kAutoAlign.ROTATION_TOLERANCE);
 
-      }
-    ).andThen(
+    }).andThen(
         Commands.runOnce(() -> {
           drive.stop();
           isAligned = true;
@@ -485,19 +378,85 @@ public class DriveCommands {
     );
   }
 
+  public static Command crossBump(Drive drive, Vision vision, Supplier<Rotation2d> targetHeading, Supplier<LinearVelocity> speed, Time timeout){
+    if (Constants.CURRENT_MODE == Mode.SIM)
+        return Commands.sequence(
+            DriveCommands.alignToHeading(
+                drive, 
+                targetHeading
+            ),
+            Commands.run(() -> drive.runVelocity(
+                ChassisSpeeds.fromFieldRelativeSpeeds(
+                    new ChassisSpeeds(
+                        speed.get(),
+                        MetersPerSecond.of(0.0),
+                        RadiansPerSecond.of(0.0)
+                ),
+                drive.getRotation())
+            ), drive).withTimeout(2),
+            Commands.runOnce(drive::stop)
+        );
+
+    return Commands.sequence(
+        DriveCommands.alignToHeading(
+            drive, 
+            targetHeading
+        ),
+        Commands.runOnce(() -> DID_GET_OFF_GROUND.set(false)),
+        Commands.run(() -> drive.runVelocity(
+            ChassisSpeeds.fromFieldRelativeSpeeds(
+                new ChassisSpeeds(
+                    speed.get(),
+                    MetersPerSecond.of(0.0),
+                    RadiansPerSecond.of(0.0)
+                ),
+                drive.getRotation())
+        ), drive)
+        .until(() -> {
+            if (drive.getTilt().gt(Degrees.of(2.5)) && !DID_GET_OFF_GROUND.get())
+                DID_GET_OFF_GROUND.set(true);
+
+            if (!DID_GET_OFF_GROUND.get()) return false;
+
+            // TODO: Tune for real robot value
+            if (drive.getTilt().gt(Degrees.of(2.5))){ // should be much lower on real robot
+                lastTime.set(System.currentTimeMillis());
+            }
+
+            Logger.recordOutput("Drive/BumpTimer", System.currentTimeMillis() - lastTime.get());
+
+            return (drive.getTilt().lte(Degrees.of(2.5)) && (System.currentTimeMillis() - lastTime.get() > timeout.in(Millisecond) || vision.hasTarget()));
+        }),
+        Commands.runOnce(drive::stop)
+    );
+  }
+
+  public static Distance distToHub(Drive drive){
+    Pose2d hubPose = Constants.kField.BLUE_HUB;
+    if (AutoBuilder.shouldFlip())
+        hubPose = FlippingUtil.flipFieldPose(hubPose);
+
+    return Meters.of((drive.getPose().getTranslation().getDistance(hubPose.getTranslation())));
+  }
+
   /*
    * Gets Rotation2d to target pose from drive pose
    */
   public static Rotation2d getRotation2d(Drive drive, Pose2d targetPose){
 
-    if (AutoBuilder.shouldFlip()){
+    if (AutoBuilder.shouldFlip())
       targetPose = FlippingUtil.flipFieldPose(targetPose);
-    }
 
     return new Rotation2d(
       targetPose.getX() - drive.getPose().getX(),
       targetPose.getY() - drive.getPose().getY()
     );
+  }
+
+  public static LinearVelocity getBumpSpeed(LinearVelocity speed) {
+    if (AutoBuilder.shouldFlip())
+        return speed.times(-1);
+    return speed; 
   }
 
   /**
@@ -512,55 +471,49 @@ public class DriveCommands {
 
     return Commands.sequence(
         // Reset data
-        Commands.runOnce(
-            () -> {
-              velocitySamples.clear();
-              voltageSamples.clear();
-            }),
+        Commands.runOnce(() -> {
+            velocitySamples.clear();
+            voltageSamples.clear();
+        }),
 
         // Allow modules to orient
-        Commands.run(
-                () -> {
-                  drive.runCharacterization(0.0);
-                },
-                drive)
-            .withTimeout(FF_START_DELAY),
+        Commands.run(() -> {
+            drive.runCharacterization(0.0);
+        }, drive)
+        .withTimeout(FF_START_DELAY),
 
         // Start timer
         Commands.runOnce(timer::restart),
 
         // Accelerate and gather data
-        Commands.run(
-                () -> {
+        Commands.run(() -> {
                   double voltage = timer.get() * FF_RAMP_RATE;
                   drive.runCharacterization(voltage);
                   velocitySamples.add(drive.getFFCharacterizationVelocity());
                   voltageSamples.add(voltage);
-                },
-                drive)
+            }, drive)
 
             // When cancelled, calculate and print results
-            .finallyDo(
-                () -> {
-                  int n = velocitySamples.size();
-                  double sumX = 0.0;
-                  double sumY = 0.0;
-                  double sumXY = 0.0;
-                  double sumX2 = 0.0;
-                  for (int i = 0; i < n; i++) {
-                    sumX += velocitySamples.get(i);
-                    sumY += voltageSamples.get(i);
-                    sumXY += velocitySamples.get(i) * voltageSamples.get(i);
-                    sumX2 += velocitySamples.get(i) * velocitySamples.get(i);
-                  }
-                  double kS = (sumY * sumX2 - sumX * sumXY) / (n * sumX2 - sumX * sumX);
-                  double kV = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            .finallyDo(() -> {
+                int n = velocitySamples.size();
+                double sumX = 0.0;
+                double sumY = 0.0;
+                double sumXY = 0.0;
+                double sumX2 = 0.0;
+                for (int i = 0; i < n; i++) {
+                sumX += velocitySamples.get(i);
+                sumY += voltageSamples.get(i);
+                sumXY += velocitySamples.get(i) * voltageSamples.get(i);
+                sumX2 += velocitySamples.get(i) * velocitySamples.get(i);
+                }
+                double kS = (sumY * sumX2 - sumX * sumXY) / (n * sumX2 - sumX * sumX);
+                double kV = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
 
-                  NumberFormat formatter = new DecimalFormat("#0.00000");
-                  System.out.println("********** Drive FF Characterization Results **********");
-                  System.out.println("\tkS: " + formatter.format(kS));
-                  System.out.println("\tkV: " + formatter.format(kV));
-                }));
+                NumberFormat formatter = new DecimalFormat("#0.00000");
+                System.out.println("********** Drive FF Characterization Results **********");
+                System.out.println("\tkS: " + formatter.format(kS));
+                System.out.println("\tkV: " + formatter.format(kV));
+            }));
   }
 
   /** Measures the robot's wheel radius by spinning in a circle. */
@@ -572,18 +525,15 @@ public class DriveCommands {
         // Drive control sequence
         Commands.sequence(
             // Reset acceleration limiter
-            Commands.runOnce(
-                () -> {
-                  limiter.reset(0.0);
-                }),
+            Commands.runOnce(() -> {
+                limiter.reset(0.0);
+            }),
 
             // Turn in place, accelerating up to full speed
-            Commands.run(
-                () -> {
-                  double speed = limiter.calculate(WHEEL_RADIUS_MAX_VELOCITY);
-                  drive.runVelocity(new ChassisSpeeds(0.0, 0.0, speed));
-                },
-                drive)),
+            Commands.run(() -> {
+                double speed = limiter.calculate(WHEEL_RADIUS_MAX_VELOCITY);
+                drive.runVelocity(new ChassisSpeeds(0.0, 0.0, speed));
+            }, drive)),
 
         // Measurement sequence
         Commands.sequence(
@@ -591,45 +541,42 @@ public class DriveCommands {
             Commands.waitSeconds(1.0),
 
             // Record starting measurement
-            Commands.runOnce(
-                () -> {
-                  state.positions = drive.getWheelRadiusCharacterizationPositions();
-                  state.lastAngle = drive.getRotation();
-                  state.gyroDelta = 0.0;
-                }),
+            Commands.runOnce(() -> {
+                state.positions = drive.getWheelRadiusCharacterizationPositions();
+                state.lastAngle = drive.getRotation();
+                state.gyroDelta = 0.0;
+            }),
 
             // Update gyro delta
-            Commands.run(
-                    () -> {
-                      var rotation = drive.getRotation();
-                      state.gyroDelta += Math.abs(rotation.minus(state.lastAngle).getRadians());
-                      state.lastAngle = rotation;
-                    })
+            Commands.run(() -> {
+                var rotation = drive.getRotation();
+                state.gyroDelta += Math.abs(rotation.minus(state.lastAngle).getRadians());
+                state.lastAngle = rotation;
+            })
 
-                // When cancelled, calculate and print results
-                .finallyDo(
-                    () -> {
-                      double[] positions = drive.getWheelRadiusCharacterizationPositions();
-                      double wheelDelta = 0.0;
-                      for (int i = 0; i < 4; i++) {
-                        wheelDelta += Math.abs(positions[i] - state.positions[i]) / 4.0;
-                      }
-                      double wheelRadius = (state.gyroDelta * Drive.DRIVE_BASE_RADIUS) / wheelDelta;
+            // When cancelled, calculate and print results
+            .finallyDo(() -> {
+                double[] positions = drive.getWheelRadiusCharacterizationPositions();
+                double wheelDelta = 0.0;
+                for (int i = 0; i < 4; i++) {
+                wheelDelta += Math.abs(positions[i] - state.positions[i]) / 4.0;
+                }
+                double wheelRadius = (state.gyroDelta * Drive.DRIVE_BASE_RADIUS) / wheelDelta;
 
-                      NumberFormat formatter = new DecimalFormat("#0.000");
-                      System.out.println(
-                          "********** Wheel Radius Characterization Results **********");
-                      System.out.println(
-                          "\tWheel Delta: " + formatter.format(wheelDelta) + " radians");
-                      System.out.println(
-                          "\tGyro Delta: " + formatter.format(state.gyroDelta) + " radians");
-                      System.out.println(
-                          "\tWheel Radius: "
-                              + formatter.format(wheelRadius)
-                              + " meters, "
-                              + formatter.format(Units.metersToInches(wheelRadius))
-                              + " inches");
-                    })));
+                NumberFormat formatter = new DecimalFormat("#0.000");
+                System.out.println(
+                    "********** Wheel Radius Characterization Results **********");
+                System.out.println(
+                    "\tWheel Delta: " + formatter.format(wheelDelta) + " radians");
+                System.out.println(
+                    "\tGyro Delta: " + formatter.format(state.gyroDelta) + " radians");
+                System.out.println(
+                    "\tWheel Radius: "
+                    + formatter.format(wheelRadius)
+                    + " meters, "
+                    + formatter.format(Units.metersToInches(wheelRadius))
+                    + " inches");
+            })));
   }
 
   private static class WheelRadiusCharacterizationState {

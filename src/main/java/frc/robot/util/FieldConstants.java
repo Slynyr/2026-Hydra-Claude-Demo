@@ -341,7 +341,7 @@ public class FieldConstants {
           if (layout == null) {
             try {
               Path p =
-                  Constants.CURRENT_MODE == Mode.REAL
+                  Constants.CURRENT_MODE == Mode.SIM
                       ? Path.of(
                           "src",
                           "main",

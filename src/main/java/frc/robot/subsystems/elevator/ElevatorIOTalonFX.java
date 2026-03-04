@@ -40,6 +40,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     private StatusSignal<Voltage> mainMotorVoltage;
     private StatusSignal<Current> mainMotorCurrent;
     private StatusSignal<Temperature> mainMotorTemp;
+    private StatusSignal<Current> mainMotorTorqueCurrent;
 
 
     public ElevatorIOTalonFX(int mainMotorID) {
@@ -76,6 +77,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
         mainMotorVoltage = m_motor.getMotorVoltage();
         mainMotorCurrent = m_motor.getSupplyCurrent();
         mainMotorTemp  = m_motor.getDeviceTemp();
+        mainMotorTorqueCurrent = m_motor.getTorqueCurrent();
 
         // Update all the values
         BaseStatusSignal.setUpdateFrequencyForAll(
@@ -83,7 +85,8 @@ public class ElevatorIOTalonFX implements ElevatorIO {
             motorPosition,
             mainMotorVoltage,
             mainMotorCurrent,
-            mainMotorTemp
+            mainMotorTemp,
+            mainMotorTorqueCurrent
         );
 
         m_motor.optimizeBusUtilization();
@@ -144,12 +147,14 @@ public class ElevatorIOTalonFX implements ElevatorIO {
             motorPosition,
             mainMotorVoltage, 
             mainMotorCurrent, 
-            mainMotorTemp
+            mainMotorTemp,
+            mainMotorTorqueCurrent
         ).isOK();
-        inputs.mainAppliedVoltage = Units.Volts.of(mainMotorVoltage.getValueAsDouble());
-        inputs.mainAppliedCurrent = Units.Amps.of(Math.abs(mainMotorCurrent.getValueAsDouble()));
+        inputs.mainAppliedVoltage = mainMotorVoltage.getValue();
+        inputs.mainAppliedCurrent = mainMotorCurrent.getValue();
         inputs.mainMotorTemperature = mainMotorTemp.getValueAsDouble();
         inputs.mainMotorPosition = Units.Meters.of(motorPosition.getValueAsDouble());
+        inputs.mainMotorTorqueCurrent = mainMotorTorqueCurrent.getValue();
         
     }
 }

@@ -9,12 +9,13 @@ package frc.robot;
 
 import com.pathplanner.lib.config.PIDConstants;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rectangle2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.subsystems.drive.DriveConstants;
-import frc.robot.util.FieldConstants.Tower;
+import frc.robot.util.FieldConstants;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -67,15 +68,11 @@ public final class Constants {
         public static final int SERIALIZER_MOTOR = 31;
 
         // CLIMBER
-        public static final int CLIMBER_MOTOR = 0; // TODO: yonina will update this
+        public static final int CLIMBER_MOTOR = 32;
     }
 
     public static final class kAutoAlign {
         public static final PIDConstants ALIGN_PID = new PIDConstants(4.9, 0.0, 0.28);
-
-        // Blue HUB Position relative to a blue alliance origin
-        public static final Pose2d HUB_POSE = new Pose2d(
-                new Translation2d(Meters.of(4.620), Meters.of(4.030)), Rotation2d.kZero);
 
         public static final Distance TRANSLATION_TOLERANCE;
         public static final Angle    ROTATION_TOLERANCE;
@@ -116,44 +113,48 @@ public final class Constants {
 
         // Distance from the upright to the robot climber
         public static final Distance CLIMBER_DISTANCE_FROM_UPRIGHT = Meters.of(
-                (Tower.width - Tower.innerOpeningWidth) / 2);
+                (FieldConstants.Tower.width - FieldConstants.Tower.innerOpeningWidth) / 2);
     }
 
     /*
      * Passing positon if looking from alliance driver station
      */
-    public static enum PassingPositions {
+    public enum PassingPositions {
         RIGHT(new Pose2d(new Translation2d(Meters.of(2.5), Meters.of(1.26)), Rotation2d.kZero)),
         MIDDLE(new Pose2d(new Translation2d(Meters.of(2.1), Meters.of(3.95)), Rotation2d.kZero)),
         LEFT(new Pose2d(new Translation2d(Meters.of(2.5), Meters.of(6.8)), Rotation2d.kZero));
 
         Pose2d pose;
 
-        private PassingPositions(Pose2d pose) {
+        PassingPositions(Pose2d pose) {
             this.pose = pose;
+        }
+
+        public Pose2d getPose() {
+            return pose;
         }
     }
 
     /*
-     * Climibing position if looking from alliance driver station
+     * Climbing position if looking from blue alliance driver station
      */
-    public static enum ClimbingPositions {
+    public enum ClimbingPositions {
         // RIGHT   (new Pose2d(new Translation2d(Meters.of(1.15), Meters.of(2.66)), Rotation2d.kZero)),
         // LEFT    (new Pose2d(new Translation2d(Meters.of(1.15), Meters.of(4.84)), Rotation2d.k180deg)),
         RIGHT(new Pose2d(
                 new Translation2d(
-                        Meters.of(Tower.rightUpright.getX()),
+                        Meters.of(FieldConstants.Tower.rightUpright.getX()),
                         Meters.of(
-                                Tower.rightUpright.getY() - (DriveConstants.ROBOT_WIDTH.in(Meters) / 2) -
+                                FieldConstants.Tower.rightUpright.getY() - (DriveConstants.ROBOT_WIDTH.in(Meters) / 2) -
                                 kAutoAlign.CLIMBER_DISTANCE_FROM_UPRIGHT.in(Meters)
                         )
                 ),
                 Rotation2d.kZero)),
         LEFT(new Pose2d(
                 new Translation2d(
-                        Meters.of(Tower.leftUpright.getX()),
+                        Meters.of(FieldConstants.Tower.leftUpright.getX()),
                         Meters.of(
-                                Tower.leftUpright.getY() + (DriveConstants.ROBOT_WIDTH.in(Meters) / 2) +
+                                FieldConstants.Tower.leftUpright.getY() + (DriveConstants.ROBOT_WIDTH.in(Meters) / 2) +
                                 kAutoAlign.CLIMBER_DISTANCE_FROM_UPRIGHT.in(Meters)
                         )
                 ),
@@ -161,21 +162,101 @@ public final class Constants {
         ),
 
         LEFT_PREP(new Pose2d(
-                new Translation2d(Meters.of(Tower.leftUpright.getX()), Meters.of(5.00)),
+                new Translation2d(Meters.of(FieldConstants.Tower.leftUpright.getX()), Meters.of(5.00)),
                 Rotation2d.k180deg)),
         RIGHT_PREP(new Pose2d(
-                new Translation2d(Meters.of(Tower.rightUpright.getX()), Meters.of(2.450)),
+                new Translation2d(Meters.of(FieldConstants.Tower.rightUpright.getX()), Meters.of(2.450)),
                 Rotation2d.kZero));
 
         Pose2d pose;
 
-        private ClimbingPositions(Pose2d pose) {
+        ClimbingPositions(Pose2d pose) {
             this.pose = pose;
+        }
+
+        public Pose2d getPose(){
+            return this.pose;
         }
     }
 
     public static final class kBump {
         // Percentage of max speed
-        public static final double BUMP_SPEED_MODIFIER = 0.4;
+        public static final double         BUMP_SPEED_MODIFIER  = 0.4;
+        // TODO: GET A REAL NUMBER NOT A GUESS
+        public static final LinearVelocity BUMP_TRAVERSAL_SPEED = FeetPerSecond.of(5.5);
+        public static final Time           SETTLING_TIME        = Seconds.of(1);
+    }
+
+    public static final class kField{
+        public static final Pose2d BLUE_HUB 				=	new Pose2d(
+                                                                    new Translation2d(
+                                                                            FieldConstants.Hub.topCenterPoint.getMeasureX(),
+                                                                            FieldConstants.Hub.topCenterPoint.getMeasureY()),
+                                                                    Rotation2d.kZero
+                                                                );
+
+        public static final Pose2d RED_HUB					=	new Pose2d(
+                                                                    new Translation2d(
+                                                                            FieldConstants.Hub.oppTopCenterPoint.getMeasureX(),
+                                                                            FieldConstants.Hub.oppTopCenterPoint.getMeasureY()),
+                                                                    Rotation2d.kZero
+                                                                );
+
+        public static final Rectangle2d NEUTRAL_ZONE 		=	new Rectangle2d(
+                                                                    new Translation2d(
+                                                                        FieldConstants.LeftTrench.openingTopLeft.getMeasureX(), 
+                                                                        FieldConstants.LeftTrench.openingTopLeft.getMeasureY() 
+                                                                    ), 
+                                                                    new Translation2d(
+                                                                        FieldConstants.RightTrench.oppOpeningTopRight.getMeasureX(),
+                                                                        FieldConstants.RightTrench.oppOpeningTopRight.getMeasureY()
+                                                                ));
+
+        public static final Rectangle2d BLUE_ALLIANCE_ZONE 	=	new Rectangle2d(
+                                                                    new Translation2d(
+                                                                        Meters.of(0.0), 
+                                                                        Meters.of(FieldConstants.fieldWidth)
+                                                                    ), 
+                                                                    new Translation2d(
+                                                                        FieldConstants.RightTrench.openingTopRight.getMeasureX(),
+                                                                        FieldConstants.RightTrench.openingTopRight.getMeasureY()
+                                                                ));
+
+        public static final Rectangle2d RED_ALLIANCE_ZONE 	= 	new Rectangle2d(
+                                                                    new Translation2d(
+                                                                        Meters.of(FieldConstants.fieldLength), 
+                                                                        Meters.of(FieldConstants.fieldWidth)
+                                                                    ), 
+                                                                    new Translation2d(
+                                                                        FieldConstants.RightTrench.oppOpeningTopRight.getMeasureX(),
+                                                                        FieldConstants.RightTrench.oppOpeningTopRight.getMeasureY()
+                                                                ));
+
+        /**
+         * Left half of field if looking from blue alliance drive station
+         */
+        public static final Rectangle2d LEFT_HALF         	=  new Rectangle2d(
+                                                                    new Translation2d(
+                                                                        Meters.of(0.0), 
+                                                                        Meters.of(FieldConstants.fieldWidth)
+                                                                    ),
+                                                                    new Translation2d(
+                                                                        Meters.of(FieldConstants.fieldLength),
+                                                                        Meters.of(FieldConstants.LinesHorizontal.center)
+                                                                ));
+
+        /**
+         * Right half of field if looking from blue alliance drive station
+         */
+        public static final Rectangle2d RIGHT_HALF         	=  new Rectangle2d(
+                                                                    new Translation2d(
+                                                                        Meters.of(0.0),
+                                                                        Meters.of(0.0)
+                                                                    ),
+                                                                    new Translation2d(
+                                                                        Meters.of(FieldConstants.fieldLength),
+                                                                        Meters.of(FieldConstants.LinesHorizontal.center)
+                                                                ));
+        
     }
 }

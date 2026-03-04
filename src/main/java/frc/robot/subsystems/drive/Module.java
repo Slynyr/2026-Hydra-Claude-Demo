@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 
@@ -92,6 +93,19 @@ public class Module {
     io.setDriveOpenLoop(output);
     io.setTurnPosition(Rotation2d.kZero);
   }
+
+    public void setTurnPosition(Rotation2d position){
+        io.setTurnPosition(position);
+    }
+
+    public void setTurnVelocity(AngularVelocity velocityRadPerSec){
+        io.setTurnVelocity(velocityRadPerSec);
+    }
+
+    public void setTurnVoltage(double voltage){
+        io.setTurnVoltage(voltage);
+    }
+	
 
   /** Disables all outputs to motors. */
   public void stop() {

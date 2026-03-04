@@ -60,9 +60,9 @@ public class GyroIOPigeon2 implements GyroIO {
     pitch.setUpdateFrequency(Drive.ODOMETRY_FREQUENCY);
     roll.setUpdateFrequency(Drive.ODOMETRY_FREQUENCY);
 
-    yawVelocity.setUpdateFrequency(DriveConstants.ODOMETRY_VELOCITY_UPDATE_FREQUENCE);
-    pitchVelocity.setUpdateFrequency(DriveConstants.ODOMETRY_VELOCITY_UPDATE_FREQUENCE);
-    rollVelocity.setUpdateFrequency(DriveConstants.ODOMETRY_VELOCITY_UPDATE_FREQUENCE);
+    yawVelocity.setUpdateFrequency(DriveConstants.ODOMETRY_VELOCITY_UPDATE_FREQUENCY);
+    pitchVelocity.setUpdateFrequency(DriveConstants.ODOMETRY_VELOCITY_UPDATE_FREQUENCY);
+    rollVelocity.setUpdateFrequency(DriveConstants.ODOMETRY_VELOCITY_UPDATE_FREQUENCY);
 
     pigeon.optimizeBusUtilization();
 

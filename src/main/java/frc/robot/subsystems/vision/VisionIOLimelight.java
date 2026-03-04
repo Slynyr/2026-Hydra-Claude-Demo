@@ -1,5 +1,7 @@
 package frc.robot.subsystems.vision;
 
+import static edu.wpi.first.units.Units.*;
+
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.net.PortForwarder;
@@ -95,9 +97,9 @@ public class VisionIOLimelight implements VisionIO {
     public void setCameraOffset() {
         LimelightHelpers.setCameraPose_RobotSpace(
                 Vision.PRIMARY_CAM_NAME,
-                Vision.OFFSET_FROM_ROBOT_ORIGIN.getTranslation().getX(),
-                Vision.OFFSET_FROM_ROBOT_ORIGIN.getTranslation().getY(),
-                Vision.OFFSET_FROM_ROBOT_ORIGIN.getTranslation().getZ(),
+                Vision.OFFSET_FROM_ROBOT_ORIGIN.getTranslation().getMeasureX().in(Meters),
+                Vision.OFFSET_FROM_ROBOT_ORIGIN.getTranslation().getMeasureY().in(Meters),
+                Vision.OFFSET_FROM_ROBOT_ORIGIN.getTranslation().getMeasureZ().in(Meters),
                 Vision.OFFSET_FROM_ROBOT_ORIGIN.getRotation().getMeasureX().in(Units.Degrees),
                 Vision.OFFSET_FROM_ROBOT_ORIGIN.getRotation().getMeasureY().in(Units.Degrees),
                 Vision.OFFSET_FROM_ROBOT_ORIGIN.getRotation().getMeasureZ().in(Units.Degrees));
@@ -125,7 +127,8 @@ public class VisionIOLimelight implements VisionIO {
 
         if (Vision.ALLOW_FUSED_GYRO_ESTIMATIONS &&
             DriverStation.isEnabled() && // enabled
-            LimelightHelpers.getTA(Vision.PRIMARY_CAM_NAME) >= 1.5 && // confident tag
+//          TODO: tune this value (0.25)
+            LimelightHelpers.getTA(Vision.PRIMARY_CAM_NAME) >= 0.25 && // confident tag
             Math.abs(speeds.vxMetersPerSecond) < 0.1 && // bot not moving
             Math.abs(speeds.vyMetersPerSecond) < 0.1 &&
             Math.abs(speeds.omegaRadiansPerSecond) < 0.1) {
@@ -133,8 +136,10 @@ public class VisionIOLimelight implements VisionIO {
             // ...and get estimate for bot pose in FUSED mode
             yaw = LimelightHelpers.getBotPoseEstimate_wpiBlue(Vision.PRIMARY_CAM_NAME).pose.getRotation();
             logGryoMode(IMUMode.FUSED);
+            LimelightHelpers.SetIMUMode(Vision.PRIMARY_CAM_NAME, IMUMode.FUSED.ID);
         } else {
             logGryoMode(IMUMode.EXTERNAL);
+            LimelightHelpers.SetIMUMode(Vision.PRIMARY_CAM_NAME, IMUMode.EXTERNAL.ID);
         }
 
         LimelightHelpers.SetRobotOrientation(

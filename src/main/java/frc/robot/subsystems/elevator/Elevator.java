@@ -4,8 +4,6 @@ import static edu.wpi.first.units.Units.*;
 
 import org.littletonrobotics.junction.Logger;
 
-import com.google.flatbuffers.Constants;
-
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.units.Units;
@@ -13,6 +11,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DeviceID;
@@ -55,7 +54,7 @@ public class Elevator extends SubsystemBase{
     public Command goTillSpike(double voltage) {
         return Commands.sequence(
             startManualMove(voltage),
-            Commands.waitUntil(() -> getCurrent().gte(Amps.of(50))),
+            Commands.waitUntil(() -> getCurrent().gte(ElevatorConstants.SPIKE_CURRENT)),
             stopAll(),
             zeroEncoder()
         );
@@ -104,11 +103,11 @@ public class Elevator extends SubsystemBase{
         io.updateInputs(inputs);
 
         if (dashboardGoToSetpoint.get()) {
-            elevatorGo(Meters.of(dashboardSetpoint.get())).schedule();
+            CommandScheduler.getInstance().schedule(elevatorGo(Meters.of(dashboardSetpoint.get())));
             dashboardGoToSetpoint.set(false);
 }
         // Safety: Stop elevator if current exceeds 50A
-        if (inputs.mainAppliedCurrent.gte(Amps.of(50))) {
+        if (inputs.mainAppliedCurrent.gte(ElevatorConstants.SPIKE_CURRENT)) {
             io.stopMotor();
         }
 
