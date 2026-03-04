@@ -59,6 +59,8 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import frc.robot.Constants.DeviceID;
 
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Amps;
+
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a "declarative" paradigm, very
@@ -84,6 +86,7 @@ public class RobotContainer {
     // Controllers
     private final CommandXboxController primaryController   = new CommandXboxController(0);
     private final CommandXboxController secondaryController = new CommandXboxController(1);
+    private final CommandXboxController tertiaryController = new CommandXboxController(2);
 
     // Dashboard inputs
     private final LoggedDashboardChooser<Command> autoChooser;
@@ -249,8 +252,9 @@ public class RobotContainer {
                          .onTrue(Commands.runOnce(() -> DriveCommands.setSpeed(kBump.BUMP_SPEED_MODIFIER)))
                          .onFalse(Commands.runOnce(() -> DriveCommands.setSpeed(1.0)));
     
-        primaryController.povUp().onTrue(Commands.runOnce(() -> sys_elevator.startManualMove(3)));
-        primaryController.povDown().onTrue(Commands.runOnce(() -> sys_elevator.startManualMove(-3)));
+        tertiaryController.y().onTrue(Commands.runOnce(() -> sys_elevator.goTillSpike(-3)));
+        tertiaryController.povUp().onTrue(Commands.runOnce(() -> sys_elevator.startManualMove(0.5)));
+        tertiaryController.povDown().onTrue(Commands.runOnce(() -> sys_elevator.startManualMove(-0.5)));
 
         primaryController.rightBumper()
                          .whileTrue(

@@ -21,6 +21,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.subsystems.elevator.ElevatorConstants;
+import frc.robot.util.PhoenixUtil;
 
 public class ElevatorIOTalonFX implements ElevatorIO {
 
@@ -63,7 +64,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
 
         m_motorConfig.apply(m_pidConfig);
 
-        m_motorConfig.apply(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
+        m_motorConfig.apply(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
 
         m_motor.setNeutralMode(NeutralModeValue.Brake);
 
@@ -128,7 +129,8 @@ public class ElevatorIOTalonFX implements ElevatorIO {
      */
     @Override
     public void setSetpoint(Distance setpoint) {
-        m_motor.setControl(m_request.withPosition(setpoint.in(Meters)));
+        PhoenixUtil.tryUntilOk(3,() -> m_motor.setControl(m_request.withPosition(setpoint.in(Meters))));;
+
     }
 
     /**
