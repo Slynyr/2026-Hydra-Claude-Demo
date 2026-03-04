@@ -1,8 +1,11 @@
 package frc.robot.subsystems.feeder;
 
+import java.util.function.Supplier;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
@@ -16,35 +19,41 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Constants;
 
 public class FeederIOTalonFX implements FeederIO {
     
-    private TalonFX feederMotor;
-    private TalonFXConfigurator feederMotorConfig;
-    private CurrentLimitsConfigs currentConfigs;
-    private Slot0Configs feederPidConfigs;
+    private final TalonFX feederMotor;
 
-    private StatusSignal<AngularVelocity> feederDeviceVelocity;
-    private StatusSignal<Angle> feederDevicePosition;
-    private StatusSignal<Voltage> feederDeviceVoltage;
-    private StatusSignal<Current> feederDeviceCurrent;
-    private StatusSignal<Temperature> feederDeviceTemp;
+    private final StatusSignal<AngularVelocity> feederDeviceVelocity;
+    private final StatusSignal<Angle> feederDevicePosition;
+    private final StatusSignal<Voltage> feederDeviceVoltage;
+    private final StatusSignal<Current> feederDeviceCurrent;
+    private final StatusSignal<Temperature> feederDeviceTemp;
 
     public FeederIOTalonFX(int feederID) {
         feederMotor = new TalonFX(feederID);
-        feederMotorConfig = feederMotor.getConfigurator();
+        final TalonFXConfigurator feederMotorConfig = feederMotor.getConfigurator();
 
-        currentConfigs = new CurrentLimitsConfigs()
+        final CurrentLimitsConfigs currentConfigs = new CurrentLimitsConfigs()
             .withSupplyCurrentLimit(FeederConstants.TALON_FX_CURRENT_LIMIT)
             .withSupplyCurrentLimitEnable(true);
         feederMotorConfig.apply(currentConfigs);
 
-        feederPidConfigs = new Slot0Configs()
+        final FeedbackConfigs encoderConfigs = new FeedbackConfigs()
+            .withSensorToMechanismRatio(FeederConstants.GEARING);
+        feederMotorConfig.apply(encoderConfigs);
+
+        final Slot0Configs feederPidConfigs = Constants.IS_TUNING 
+        ? new Slot0Configs()
+            .withKP(FeederConstants.PID.getP())
+            .withKI(FeederConstants.PID.getI())
+            .withKD(FeederConstants.PID.getD())
+            .withKV(FeederConstants.kV)
+        : new Slot0Configs()
             .withKP(FeederConstants.TALONFX_PID.kP)
             .withKI(FeederConstants.TALONFX_PID.kI)
             .withKD(FeederConstants.TALONFX_PID.kD)
-            .withKG(FeederConstants.kG)
-            .withKS(FeederConstants.kS)
             .withKV(FeederConstants.kV);
         feederMotorConfig.apply(feederPidConfigs);
 
@@ -77,8 +86,8 @@ public class FeederIOTalonFX implements FeederIO {
     }
 
     @Override
-    public void runRPS(double velocity) {
-        VelocityVoltage velocityVoltage = new VelocityVoltage(velocity)
+    public void runRPS(Supplier<AngularVelocity> velocity) {
+        VelocityVoltage velocityVoltage = new VelocityVoltage(velocity.get())
                                         .withSlot(0)
                                         .withFeedForward(0);
         feederMotor.setControl(velocityVoltage);

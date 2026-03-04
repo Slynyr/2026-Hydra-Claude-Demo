@@ -100,8 +100,8 @@ public class RobotContainer {
                         new HopperIOTalonFX(HopperConstants.MAIN_MOTOR_ID, HopperConstants.FOLLOWER_MOTOR_ID));
                 sys_intake = new Intake(new IntakeIOTalonFX(DeviceID.INTAKE_ROLLER_MOTOR, DeviceID.INTAKE_EXTENSION_MOTOR));
                 sys_serializer = new Serializer(
-                        new SerializerIOTalonFX(SerializerConstants.INDEXER_ID));
-                sys_feeder = new Feeder(new FeederIOTalonFX(FeederConstants.FEEDER_ID));
+                        new SerializerIOTalonFX(Constants.DeviceID.SERIALIZER_MOTOR, Constants.DeviceID.FEEDER_MOTOR_BOTTOM));
+                sys_feeder = new Feeder(new FeederIOTalonFX(Constants.DeviceID.FEEDER_MOTOR_TOP));
                 sys_vision = new Vision(new VisionIOLimelight());
                 sys_elevator = new Elevator(new ElevatorIOTalonFX(DeviceID.CLIMBER_MOTOR));
 

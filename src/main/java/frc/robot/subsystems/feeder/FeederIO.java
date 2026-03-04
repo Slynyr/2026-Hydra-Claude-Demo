@@ -5,6 +5,8 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.units.measure.Angle;
@@ -21,13 +23,14 @@ public interface FeederIO {
         public double motorTemperature = 0.0;
         public Angle motorPosition = Degrees.of(0.0);
         public AngularVelocity motorVelocity = RotationsPerSecond.of(0.0);
+        public double setpoint = 0.0;
     }
 
     public default void updateInputs(FeederInputs inputs) {}
 
     public default void setMotorVoltage(double voltage) {}
 
-     public default void runRPS(double velocity) {}
+     public default void runRPS(Supplier<AngularVelocity> velocity) {}
 
      public default void stopMotor() {}
 
