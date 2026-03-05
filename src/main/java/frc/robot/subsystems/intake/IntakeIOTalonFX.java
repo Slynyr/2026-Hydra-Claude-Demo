@@ -53,7 +53,7 @@ public final class IntakeIOTalonFX implements IntakeIO {
         TalonFXConfiguration extensionConfigurator = new TalonFXConfiguration()
         .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(Extension.GEARING));
 
-        if (frc.robot.Constants.IS_TUNING) {
+        if (frc.robot.Constants.IS_TUNING) { // If we are tuning, use the PID values from the Extension class, otherwise use the default TalonFX PID values
             if (Extension.INTAKE_IS_TUNING) {
                 extensionConfigurator.Slot0 = new Slot0Configs()
                     .withKP(Extension.PID.getP())
@@ -104,38 +104,62 @@ public final class IntakeIOTalonFX implements IntakeIO {
         extensionMotor.optimizeBusUtilization();
 
     }
-
+/**
+* Sets the voltage of the roller motor
+* @param voltage The voltage to set the roller motor to, in volts.
+ */
     public void setRollerVoltage(double voltage) {
         rollerMotor.setVoltage(voltage);
     }
-
+/**
+* Sets the voltage of the extension motor
+* @param voltage The voltage to set the extension motor to, in volts.
+ */
     public void setExtensionVoltage(double voltage) {
         extensionMotor.setVoltage(voltage);
     }
-
+/**
+* Moves intake to given setpoint
+* @param position The position to set the extension motor to given position, in meters.
+ */
     public void setSetpoint(Distance position) {
         extensionMotor.setControl(positionControl.withPosition(position.in(Meters)).withSlot(0));
     }
-
+/**
+* Sets motor to coastMode
+* @return A command that sets the extension motor to coast mode when executed.
+ */
     public void coastMode() {
         rollerMotor.setNeutralMode(NeutralModeValue.Coast);
         extensionMotor.setNeutralMode(NeutralModeValue.Coast);
     }
-
+/**
+* Sets motor to brakeMode
+* @return A command that sets the extension motor to brake mode when executed.
+ */
     public void brakeMode() {
         rollerMotor.setNeutralMode(NeutralModeValue.Brake);
         extensionMotor.setNeutralMode(NeutralModeValue.Brake);
     }   
-
+/**
+* Stops the motor
+* @return A command that stops the extension motor when executed.
+ */
     public void stopMotor() {
         rollerMotor.set(0.0);
         extensionMotor.set(0.0);
     }
-
+/**
+* Gets current motor position
+* @return The current position of the intake extension, in meters.
+ */
     public Distance getPosition() {
         return Meters.of(extensionPositionSignal.getValueAsDouble());
     }
-
+/**
+* Updates the inputs of the intake subsystem
+* @param inputs The inputs object to update with the latest sensor values and other relevant information.
+ */
     @Override
     public void updateInputs(IntakeIO.IntakeInputs inputs) {
 
