@@ -21,6 +21,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+import static frc.robot.subsystems.vision.VisionConstants.FIDUCIAL_TRUST_THRESHOLD;
+import static frc.robot.subsystems.vision.VisionConstants.OFFSET_FROM_ROBOT_ORIGIN;
+
 /**
  * @author Logan Dhillon, FRC 5409 Chargers
  */
@@ -55,13 +58,13 @@ public class VisionIOSim implements VisionIO {
                     AprilTagFields.kDefaultField.m_resourceFile);
             sim_vision.addAprilTags(tagLayout);
 
-            poseEstimator = new PhotonPoseEstimator(tagLayout, Vision.OFFSET_FROM_ROBOT_ORIGIN);
+            poseEstimator = new PhotonPoseEstimator(tagLayout, OFFSET_FROM_ROBOT_ORIGIN);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load PV AprilTag layout '" + AprilTagFields.kDefaultField + "': " +
                                        AprilTagFields.kDefaultField.m_resourceFile);
         }
 
-        sim_vision.addCamera(cameraSim, Vision.OFFSET_FROM_ROBOT_ORIGIN);
+        sim_vision.addCamera(cameraSim, OFFSET_FROM_ROBOT_ORIGIN);
 
         globalThis = this;
     }
@@ -81,7 +84,7 @@ public class VisionIOSim implements VisionIO {
                 t.area,
                 t.bestCameraToTarget.getTranslation().getNorm(),
                 t.bestCameraToTarget.getTranslation()
-                                    .plus(Vision.OFFSET_FROM_ROBOT_ORIGIN.getTranslation())
+                                    .plus(OFFSET_FROM_ROBOT_ORIGIN.getTranslation())
                                     .getNorm(),
                 t.poseAmbiguity);
     }
@@ -110,7 +113,7 @@ public class VisionIOSim implements VisionIO {
         hasTarget = true;
 
         //noinspection SizeReplaceableByIsEmpty
-        if (pe.get().targetsUsed.size() < Vision.FIDUCIAL_TRUST_THRESHOLD) return null;
+        if (pe.get().targetsUsed.size() < FIDUCIAL_TRUST_THRESHOLD) return null;
 
         return new PoseEstimate(
                 pe.get().estimatedPose.toPose2d(),

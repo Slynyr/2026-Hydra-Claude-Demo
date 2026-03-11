@@ -15,10 +15,11 @@ public interface LauncherIO {
 
     @AutoLog
     class LauncherInputs {
-        // Launcher
+        // CANcoder
         public boolean           isCANCoderConnected = false;
         public MagnetHealthValue magnetHealth        = MagnetHealthValue.Magnet_Invalid;
 
+        // Launcher
         public boolean         isLauncherConnected = false;
         public double          launcherTemperature = 0.0;
         public Voltage         launcherVoltage     = Volts.of(0.0);
@@ -36,8 +37,6 @@ public interface LauncherIO {
         public Distance hoodServo2Pos    = Meters.of(0.0);
         public Distance hoodServo1Target = Meters.of(0.0);
         public Distance hoodServo2Target = Meters.of(0.0);
-
-        public Voltage ultrasonicVoltage = Volts.of(0);
     }
 
     // Launcher
@@ -56,11 +55,5 @@ public interface LauncherIO {
 
     default void updateHood(Distance setpoint) {}
 
-    // Ultrasonic sensor
-    default Voltage getUltrasonicVolts() {
-        return Volts.of(0.0);
-    }
-
-    // Shared 
     default void updateInputs(LauncherInputs inputs) {}
 }

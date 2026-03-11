@@ -1,32 +1,24 @@
 package frc.robot.commands;
 
-import static edu.wpi.first.units.Units.*;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants;
+import frc.robot.Constants.GameCommandsConstants;
+import frc.robot.Constants.kAutoAlign;
+import frc.robot.Constants.kBump;
+import frc.robot.RobotContainer;
+import frc.robot.util.AutoPath;
+import frc.robot.util.FieldConstants.LinesHorizontal;
 
 import java.util.ArrayList;
 import java.util.Objects;
 
-
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.Constants.GameCommandsConstants;
-import frc.robot.Constants.kAutoAlign;
-import frc.robot.Constants.kBump;
-import frc.robot.Constants;
-import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.elevator.Elevator;
-import frc.robot.subsystems.feeder.Feeder;
-import frc.robot.subsystems.hopper.Hopper;
-import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.launcher.Launcher;
-import frc.robot.subsystems.serializer.Serializer;
-import frc.robot.subsystems.vision.Vision;
-import frc.robot.util.AutoPath;
-import frc.robot.util.FieldConstants.LinesHorizontal;
+import static edu.wpi.first.units.Units.*;
 
 public class Autos {
 
-	public static ArrayList<AutoPath> getAutoPaths(Drive drive, Vision vision, Launcher launcher, Feeder feeder, Intake intake, Hopper hopper, Serializer serializer, Elevator elevator){
+	public static ArrayList<AutoPath> getAutoPaths(RobotContainer robot) {
 		ArrayList<AutoPath> autoPaths = new ArrayList<>();
 
 		// LEFT SIDE AUTOS:
@@ -37,34 +29,34 @@ public class Autos {
 				// Angled Starting pose:
 				new Pose2d(3.565,5.400, new Rotation2d(Degrees.of(38.572))),
 
-				// Starting Pose: 
+				// Starting Pose:
 				// new Pose2d(3.565,5.400, Rotation2d.k180deg),
 
-				// Alliance -> neutral zone 
+				// Alliance -> neutral zone
 				DriveCommands.crossBump(
-					drive, 
-					vision,
-					drive::getRotation,
-					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED), 
+					robot.sys_drive,
+					robot.sys_vision,
+					robot.sys_drive::getRotation,
+					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED),
 					kBump.SETTLING_TIME
 				),
 
 				// confirm position
 				DriveCommands.alignToPoint(
-					drive,
-					() -> new Pose2d(6.200,5.400, new Rotation2d(Degrees.of(38.572))), 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
+                    robot.sys_drive,
+					() -> new Pose2d(6.200,5.400, new Rotation2d(Degrees.of(38.572))),
+					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY,
 					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
 				),
 
                 Objects.requireNonNull(AutoPath.followPath("Left-Bump-Intake-CloseFar"))
-                    .alongWith(GameCommands.startIntake(intake, hopper)),
+                    .alongWith(GameCommands.startIntake(robot)),
 
 				// Align back to bump known position
 				DriveCommands.alignToPoint(
-					drive, 
-					() -> new Pose2d(6.200,(LinesHorizontal.leftBumpEnd + LinesHorizontal.leftBumpStart) / 2, Rotation2d.k180deg), 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
+					robot.sys_drive,
+					() -> new Pose2d(6.200,(LinesHorizontal.leftBumpEnd + LinesHorizontal.leftBumpStart) / 2, Rotation2d.k180deg),
+					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY,
 					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
 				),
 
@@ -73,19 +65,19 @@ public class Autos {
 
 				// neutral zone -> alliance zone
 				DriveCommands.crossBump(
-					drive, 
-					vision,
-					drive::getRotation,
-					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED.times(-1)), 
+					robot.sys_drive,
+					robot.sys_vision,
+					robot.sys_drive::getRotation,
+					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED.times(-1)),
 					kBump.SETTLING_TIME
 				),
 
                 Commands.deadline(
-                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME), 
-                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(drive), drive, launcher, feeder, serializer, intake)
+                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME),
+                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(robot.sys_drive), robot)
                 ),
-                
-                GameCommands.stopLaunching(launcher, feeder, serializer, intake)
+
+                GameCommands.stopLaunching(robot)
 
                 // GameCommands.autoClimb(drive, elevator, ClimbingPositions.LEFT_PREP::getPose, ClimbingPositions.LEFT::getPose)
 			)
@@ -95,36 +87,36 @@ public class Autos {
 			new AutoPath(
 				"LeftBump-Intake-FarClose-Score-LeftClimb",
 				// Angled Start:
-				new Pose2d(3.565,5.801, new Rotation2d(Degrees.of(-43.361))),            
-				// Starting Pose: 
+				new Pose2d(3.565,5.801, new Rotation2d(Degrees.of(-43.361))),
+				// Starting Pose:
 				// new Pose2d(3.565,5.801, Rotation2d.k180deg),
 
-				// Alliance -> neutral zone 
+				// Alliance -> neutral zone
 				DriveCommands.crossBump(
-					drive, 
-					vision,
-					drive::getRotation,
-					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED), 
+					robot.sys_drive,
+					robot.sys_vision,
+					robot.sys_drive::getRotation,
+					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED),
 					kBump.SETTLING_TIME
 				),
 
 				// confirm position
 				DriveCommands.alignToPoint(
-					drive,
-					() -> new Pose2d(6.187,5.969, new Rotation2d(Degrees.of(-43.361))), 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
+					robot.sys_drive,
+					() -> new Pose2d(6.187,5.969, new Rotation2d(Degrees.of(-43.361))),
+					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY,
 					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
 				),
 
 				// Follow path from center of neutral zone to left of field
                 Objects.requireNonNull(AutoPath.followPath("Left-Bump-Intake-FarClose"))
-                    .alongWith(GameCommands.startIntake(intake, hopper)),
+                    .alongWith(GameCommands.startIntake(robot)),
 
 				// Align back to bump known position
 				DriveCommands.alignToPoint(
-					drive, 
-					() -> new Pose2d(6.200,(LinesHorizontal.leftBumpEnd + LinesHorizontal.leftBumpStart) / 2, Rotation2d.k180deg), 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
+					robot.sys_drive,
+					() -> new Pose2d(6.200,(LinesHorizontal.leftBumpEnd + LinesHorizontal.leftBumpStart) / 2, Rotation2d.k180deg),
+					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY,
 					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
 				),
 
@@ -133,19 +125,19 @@ public class Autos {
 
 				// neutral zone -> alliance zone
 				DriveCommands.crossBump(
-					drive, 
-					vision,
-					drive::getRotation,
-					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED.times(-1)), 
+					robot.sys_drive,
+					robot.sys_vision,
+					robot.sys_drive::getRotation,
+					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED.times(-1)),
 					kBump.SETTLING_TIME
 				),
 
                 Commands.deadline(
-                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME), 
-                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(drive), drive, launcher, feeder, serializer, intake)
+                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME),
+                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(robot.sys_drive), robot)
                 ),
 
-                GameCommands.stopLaunching(launcher, feeder, serializer, intake)
+                GameCommands.stopLaunching(robot)
 
                 // GameCommands.autoClimb(drive, elevator, ClimbingPositions.LEFT_PREP::getPose, ClimbingPositions.LEFT::getPose)
 			)
@@ -156,38 +148,38 @@ public class Autos {
 			new AutoPath(
 				"RightBump-Intake-CloseFar-Score-RightClimb",
 
-				// Starting Pose: 
+				// Starting Pose:
 				// new Pose2d(3.565,2.750, Rotation2d.kZero),
 
 				// Angled Starting Pose
 				new Pose2d(3.565,2.750, new Rotation2d(Degrees.of(-41.689))),
-				
+
 				// Alliance -> neutral zone
 				DriveCommands.crossBump(
-					drive, 
-					vision,
-					drive::getRotation,
-					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED), 
+                    robot.sys_drive,
+                    robot.sys_vision,
+                    robot.sys_drive::getRotation,
+					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED),
 					kBump.SETTLING_TIME
 				),
 
 				// confirm position
 				DriveCommands.alignToPoint(
-					drive, 
+					robot.sys_drive,
 
-					() -> new Pose2d(6.265,2.750, new Rotation2d(Degrees.of(-41.689))), 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
+					() -> new Pose2d(6.265,2.750, new Rotation2d(Degrees.of(-41.689))),
+					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY,
 					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
 				),
 				// Follow path from center of neutral zone to right of field
 				Objects.requireNonNull(AutoPath.followPath("Right-Bump-Intake-CloseFar"))
-                .alongWith(GameCommands.startIntake(intake, hopper)),
+                .alongWith(GameCommands.startIntake(robot)),
 
 				// Align back to bump known position
 				DriveCommands.alignToPoint(
-					drive, 
-					() -> new Pose2d(6.200,(LinesHorizontal.rightBumpStart + LinesHorizontal.rightBumpEnd) / 2, Rotation2d.k180deg), 
-					() -> MetersPerSecond.of(2.0), 
+					robot.sys_drive,
+					() -> new Pose2d(6.200,(LinesHorizontal.rightBumpStart + LinesHorizontal.rightBumpEnd) / 2, Rotation2d.k180deg),
+					() -> MetersPerSecond.of(2.0),
 					() -> MetersPerSecondPerSecond.of(8.0)
 				),
 
@@ -196,18 +188,19 @@ public class Autos {
 
 				// neutral zone -> alliance zone
 				DriveCommands.crossBump(
-					drive, vision,
-					drive::getRotation,
-					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED.times(-1)), 
+                    robot.sys_drive,
+                    robot.sys_vision,
+                    robot.sys_drive::getRotation,
+					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED.times(-1)),
 					kBump.SETTLING_TIME
 				),
 
                 Commands.deadline(
-                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME), 
-                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(drive), drive, launcher, feeder, serializer, intake)
+                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME),
+                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(robot.sys_drive), robot)
                 ),
-                
-                GameCommands.stopLaunching(launcher, feeder, serializer, intake)
+
+                GameCommands.stopLaunching(robot)
 
                 // GameCommands.autoClimb(drive, elevator, ClimbingPositions.RIGHT_PREP::getPose, ClimbingPositions.RIGHT::getPose)
 			)
@@ -222,37 +215,37 @@ public class Autos {
 			new AutoPath(
 				"RightBump-Intake-FarClose-Score-RightClimb",
 
-				// Starting Pose: 
+				// Starting Pose:
 				// new Pose2d(3.565,2.750, Rotation2d.k180deg),
 
 				// Angled Starting Pose
 				new Pose2d(3.565,2.282, new Rotation2d(Degrees.of(53.181))),
-				
+
 				// Alliance -> neutral zone
 				DriveCommands.crossBump(
-					drive, 
-					vision,
-					drive::getRotation,
-					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED), 
+                    robot.sys_drive,
+                    robot.sys_vision,
+                    robot.sys_drive::getRotation,
+					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED),
 					kBump.SETTLING_TIME
 				),
 
 				// confirm position
 				DriveCommands.alignToPoint(
-					drive, 
-					() -> new Pose2d(6.200,2.282, new Rotation2d(Degrees.of(53.181))), 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
+					robot.sys_drive,
+					() -> new Pose2d(6.200,2.282, new Rotation2d(Degrees.of(53.181))),
+					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY,
 					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
 				),
-				// Follow path from right of field to center of neutral zone 
+				// Follow path from right of field to center of neutral zone
 				Objects.requireNonNull(AutoPath.followPath("Right-Bump-Intake-FarClose"))
-                .alongWith(GameCommands.startIntake(intake, hopper)),
+                .alongWith(GameCommands.startIntake(robot)),
 
 				// Align back to bump known position
 				DriveCommands.alignToPoint(
-					drive, 
-					() -> new Pose2d(6.200,(LinesHorizontal.rightBumpStart + LinesHorizontal.rightBumpEnd) / 2, Rotation2d.k180deg), 
-					() -> MetersPerSecond.of(2.0), 
+					robot.sys_drive,
+					() -> new Pose2d(6.200,(LinesHorizontal.rightBumpStart + LinesHorizontal.rightBumpEnd) / 2, Rotation2d.k180deg),
+					() -> MetersPerSecond.of(2.0),
 					() -> MetersPerSecondPerSecond.of(8.0)
 				),
 
@@ -261,22 +254,23 @@ public class Autos {
 
 				// neutral zone -> alliance zone
 				DriveCommands.crossBump(
-					drive, vision,
-					drive::getRotation,
-					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED.times(-1)), 
+                    robot.sys_drive,
+                    robot.sys_vision,
+                    robot.sys_drive::getRotation,
+					() -> DriveCommands.getBumpSpeed(kBump.BUMP_TRAVERSAL_SPEED.times(-1)),
 					kBump.SETTLING_TIME
 				),
 
                 Commands.deadline(
-                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME), 
-                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(drive), drive, launcher, feeder, serializer, intake)
+                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME),
+                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(robot.sys_drive), robot)
                 ),
-                
-                GameCommands.stopLaunching(launcher, feeder, serializer, intake)
+
+                GameCommands.stopLaunching(robot)
 
                 // GameCommands.autoClimb(drive, elevator, ClimbingPositions.RIGHT_PREP::getPose, ClimbingPositions.RIGHT::getPose)
 			)
-		); 
+		);
 
         if (Constants.IS_TUNING)
             autoPaths.add(
@@ -284,58 +278,58 @@ public class Autos {
                     "Test-Path",
                     new Pose2d(2,7,Rotation2d.k180deg),
                     DriveCommands.alignToPoint(
-                        drive, 
-                        () -> new Pose2d(2,7,Rotation2d.kZero), 
-                        () -> MetersPerSecond.of(1), 
+                        robot.sys_drive,
+                        () -> new Pose2d(2,7,Rotation2d.kZero),
+                        () -> MetersPerSecond.of(1),
                         () -> MetersPerSecondPerSecond.of(2)
                     ),
                     AutoPath.followPath("TestPath")
                 )
             );
-        
+
 
         autoPaths.add(
             new AutoPath(
-                "Leave-Shoot", 
-                new Pose2d(3.565,4.011,Rotation2d.k180deg), 
+                "Leave-Shoot",
+                new Pose2d(3.565,4.011,Rotation2d.k180deg),
                 DriveCommands.alignToPoint(
-                    drive, 
-                    () -> new Pose2d(3.127,4.011,Rotation2d.k180deg), 
-                    () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
+                    robot.sys_drive,
+                    () -> new Pose2d(3.127,4.011,Rotation2d.k180deg),
+                    () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY,
                     () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION),
 
                 Commands.deadline(
-                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME), 
-                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(drive), drive, launcher, feeder, serializer, intake)
+                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME),
+                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(robot.sys_drive), robot)
                 ),
-                
-                GameCommands.stopLaunching(launcher, feeder, serializer, intake)
+
+                GameCommands.stopLaunching(robot)
             )
         );
 
         autoPaths.add(
             new AutoPath(
-                "Depot-Shoot-LeftClimb", 
+                "Depot-Shoot-LeftClimb",
                 new Pose2d(3.565,5.958,Rotation2d.k180deg),
 
                 // Go from starting point to depot
                 Objects.requireNonNull(AutoPath.followPath("Start-Depot"))
-                .alongWith(GameCommands.startIntake(intake, hopper)),
+                .alongWith(GameCommands.startIntake(robot)),
 
                 // Align to scoring point
                 DriveCommands.alignToPoint(
-                    drive, 
-                    () -> new Pose2d(1.390, 4.887, Rotation2d.k180deg), 
-                    () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
+                    robot.sys_drive,
+                    () -> new Pose2d(1.390, 4.887, Rotation2d.k180deg),
+                    () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY,
                     () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
                 ),
 
                 Commands.deadline(
-                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME), 
-                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(drive), drive, launcher, feeder, serializer, intake)
+                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME),
+                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(robot.sys_drive), robot)
                 ),
-                
-                GameCommands.stopLaunching(launcher, feeder, serializer, intake)
+
+                GameCommands.stopLaunching(robot)
 
                 // GameCommands.autoClimb(drive, elevator, ClimbingPositions.LEFT_PREP::getPose, ClimbingPositions.LEFT::getPose)
 
@@ -344,34 +338,34 @@ public class Autos {
 
         autoPaths.add(
             new AutoPath(
-                "Outpost-Shoot-RightClimb", 
+                "Outpost-Shoot-RightClimb",
                 // Start at edge of bump
-                new Pose2d(3.565,2.076,Rotation2d.k180deg), 
+                new Pose2d(3.565,2.076,Rotation2d.k180deg),
                 // Start at trench
                 // new Pose2d(3.565,0.719,Rotation2d.k180deg),
                 DriveCommands.alignToPoint(
-                    drive, 
-                    () -> new Pose2d(0.473, 0.670, Rotation2d.k180deg), 
-                    () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
-                    () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION  
+                    robot.sys_drive,
+                    () -> new Pose2d(0.473, 0.670, Rotation2d.k180deg),
+                    () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY,
+                    () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
                 )
-                .alongWith(GameCommands.startIntake(intake, hopper)),
+                .alongWith(GameCommands.startIntake(robot)),
                 // Time to wait for outpost dump
                 Commands.waitSeconds(2),
 
                 DriveCommands.alignToPoint(
-                    drive, 
-                    () -> new Pose2d(0.902, 0.670, Rotation2d.k180deg), 
-                    () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
+                    robot.sys_drive,
+                    () -> new Pose2d(0.902, 0.670, Rotation2d.k180deg),
+                    () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY,
                     () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
                 ),
-                
+
                 Commands.deadline(
-                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME), 
-                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(drive), drive, launcher, feeder, serializer, intake)
+                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME),
+                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(robot.sys_drive), robot)
                 ),
-                
-                GameCommands.stopLaunching(launcher, feeder, serializer, intake)
+
+                GameCommands.stopLaunching(robot)
 
                 // GameCommands.autoClimb(drive, elevator, ClimbingPositions.RIGHT_PREP::getPose, ClimbingPositions.RIGHT::getPose)
             )
@@ -379,5 +373,5 @@ public class Autos {
 
 		return autoPaths;
 	}
-	
+
 }

@@ -1,10 +1,9 @@
 package frc.robot.subsystems.fuelgauge;
 
-import static edu.wpi.first.units.Units.Volts;
-
+import edu.wpi.first.units.measure.Voltage;
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.units.measure.Voltage;
+import static edu.wpi.first.units.Units.Volts;
 
 public interface FuelGaugeIO {
 
@@ -15,7 +14,9 @@ public interface FuelGaugeIO {
         public double fuel = 0;
     }
 
-    default Voltage getVoltage() {return Volts.of(0.0);}
+    default Voltage getVoltage() {
+        return Volts.of(0.0);
+    }
 
     default void updateInputs(FuelGaugeInputs inputs) {}
 }

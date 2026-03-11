@@ -10,22 +10,18 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.*;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.*;
-import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.Timer;
 
 import java.util.function.Supplier;
 
 import static edu.wpi.first.units.Units.Millimeters;
-import static edu.wpi.first.units.Units.Volts;
 
 public class LauncherIOTalonFX implements LauncherIO {
     // Motors and sensors
     private final TalonFX     leaderMotor;
-    private final TalonFX followerMotor;
     private final Servo       hoodServo;
     private final Servo       hoodServo2;
-    private final AnalogInput ultrasonic;
 
     private double servo1CurPos;
     private double servo2CurPos;
@@ -51,17 +47,15 @@ public class LauncherIOTalonFX implements LauncherIO {
             int launcherCANCoderID,
             int launcherCanID,
             int launcherFollowerCanID,
-            int ultrasonicChannel,
             int servoChannel,
             int servoChannel2
     ) {
         // Motors and sensors
         leaderMotor = new TalonFX(launcherCanID);
-        followerMotor = new TalonFX(launcherFollowerCanID);
+        TalonFX followerMotor = new TalonFX(launcherFollowerCanID);
         CANcoder encoder = new CANcoder(launcherCANCoderID);
         hoodServo = new Servo(servoChannel);
         hoodServo2 = new Servo(servoChannel2);
-        ultrasonic = new AnalogInput(ultrasonicChannel);
 
         // IOs
         magnetHealth = encoder.getMagnetHealth();
@@ -109,8 +103,8 @@ public class LauncherIOTalonFX implements LauncherIO {
         TalonFXConfigurator followerConfig = followerMotor.getConfigurator();
 
         encoder.getConfigurator()
-                        .apply(new CANcoderConfiguration().MagnetSensor
-                                       .withSensorDirection(SensorDirectionValue.Clockwise_Positive));
+               .apply(new CANcoderConfiguration().MagnetSensor
+                              .withSensorDirection(SensorDirectionValue.Clockwise_Positive));
 
         // Slot configs
         Slot0Configs motorTuning = new Slot0Configs()
@@ -124,7 +118,7 @@ public class LauncherIOTalonFX implements LauncherIO {
 
         // Current limit configs
         CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs()
-                .withSupplyCurrentLimit(LauncherConstants.Launcher.SUPPLY_CURRENT_LIMIT)
+                .withSupplyCurrentLimit(LauncherConstants.Launcher.CURRENT_LIMIT)
                 .withSupplyCurrentLimitEnable(true);
         leaderConfig.apply(currentLimits);
         followerConfig.apply(currentLimits);
@@ -138,7 +132,7 @@ public class LauncherIOTalonFX implements LauncherIO {
 
         // Feedback configs
         FeedbackConfigs feedbackConfigs = new FeedbackConfigs()
-                .withRotorToSensorRatio(LauncherConstants.Launcher.MOTOR_ENCODER_GEAR_RATIO)
+                .withRotorToSensorRatio(LauncherConstants.Launcher.SENSOR_RATIO)
                 .withRemoteCANcoder(encoder);
         leaderConfig.apply(feedbackConfigs);
         followerConfig.apply(feedbackConfigs);
@@ -189,7 +183,7 @@ public class LauncherIOTalonFX implements LauncherIO {
         servo1Setpoint = appliedSetpoint;
         appliedSetpoint = (targetSetpoint / LauncherConstants.Hood.MAX_EXTENSION.in(Millimeters) * 2) - 1;
         hoodServo.setSpeed(appliedSetpoint);
-        
+
         appliedSetpoint = MathUtil.clamp(targetSetpoint, 0, LauncherConstants.Hood.MAX_EXTENSION.in(Millimeters));
         servo2Setpoint = appliedSetpoint;
         appliedSetpoint = (targetSetpoint / LauncherConstants.Hood.MAX_EXTENSION.in(Millimeters) * 2) - 1;
@@ -199,11 +193,6 @@ public class LauncherIOTalonFX implements LauncherIO {
     @Override
     public Distance getHoodExtension() {
         return Millimeters.of(hoodServo.getPosition());
-    }
-
-    @Override
-    public Voltage getUltrasonicVolts() {
-        return Volts.of(ultrasonic.getVoltage());
     }
 
     /**
@@ -222,17 +211,6 @@ public class LauncherIOTalonFX implements LauncherIO {
 
     @Override
     public void updateInputs(LauncherInputs inputs) {
-        // if (Constants.IS_TUNING && IntakeConstants.Extension.INTAKE_IS_TUNING) {
-        //     var slot0 = new Slot0Configs()
-        //                     .withKP(IntakeConstants.Extension.PID.getP())
-        //                     .withKI(IntakeConstants.Extension.PID.getI())
-        //                     .withKD(IntakeConstants.Extension.PID.getD())
-        //                     .withKS(IntakeConstants.Extension.KS.get())
-        //                     .withKV(IntakeConstants.Extension.KV.get());
-        //     leaderMotor.getConfigurator().apply(slot0);
-        //     followerMotor.getConfigurator().apply(slot0);
-        // }
-
         // Launcher
         inputs.isCANCoderConnected = BaseStatusSignal.refreshAll(magnetHealth).isOK();
         inputs.magnetHealth = magnetHealth.getValue();
@@ -264,7 +242,5 @@ public class LauncherIOTalonFX implements LauncherIO {
         inputs.hoodServo2Pos = Millimeters.of(servo2CurPos);
         inputs.hoodServo1Target = Millimeters.of(servo1Setpoint);
         inputs.hoodServo2Target = Millimeters.of(servo2Setpoint);
-
-        inputs.ultrasonicVoltage = getUltrasonicVolts();
     }
 }

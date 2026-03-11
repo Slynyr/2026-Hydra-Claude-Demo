@@ -1,49 +1,47 @@
 package frc.robot.subsystems.elevator;
 
-import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.Kilograms;
-import static edu.wpi.first.units.Units.Meters;
-import edu.wpi.first.units.Units;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
-import frc.robot.subsystems.elevator.ElevatorConstants;
+
+import static edu.wpi.first.units.Units.*;
+import static frc.robot.subsystems.elevator.ElevatorConstants.*;
 
 public class ElevatorIOSim implements ElevatorIO {
+    private final ElevatorSim   elevator;
+    private final PIDController controller;
 
     private boolean running;
-    private ElevatorSim elevatorSim;
-    private PIDController PID;
 
     public ElevatorIOSim() {
 
         //Creating sim elevator object
-        elevatorSim = new ElevatorSim(
-            DCMotor.getFalcon500(2), 
-            ElevatorConstants.GEARING, 
-            ElevatorConstants.ELEVATOR_MASS.in(Kilograms), 
-            ElevatorConstants.ELEVATOR_DRUMRADIUS.in(Inches), 
-            ElevatorConstants.ELEVATOR_MIN_HEIGHT.in(Inches), 
-            ElevatorConstants.ELEVATOR_MAX_HEIGHT.in(Inches), 
-            true, 
-            ElevatorConstants.ELEVATOR_MIN_HEIGHT.in(Inches)
+        elevator = new ElevatorSim(
+                DCMotor.getFalcon500(2),
+                GEARING,
+                ELEVATOR_MASS.in(Kilograms),
+                DRUM_RADIUS.in(Inches),
+                ELEVATOR_MIN_HEIGHT.in(Inches),
+                ELEVATOR_MAX_HEIGHT.in(Inches),
+                true,
+                ELEVATOR_MIN_HEIGHT.in(Inches)
         );
-        PID = new PIDController(ElevatorConstants.SIM_PID.kP, ElevatorConstants.SIM_PID.kI, ElevatorConstants.SIM_PID.kD);
+        controller = new PIDController(SIM_PID.kP, SIM_PID.kI, SIM_PID.kD);
         running = false;
-
     }
 
     /**
-     * Set voltage of the motor to assigned voltage 
-     *@param voltage voltage value
+     * Set voltage of the motor to assigned voltage
+     *
+     * @param voltage voltage value
      */
     @Override
     public void setMotorVoltage(double voltage) {
-        elevatorSim.setInputVoltage(voltage);
+        elevator.setInputVoltage(voltage);
     }
 
     /**
@@ -51,27 +49,29 @@ public class ElevatorIOSim implements ElevatorIO {
      */
     @Override
     public void stopMotor() {
-        elevatorSim.setInputVoltage(0.0);
+        elevator.setInputVoltage(0.0);
         running = false;
     }
 
     /**
      * sets the elevator to the assigned setpoint
+     *
      * @param setpoint setpoint value
      */
     @Override
     public void setSetpoint(Distance setpoint, int slot) {
-        PID.setSetpoint(setpoint.in(Meters));
+        controller.setSetpoint(setpoint.in(Meters));
         running = true;
     }
 
     /**
      * returns the elevator encoders value
+     *
      * @return values of the encoder
      */
     @Override
     public Distance getPosition() {
-        return Meters.of(elevatorSim.getPositionMeters());
+        return Meters.of(elevator.getPositionMeters());
     }
 
     @Override
@@ -80,19 +80,19 @@ public class ElevatorIOSim implements ElevatorIO {
         double current = 0.0;
         if (running) {
             volts = MathUtil.clamp(
-                PID.calculate(elevatorSim.getPositionMeters()) * 12, 
-                -RoboRioSim.getVInVoltage(), 
-                RoboRioSim.getVInVoltage()
+                    controller.calculate(elevator.getPositionMeters()) * 12,
+                    -RoboRioSim.getVInVoltage(),
+                    RoboRioSim.getVInVoltage()
             );
-            current = elevatorSim.getCurrentDrawAmps();
+            current = elevator.getCurrentDrawAmps();
         }
-        elevatorSim.setInputVoltage (volts);
-        elevatorSim.update(0.02);
+        elevator.setInputVoltage(volts);
+        elevator.update(0.02);
 
-        inputs.isMainMotorConnected = true;
-        inputs.mainAppliedVoltage = Units.Volts.of(volts);
-        inputs.mainAppliedCurrent = Units.Amps.of(Math.abs(current));
-        inputs.mainMotorTemperature = 0.0;
-        inputs.mainMotorPosition = Units.Meters.of(elevatorSim.getPositionMeters());
+        inputs.isConnected = true;
+        inputs.voltage = Units.Volts.of(volts);
+        inputs.supplyCurrent = Units.Amps.of(Math.abs(current));
+        inputs.temperature = 0.0;
+        inputs.position = Units.Meters.of(elevator.getPositionMeters());
     }
 }

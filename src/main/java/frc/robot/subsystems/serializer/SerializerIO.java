@@ -1,45 +1,39 @@
 package frc.robot.subsystems.serializer;
 
-import org.littletonrobotics.junction.AutoLog;
-
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.Volts;
-
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
+import org.littletonrobotics.junction.AutoLog;
 
+import static edu.wpi.first.units.Units.*;
 
 public interface SerializerIO {
 
     @AutoLog
-    public class SerializerInputs {
+    class SerializerInputs {
+        public boolean         isSerializerConnected = false;
+        public Voltage         serializerVoltage     = Volts.of(0.0);
+        public Current         serializerCurrent     = Amps.of(0.0);
+        public double          serializerTemperature = 0.0;
+        public Angle           serializerPosition    = Degrees.of(0.0);
+        public AngularVelocity serializerVelocity    = RotationsPerSecond.of(0.0);
 
-        public boolean isIndexerMotorConnected = false;
-        public Voltage indexerAppliedVoltage = Volts.of(0.0);
-        public Current indexerAppliedCurrent = Amps.of(0.0);
-        public double indexerMotorTemperature = 0.0;
-        public Angle indexerMotorPosition = Degrees.of(0.0);
-        public AngularVelocity indexerMotorVelocity = RotationsPerSecond.of(0.0);
-        
-        public boolean isBottomFeederMotorConnected = false;
-        public Voltage bottomFeederAppliedVoltage = Volts.of(0.0);
-        public Current bottomFeederAppliedCurrent = Amps.of(0.0);
-        public double bottomFeederMotorTemperature = 0.0;
-        public Angle bottomFeederMotorPosition = Degrees.of(0.0);
-        public AngularVelocity bottomFeederMotorVelocity = RotationsPerSecond.of(0.0);
+        public boolean         isLowerFeederConnected = false;
+        public Voltage         lowerFeederVoltage     = Volts.of(0.0);
+        public Current         lowerFeederCurrent     = Amps.of(0.0);
+        public double          lowerFeederTemperature = 0.0;
+        public Angle           lowerFeederPosition    = Degrees.of(0.0);
+        public AngularVelocity lowerFeederVelocity    = RotationsPerSecond.of(0.0);
     }
 
-    public default void updateInputs(SerializerInputs inputs) {}
+    default void updateInputs(SerializerInputs inputs) {}
 
-    public default void setVoltage(double voltage) {}
+    default void setVoltage(double voltage) {}
 
-    public default void stopMotors() {}
-    
-    public default void zeroEncoders() {}
+    default void stopMotors() {}
 
-    public default AngularVelocity getVelocity() {return RotationsPerSecond.of(0);}
+    default AngularVelocity getVelocity() {
+        return RotationsPerSecond.of(0);
+    }
 }

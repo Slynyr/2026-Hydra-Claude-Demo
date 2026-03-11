@@ -17,8 +17,8 @@ public class LauncherIOSim implements LauncherIO {
     private static final double FLYWHEEL_INERTIA = 100.0;
     private static final double LAUNCHER_GEARING = 1.0;
 
-    private final FlywheelSim   flywheelSim;
-    private final PIDController controllerLauncher;
+    private final FlywheelSim   flywheel;
+    private final PIDController motorController;
 
     private Distance hoodPos = Meters.of(0.0);
 
@@ -26,7 +26,7 @@ public class LauncherIOSim implements LauncherIO {
 
     public LauncherIOSim() {
         DCMotor motorLauncher = DCMotor.getKrakenX60Foc(2);
-        flywheelSim = new FlywheelSim(
+        flywheel = new FlywheelSim(
                 LinearSystemId.createFlywheelSystem(
                         motorLauncher,
                         FLYWHEEL_INERTIA,
@@ -35,22 +35,21 @@ public class LauncherIOSim implements LauncherIO {
                 motorLauncher,
                 0.02);
 
-        flywheelSim.update(0.01);
+        flywheel.update(0.01);
 
-        controllerLauncher = new PIDController(
-                0,0,0);
+        motorController = new PIDController(0, 0, 0);
 
         isRunning = true;
     }
 
     @Override
     public void runVelocity(Supplier<AngularVelocity> velocity) {
-        flywheelSim.setAngularVelocity(velocity.get().in(RadiansPerSecond));
+        flywheel.setAngularVelocity(velocity.get().in(RadiansPerSecond));
     }
 
     @Override
     public AngularVelocity getVelocity() {
-        return flywheelSim.getAngularVelocity();
+        return flywheel.getAngularVelocity();
     }
 
     @Override
@@ -65,9 +64,9 @@ public class LauncherIOSim implements LauncherIO {
 
     @Override
     public void stopLauncher() {
-        flywheelSim.setInputVoltage(0.0);
-        flywheelSim.setAngularVelocity(0);
-        controllerLauncher.reset();
+        flywheel.setInputVoltage(0.0);
+        flywheel.setAngularVelocity(0);
+        motorController.reset();
         isRunning = false;
     }
 
@@ -78,15 +77,15 @@ public class LauncherIOSim implements LauncherIO {
 
         if (isRunning) {
             voltageLauncher = MathUtil.clamp(
-                    controllerLauncher.calculate(flywheelSim.getAngularVelocityRPM()), -12, 12);
-            currentLauncher = flywheelSim.getCurrentDrawAmps();
+                    motorController.calculate(flywheel.getAngularVelocityRPM()), -12, 12);
+            currentLauncher = flywheel.getCurrentDrawAmps();
         }
 
         inputs.isLauncherConnected = true;
         inputs.launcherTemperature = 0.0;
         inputs.launcherVoltage = Volts.of(voltageLauncher);
         inputs.launcherCurrent = Current.ofBaseUnits(currentLauncher, Amps);
-        inputs.launcherVelocity = flywheelSim.getAngularVelocity();
+        inputs.launcherVelocity = flywheel.getAngularVelocity();
 
         inputs.hoodServo1Pos = hoodPos;
         inputs.hoodServo2Pos = hoodPos;

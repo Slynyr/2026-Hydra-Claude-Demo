@@ -1,7 +1,6 @@
 package frc.robot.subsystems.launcher;
 
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -16,7 +15,7 @@ import frc.robot.subsystems.feeder.FeederIO;
 import frc.robot.subsystems.launcher.interpolator.LaunchConfig;
 import frc.robot.subsystems.launcher.interpolator.LaunchStrategy;
 import frc.robot.util.MathUtils;
-import frc.robot.utils.Checkmate;
+import frc.robot.util.Checkmate;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.Set;
@@ -125,7 +124,7 @@ public class Launcher extends SubsystemBase {
 
                     return runVelocity(() -> launchSpeed)
                             .alongWith(setHoodExtension(c::hoodExtension)) // set hood hoodExtension
-                            .alongWith(feeder.runRPS(() -> launchSpeed)); // run feeder at same vel.
+                            .alongWith(feeder.runVelocity(() -> launchSpeed)); // run feeder at same vel.
                 }, Set.of(this));
     }
 
@@ -149,35 +148,12 @@ public class Launcher extends SubsystemBase {
         realLaunchSpeedRps = realLaunchSpeed.in(RotationsPerSecond);
     }
 
-//    private Distance computeHoodExtension(Angle hoodExtension) {
-//        // clamp between min and max
-//        double theta = hoodExtension.in(Degrees);
-//        theta = Math.max(LauncherConstants.Hood.MIN_ANGLE_DEG, Math.min(LauncherConstants.Hood.MAX_ANGLE_DEG, theta));
-//
-//        return (Distance)Degrees.of(theta)
-//                                .timesConversionFactor(LauncherConstants.Hood.MM_PER_DEG)
-//                                .minus(LauncherConstants.Hood.OFFSET_MM);
-//    }
-
     public Command setHoodExtension(Supplier<Distance> angle) {
         return Commands.runOnce(() -> hoodSetpoint.set(angle.get()));
     }
 
-    // Getters
-    public Angle getHoodAngle() {
-        return Degrees.of(
-                io.getHoodExtension()
-                  .plus(LauncherConstants.Hood.OFFSET_MM)
-                  .divideRatio(LauncherConstants.Hood.MM_PER_DEG)
-                  .in(Degrees));
-    }
-
     public AngularVelocity getVelocity() {
         return io.getVelocity();
-    }
-
-    public Distance getUltrasonicDistance() {
-        return io.getUltrasonicVolts().timesConversionFactor(LauncherConstants.Ultrasonic.MM_PER_VOLT);
     }
 
     // Stops
@@ -201,10 +177,8 @@ public class Launcher extends SubsystemBase {
 
         // update inputs
         io.updateInputs(inputs);
-        // TODO: UPDATE TO MATCH HOOD ANGLE IF POSSIBLE
         Logger.recordOutput("Components/Hood", new Pose3d());
         Logger.recordOutput("Launcher/Interpolator/OperatorSpeedOffset", getSpeedOffset());
         Logger.processInputs("Launcher", inputs);
-        // SmartDashboard.putData("Launcher/PID", LauncherConstants.Launcher.PID);
     }
 }

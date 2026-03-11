@@ -7,8 +7,8 @@ public abstract class LaunchStrategy {
     protected Launcher launcher;
 
     /**
-     * Interpolates the fastest angular velocity and shoot hoodExtension for the launcher based on the displacement to fire the
-     * fuel.
+     * Interpolates the fastest angular velocity and shoot hoodExtension for the launcher based on the displacement to
+     * fire the fuel.
      *
      * @param displacement total straight-line displacement to shoot fuel at
      *
@@ -30,8 +30,7 @@ public abstract class LaunchStrategy {
      */
     public static LaunchStrategy[] getLaunchStrategies() {
         return new LaunchStrategy[]{
-                new BilinearStrategy(),
-                new DynamicHoodBilinearStrategy()
+                new BilinearStrategy()
         };
     }
 

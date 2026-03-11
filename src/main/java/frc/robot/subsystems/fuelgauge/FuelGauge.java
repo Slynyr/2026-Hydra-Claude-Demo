@@ -1,18 +1,16 @@
 package frc.robot.subsystems.fuelgauge;
 
-import static edu.wpi.first.units.Units.Volts;
-
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.fuelgauge.FuelGaugeInputsAutoLogged;
+import static edu.wpi.first.units.Units.Volts;
 
-public class FuelGauge extends SubsystemBase{
+public class FuelGauge extends SubsystemBase {
     // TODO: get real number
     public static final double FUEL_PER_VOLT = 0;
-    public static final double MIN_FUEL = 0;
+    public static final double MIN_FUEL      = 0;
 
-    private final FuelGaugeIO io;
+    private final FuelGaugeIO               io;
     private final FuelGaugeInputsAutoLogged inputs;
 
     public FuelGauge(FuelGaugeIO io) {

@@ -1,16 +1,11 @@
 package frc.robot.subsystems.serializer;
 
-import static edu.wpi.first.units.Units.Amps;
 import edu.wpi.first.units.measure.Current;
 
+import static edu.wpi.first.units.Units.Amps;
+
 public final class SerializerConstants {
-    
-    public static final Current ORTONA_SPARK_MAX_CURRENT_LIMIT = Amps.of(30);
-    public static final boolean ORTONA_INDEXER_MOTOR_INVERTED = false;
-
-    public static final double SERIALIZING_VOLTAGE = 10;
-     
-    public static final Current TALON_FX_CURRENT_LIMIT = Amps.of(20);
-    public static final double GEARING = 1.0/3.0;
-
+    public static final double  SERIALIZING_VOLTAGE = 10;
+    public static final Current CURRENT_LIMIT       = Amps.of(20);
+    public static final double  GEARING             = 1.0 / 3.0;
 }

@@ -3,60 +3,20 @@ package frc.robot.subsystems.vision;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.LimelightHelpers;
-
-import static edu.wpi.first.units.Units.*;
-
 import org.littletonrobotics.junction.Logger;
+
+import static frc.robot.subsystems.vision.VisionConstants.*;
 
 /**
  * @author Logan Dhillon, FRC 5409 Chargers
  */
 public class Vision extends SubsystemBase {
-    public static final String PRIMARY_CAM_NAME = "limelight";
-
-    public static final int FIDUCIAL_TRUST_THRESHOLD = 1;
-    public static final int DISCONNECTION_TIMEOUT    = 5;
-    public static final int THROTTLE_DISABLED        = 200;
-
-    /**
-     * If enabled, the {@link VisionIOLimelight} will use
-     * {@link frc.robot.subsystems.vision.VisionIOLimelight.IMUMode#FUSED} estimations if the detected AprilTag is
-     * strong enough.
-     */
-    public static final boolean ALLOW_FUSED_GYRO_ESTIMATIONS = true;
-
-    /**
-     * 1σ translation error at zero distance (meters)
-     */
-    public static final double XY_STDDEV_BASE_METERS  = 0.10;
-    /**
-     * Additional translation error per meter of tag distance
-     */
-    public static final double XY_STDDEV_PER_METER    = 0.05;
-    /**
-     * 1σ rotation error at zero distance (deg)
-     */
-    public static final double THETA_STDDEV_BASE_DEG  = 2.0;
-    /**
-     * Additional rotation error per meter of tag distance (deg / meter)
-     */
-    public static final double THETA_STDDEV_PER_METER = 1.5;
-
-    // TODO: update these to camera offset (done) - Double check hoodExtension
-    public static final Transform3d OFFSET_FROM_ROBOT_ORIGIN = new Transform3d(
-                                                                    new Translation3d(Inches.of(-11.639), Inches.of(- 1.623 ), Inches.of(20.027)),
-                                                                    new Rotation3d( Degrees.of(0.0),  Degrees.of(5.0),   Degrees.of(180.0))
-                                                                );
-
     private final VisionIO               io;
     private final VisionInputsAutoLogged inputs;
 
@@ -81,7 +41,7 @@ public class Vision extends SubsystemBase {
         LimelightHelpers.PoseEstimate estimate = io.estimatePose(drive);
 
         // if estimate is invalid, don't update pose
-        if (estimate == null || estimate.tagCount < Vision.FIDUCIAL_TRUST_THRESHOLD) return;
+        if (estimate == null || estimate.tagCount < FIDUCIAL_TRUST_THRESHOLD) return;
 
         drive.addVisionMeasurement(estimate.pose, estimate.timestampSeconds, deriveStdDevs(estimate.avgTagDist));
     }

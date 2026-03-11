@@ -8,20 +8,14 @@
 package frc.robot;
 
 import com.ctre.phoenix6.SignalLogger;
-
-
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.DriveCommands;
-import frc.robot.commands.GameCommands;
-import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.util.RebuiltTimer;
-
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -36,9 +30,9 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
  * project, you must also update the build.gradle file in the project.
  */
 public class Robot extends LoggedRobot {
-    private         Command        autonomousCommand;
-    private final   RobotContainer robotContainer;
-    public  static  RebuiltTimer   rebuiltTimer;
+    private       Command        autonomousCommand;
+    private final RobotContainer robotContainer;
+    public static RebuiltTimer   rebuiltTimer;
 
     // build constants are defined at compile-time, thus IntelliSense thinks "GitDirty" is unreachable.
     @SuppressWarnings("DataFlowIssue")
@@ -86,27 +80,12 @@ public class Robot extends LoggedRobot {
         // and put our autonomous chooser on the dashboard.
         robotContainer = new RobotContainer();
 
-        // forward limelight ports
-        VisionIOLimelight.forwardLimelightPorts();
-
         SignalLogger.enableAutoLogging(false);
         rebuiltTimer = new RebuiltTimer();
 
         // stop all subsystems on disabled
         new Trigger(DriverStation::isDisabled)
-                .onTrue(
-                        Commands.parallel(
-                                GameCommands.stopLaunching(
-                                        robotContainer.sys_launcher,
-                                        robotContainer.sys_feeder,
-                                        robotContainer.sys_serializer,
-                                        robotContainer.sys_intake
-                                ),
-                                Commands.runOnce(robotContainer.sys_drive::stop),
-                                robotContainer.sys_hopper.setVoltage(0),
-                                robotContainer.sys_elevator.startManualMove(0)
-                        ).ignoringDisable(true)
-                );
+                .onTrue(robotContainer.onDisable().ignoringDisable(true));
     }
 
     /** This function is called periodically during all modes. */
@@ -182,7 +161,6 @@ public class Robot extends LoggedRobot {
     @Override
     public void teleopPeriodic() {
         rebuiltTimer.getAutoWinner();
-   
     }
 
     /** This function is called once when test mode is enabled. */

@@ -1,130 +1,106 @@
 package frc.robot.subsystems.feeder;
 
-import static edu.wpi.first.units.Units.*;
-
-import java.util.function.Supplier;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
-import com.ctre.phoenix6.configs.FeedbackConfigs;
-import com.ctre.phoenix6.configs.MotorOutputConfigs;
-import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.configs.TalonFXConfigurator;
+import com.ctre.phoenix6.configs.*;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.units.measure.*;
 
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Temperature;
-import edu.wpi.first.units.measure.Voltage;
+import java.util.function.Supplier;
+
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 public class FeederIOTalonFX implements FeederIO {
-    
-    private final TalonFX feederMotor;
+    private final TalonFX motor;
 
-    private final StatusSignal<AngularVelocity> feederDeviceVelocity;
-    private final StatusSignal<Angle> feederDevicePosition;
-    private final StatusSignal<Voltage> feederDeviceVoltage;
-    private final StatusSignal<Current> feederDeviceCurrent;
-    private final StatusSignal<Temperature> feederDeviceTemp;
+    private final StatusSignal<AngularVelocity> velocity;
+    private final StatusSignal<Angle>           position;
+    private final StatusSignal<Voltage>         voltage;
+    private final StatusSignal<Current>         current;
+    private final StatusSignal<Temperature>     temperature;
 
     private Supplier<AngularVelocity> setpoint = () -> RotationsPerSecond.of(0.0);
 
     public FeederIOTalonFX(int feederID) {
-        feederMotor = new TalonFX(feederID);
-        final TalonFXConfigurator feederMotorConfig = feederMotor.getConfigurator();
+        motor = new TalonFX(feederID);
+        TalonFXConfigurator config = motor.getConfigurator();
 
-        final CurrentLimitsConfigs currentConfigs = new CurrentLimitsConfigs()
-            .withSupplyCurrentLimit(FeederConstants.TALON_FX_CURRENT_LIMIT)
-            .withSupplyCurrentLimitEnable(true);
-        feederMotorConfig.apply(currentConfigs);
+        config.apply(new CurrentLimitsConfigs()
+                             .withSupplyCurrentLimit(FeederConstants.CURRENT_LIMIT)
+                             .withSupplyCurrentLimitEnable(true));
 
-        final FeedbackConfigs encoderConfigs = new FeedbackConfigs()
-            .withSensorToMechanismRatio(FeederConstants.GEARING);
-        feederMotorConfig.apply(encoderConfigs);
+        config.apply(new FeedbackConfigs().withSensorToMechanismRatio(FeederConstants.GEARING));
 
-        Slot0Configs feederPidConfigs = new Slot0Configs()
-			.withKP(FeederConstants.TALONFX_PID.kP)
-			.withKI(FeederConstants.TALONFX_PID.kI)
-			.withKD(FeederConstants.TALONFX_PID.kD)
-			.withKV(FeederConstants.kV)
-            .withKS(FeederConstants.kS);
+        config.apply(new Slot0Configs()
+                             .withKP(FeederConstants.TALONFX_PID.kP)
+                             .withKI(FeederConstants.TALONFX_PID.kI)
+                             .withKD(FeederConstants.TALONFX_PID.kD)
+                             .withKV(FeederConstants.kV)
+                             .withKS(FeederConstants.kS));
 
-		feederMotorConfig.apply(feederPidConfigs);
+        config.apply(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
 
-        feederMotorConfig.apply(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
+        motor.setNeutralMode(NeutralModeValue.Coast);
 
-        feederMotor.setNeutralMode(NeutralModeValue.Coast);
-
-        feederDeviceVelocity = feederMotor.getVelocity();
-        feederDevicePosition = feederMotor.getPosition();
-        feederDeviceVoltage = feederMotor.getMotorVoltage();
-        feederDeviceCurrent = feederMotor.getSupplyCurrent();
-        feederDeviceTemp = feederMotor.getDeviceTemp();
+        velocity = motor.getVelocity();
+        position = motor.getPosition();
+        voltage = motor.getMotorVoltage();
+        current = motor.getSupplyCurrent();
+        temperature = motor.getDeviceTemp();
 
         BaseStatusSignal.setUpdateFrequencyForAll(
-            50,
-            feederDevicePosition,
-            feederDeviceVelocity,
-            feederDeviceVoltage,
-            feederDeviceCurrent,
-            feederDeviceTemp
-        );
+                50,
+                position,
+                velocity,
+                voltage,
+                current,
+                temperature);
 
-        feederMotor.optimizeBusUtilization();
+        motor.optimizeBusUtilization();
     }
-
 
     @Override
     public void setMotorVoltage(double voltage) {
-        feederMotor.setVoltage(voltage);
+        motor.setVoltage(voltage);
     }
 
     @Override
-    public void runRPS(Supplier<AngularVelocity> velocity) {
+    public void runVelocity(Supplier<AngularVelocity> velocity) {
         setpoint = velocity;
         VelocityVoltage velocityVoltage = new VelocityVoltage(velocity.get())
-                                        .withSlot(0)
-                                        .withFeedForward(0);
-        feederMotor.setControl(velocityVoltage);
+                .withSlot(0)
+                .withFeedForward(0);
+        motor.setControl(velocityVoltage);
     }
-
 
     @Override
     public void stopMotor() {
-        feederMotor.stopMotor();
+        motor.stopMotor();
     }
 
     @Override
-    public void zeroEncoder() {
-        feederMotor.setPosition(0);
-    }
-
-    @Override
-    public AngularVelocity getVelocityRPS() {
-        return feederDeviceVelocity.getValue();
+    public AngularVelocity getVelocity() {
+        return velocity.getValue();
     }
 
     @Override
     public void updateInputs(FeederInputs inputs) {
         inputs.isMotorConnected = BaseStatusSignal.refreshAll(
-            feederDevicePosition,
-            feederDeviceVelocity,
-            feederDeviceVoltage,
-            feederDeviceCurrent,
-            feederDeviceTemp
+                position,
+                velocity,
+                voltage,
+                current,
+                temperature
         ).isOK();
-        inputs.motorPosition = feederDevicePosition.getValue();
-        inputs.motorVelocity = feederDeviceVelocity.getValue();
-        inputs.appliedVoltage = feederDeviceVoltage.getValue();
-        inputs.appliedCurrent = feederDeviceCurrent.getValue();
-        inputs.motorTemperature = feederDeviceTemp.getValueAsDouble();
+        inputs.position = position.getValue();
+        inputs.velocity = velocity.getValue();
+        inputs.voltage = voltage.getValue();
+        inputs.current = current.getValue();
+        inputs.temperature = temperature.getValueAsDouble();
         inputs.setpoint = setpoint.get();
     }
-
 }
 
