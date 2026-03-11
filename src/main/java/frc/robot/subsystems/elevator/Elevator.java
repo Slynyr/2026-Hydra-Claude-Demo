@@ -11,14 +11,10 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DeviceID;
 import edu.wpi.first.units.measure.Current;
-
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
-import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 public class Elevator extends SubsystemBase{
 
@@ -27,12 +23,6 @@ public class Elevator extends SubsystemBase{
 
     private static Pose3d elevatorPose;
     
-    private final LoggedNetworkNumber dashboardSetpoint =
-        new LoggedNetworkNumber("Elevator/SetpointMeters", 0.0);
-
-    private final LoggedNetworkBoolean dashboardGoToSetpoint =
-        new LoggedNetworkBoolean("Elevator/GoToSetpoint", false);
-
     // Setup alerts for elevator motors connection
     private final Alert ElevatorAlert  = new Alert("The elevator motor is disconnected " + DeviceID.CLIMBER_MOTOR, AlertType.kError);
 
@@ -54,7 +44,7 @@ public class Elevator extends SubsystemBase{
     public Command goTillSpike(double voltage) {
         return Commands.sequence(
             startManualMove(voltage),
-            Commands.waitUntil(() -> getCurrent().gte(ElevatorConstants.SPIKE_CURRENT)),
+            Commands.waitUntil(() -> getAbsoluteCurrent().gte(ElevatorConstants.SPIKE_CURRENT)),
             stopAll(),
             zeroEncoder()
         );
@@ -72,9 +62,9 @@ public class Elevator extends SubsystemBase{
      * Command ends when the elevator is within 25mm range of the targeted position
      * @param setpoint setpoint value
      */
-    public Command elevatorGo(Distance setpoint) {
+    public Command elevatorGo(Distance setpoint, int slot) {
         return Commands.sequence(
-            Commands.runOnce(() -> io.setSetpoint(setpoint), this),
+            Commands.runOnce(() -> io.setSetpoint(setpoint, slot), this),
             Commands.waitUntil(() -> setpoint.isNear(getPosition(), Meters.of(0.025)))
         );
     }
@@ -86,8 +76,8 @@ public class Elevator extends SubsystemBase{
         return Commands.runOnce(() -> io.stopMotor(), this);
     }
 
-    public Current getCurrent() {
-        return inputs.mainAppliedCurrent;
+    public Current getAbsoluteCurrent() {
+        return Amps.of(inputs.mainMotorTorqueCurrent.abs(Amp));
     }
     
     /**
@@ -102,10 +92,6 @@ public class Elevator extends SubsystemBase{
     public void periodic() {
         io.updateInputs(inputs);
 
-        if (dashboardGoToSetpoint.get()) {
-            CommandScheduler.getInstance().schedule(elevatorGo(Meters.of(dashboardSetpoint.get())));
-            dashboardGoToSetpoint.set(false);
-}
         // Safety: Stop elevator if current exceeds 50A
         if (inputs.mainAppliedCurrent.gte(ElevatorConstants.SPIKE_CURRENT)) {
             io.stopMotor();

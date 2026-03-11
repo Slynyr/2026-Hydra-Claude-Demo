@@ -60,7 +60,7 @@ public class ElevatorIOSim implements ElevatorIO {
      * @param setpoint setpoint value
      */
     @Override
-    public void setSetpoint(Distance setpoint) {
+    public void setSetpoint(Distance setpoint, int slot) {
         PID.setSetpoint(setpoint.in(Meters));
         running = true;
     }

@@ -30,6 +30,6 @@ public interface ElevatorIO {
 
     public default Distance getPosition() {return Meters.of(0.0);}
 
-    public default void setSetpoint(Distance setpoint) {}
+    public default void setSetpoint(Distance setpoint, int slot) {}
     
 }

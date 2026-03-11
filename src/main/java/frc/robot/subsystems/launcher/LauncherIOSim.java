@@ -38,15 +38,19 @@ public class LauncherIOSim implements LauncherIO {
         flywheelSim.update(0.01);
 
         controllerLauncher = new PIDController(
-                LauncherConstants.Launcher.PID.getP(), LauncherConstants.Launcher.PID.getI(),
-                LauncherConstants.Launcher.PID.getD());
+                0,0,0);
 
         isRunning = true;
     }
 
     @Override
     public void runVelocity(Supplier<AngularVelocity> velocity) {
-        flywheelSim.setAngularVelocity(velocity.get().in(RadiansPerSecond) * 60);
+        flywheelSim.setAngularVelocity(velocity.get().in(RadiansPerSecond));
+    }
+
+    @Override
+    public AngularVelocity getVelocity() {
+        return flywheelSim.getAngularVelocity();
     }
 
     @Override

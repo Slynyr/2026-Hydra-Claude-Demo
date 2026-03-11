@@ -38,15 +38,15 @@ public class Serializer extends SubsystemBase{
     }
 
     public Command setVoltage(double voltage){
-        return Commands.runOnce(() -> {io.setVoltage(voltage);}, this);
+        return Commands.runOnce(() -> io.setVoltage(voltage), this);
     }
 
     public Command stopMotor() {
-        return Commands.runOnce(() -> {io.stopMotors();}, this);
+        return Commands.runOnce(() -> io.stopMotors(), this);
     }
 
     public Command zeroEncoder() {
-        return Commands.runOnce(() -> {io.zeroEncoders();}, this);
+        return Commands.runOnce(() -> io.zeroEncoders(), this);
     }
 
     public AngularVelocity getVelocity() {

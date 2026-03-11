@@ -1,29 +1,32 @@
 package frc.robot.subsystems.intake;
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.math.MathUtil;
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.FeedbackConfigs;
-import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.configs.*;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.google.flatbuffers.Constants;
 
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.units.measure.AngularVelocity;
-import frc.robot.subsystems.intake.IntakeConstants.Extension;;
+import frc.robot.subsystems.intake.IntakeConstants.Extension;
+import frc.robot.subsystems.launcher.LauncherConstants;
 
 public final class IntakeIOTalonFX implements IntakeIO {
   
     private final TalonFX rollerMotor;
     private final TalonFX extensionMotor;
+
+    private Distance setpoint = Meters.of(0.0);
 
     private final PositionVoltage positionControl;
 
@@ -48,30 +51,35 @@ public final class IntakeIOTalonFX implements IntakeIO {
         extensionMotor.set(0.0);
 
         positionControl = new PositionVoltage(0.0);
-        positionControl.withSlot(0);
+
+
 
         TalonFXConfiguration extensionConfigurator = new TalonFXConfiguration()
-        .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(Extension.GEARING));
+        .withFeedback(
+            new FeedbackConfigs()
+            .withSensorToMechanismRatio(Extension.GEARING)
+        );
 
-        if (frc.robot.Constants.IS_TUNING) { // If we are tuning, use the PID values from the Extension class, otherwise use the default TalonFX PID values
-            if (Extension.INTAKE_IS_TUNING) {
-                extensionConfigurator.Slot0 = new Slot0Configs()
-                    .withKP(Extension.PID.getP())
-                    .withKI(Extension.PID.getI())
-                    .withKD(Extension.PID.getD());
-            } else {
-                extensionConfigurator.Slot0 = new Slot0Configs()
-                    .withKP(Extension.TALONFX_PID.kP)
-                    .withKI(Extension.TALONFX_PID.kI)
-                    .withKD(Extension.TALONFX_PID.kD);
-            }
-        } else{
-            extensionConfigurator.Slot0 = new Slot0Configs()
-                .withKP(Extension.TALONFX_PID.kP)
-                .withKI(Extension.TALONFX_PID.kI)
-                .withKD(Extension.TALONFX_PID.kD);
-        }
+
+        extensionConfigurator.Slot0 = new Slot0Configs()
+            .withKP(Extension.TALONFX_PID.kP)
+            .withKI(Extension.TALONFX_PID.kI)
+            .withKD(Extension.TALONFX_PID.kD);
+
+        extensionConfigurator.withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
+        extensionConfigurator.withCurrentLimits(new CurrentLimitsConfigs()
+                .withSupplyCurrentLimit(20)
+                .withSupplyCurrentLimitEnable(true)
+            );
         extensionMotor.getConfigurator().apply(extensionConfigurator);
+
+        rollerMotor.getConfigurator().apply(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Coast));
+
+        rollerMotor.getConfigurator().apply( new CurrentLimitsConfigs()
+                .withSupplyCurrentLimit(20)
+                .withSupplyCurrentLimitEnable(true)
+            );
+
 
         extensionPositionSignal    = extensionMotor.getPosition();
         extensionTemperatureSignal = extensionMotor.getDeviceTemp();
@@ -100,6 +108,8 @@ public final class IntakeIOTalonFX implements IntakeIO {
             rollerCurrentSignal
         );
 
+        extensionMotor.setPosition(0);
+
         rollerMotor.optimizeBusUtilization();
         extensionMotor.optimizeBusUtilization();
 
@@ -123,6 +133,9 @@ public final class IntakeIOTalonFX implements IntakeIO {
 * @param position The position to set the extension motor to given position, in meters.
  */
     public void setSetpoint(Distance position) {
+        setpoint = position;
+        Logger.recordOutput("Intake/Setpoint", position);
+        position = Meters.of(MathUtil.clamp(position.in(Meters)/Extension.UNIT_CONVERSION_FACTOR, 0, Extension.EXTENSION_MAX_DISTANCE.in(Meters)/Extension.UNIT_CONVERSION_FACTOR));
         extensionMotor.setControl(positionControl.withPosition(position.in(Meters)).withSlot(0));
     }
 /**
@@ -154,7 +167,7 @@ public final class IntakeIOTalonFX implements IntakeIO {
 * @return The current position of the intake extension, in meters.
  */
     public Distance getPosition() {
-        return Meters.of(extensionPositionSignal.getValueAsDouble());
+        return Meters.of(extensionPositionSignal.getValueAsDouble() * Extension.UNIT_CONVERSION_FACTOR);
     }
 /**
 * Updates the inputs of the intake subsystem
@@ -162,23 +175,40 @@ public final class IntakeIOTalonFX implements IntakeIO {
  */
     @Override
     public void updateInputs(IntakeIO.IntakeInputs inputs) {
+        inputs.isExtensionConnected = BaseStatusSignal.refreshAll(
+                extensionPositionSignal,
+                extensionTemperatureSignal,
+                extensionVoltageSignal,
+                extensionCurrentSignal,
+                extensionVelocitySignal
+        ).isOK();
 
-        inputs.isExtensionConnected = true;
-        inputs.extensionVolts = Volts.of(extensionVoltageSignal.getValueAsDouble());
+        inputs.extensionVolts = extensionVoltageSignal.getValue();
+
         inputs.extensionCurrent = Amps.of(extensionCurrentSignal.getValueAsDouble());
         inputs.extensionTorqueCurrent = Amps.of(extensionTorqueCurrentSignal.getValueAsDouble());
         inputs.extensionTemp = extensionTemperatureSignal.getValueAsDouble();
-        inputs.extensionPosition =  Units.rotationsToRadians(extensionPositionSignal.getValueAsDouble());
+
+        inputs.extensionPosition = getPosition();
+
         inputs.extensionVelocity = MetersPerSecond.of(extensionVelocitySignal.getValueAsDouble());
         inputs.isExtensionRunning = Math.abs(extensionVoltageSignal.getValueAsDouble()) > 0.1;
-        inputs.isExtended = inputs.extensionPosition >= Extension.EXTENSION_MAX_DISTANCE.in(Meters) - 0.01;
-        inputs.isRetracted = inputs.extensionPosition <= Extension.EXTENSION_MIN_DISTANCE.in(Meters) + 0.01;
+        // inputs.isExtended = inputs.extensionPosition.gte(Extension.EXTENSION_MAX_DISTANCE).minus(Meters.of(0.01));
+        // inputs.isRetracted = inputs.extensionPosition <= Extension.EXTENSION_MIN_DISTANCE.in(Meters) + 0.01;
 
-        inputs.isRollerConnected = true;
+        inputs.isRollerConnected = BaseStatusSignal.refreshAll(
+                rollerPositionSignal,
+                rollerTemperatureSignal,
+                rollerVoltageSignal,
+                rollerCurrentSignal,
+                rollerVelocitySignal
+        ).isOK();
+
         inputs.rollerVolts = Volts.of(rollerVoltageSignal.getValueAsDouble());
         inputs.rollerCurrent = Amps.of(rollerCurrentSignal.getValueAsDouble());
         inputs.rollerTemp = rollerTemperatureSignal.getValueAsDouble();
         inputs.rollerVelocity = RotationsPerSecond.of(rollerVelocitySignal.getValueAsDouble());
+        inputs.extensionSetpoint = setpoint;
 
     }
 }

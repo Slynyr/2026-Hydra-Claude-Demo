@@ -1,8 +1,5 @@
 package frc.robot.subsystems.intake;
-import static edu.wpi.first.units.Units.Volts;
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.*;
 
 import org.littletonrobotics.junction.AutoLog;
 import edu.wpi.first.units.measure.Distance;
@@ -28,8 +25,9 @@ public interface IntakeIO {
         public Current extensionCurrent = Amps.of(0.0);
         public double extensionTemp = 0.0;
         public LinearVelocity extensionVelocity = MetersPerSecond.of(0.0);
-        public double extensionPosition = 0.0;
+        public Distance extensionPosition = Meters.of(0.0);
         public Current extensionTorqueCurrent = Amps.of(0.0);
+        public Distance extensionSetpoint = Meters.of(0.0);
 
         public boolean isExtended = false;
         public boolean isRetracted = true;

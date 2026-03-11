@@ -4,6 +4,8 @@ import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.units.measure.Current;
@@ -32,7 +34,7 @@ public interface HopperIO {
     public default void brakeMode() {}
     public default void coastMode() {}
 
-    public default void setSetpoint(Distance setpoint) {}
+    public default void setSetpoint(Supplier<Distance> setpoint) {}
     public default Distance getPosition() {return Inches.of(0.0);}
     public default Distance getPositionIntakeZero() {return Inches.of(0.0);}
     public default Distance getSetpoint() {return Inches.of(0.0);}

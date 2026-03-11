@@ -23,7 +23,7 @@ public interface FeederIO {
         public double motorTemperature = 0.0;
         public Angle motorPosition = Degrees.of(0.0);
         public AngularVelocity motorVelocity = RotationsPerSecond.of(0.0);
-        public double setpoint = 0.0;
+        public AngularVelocity setpoint = RotationsPerSecond.of(0.0);
     }
 
     public default void updateInputs(FeederInputs inputs) {}

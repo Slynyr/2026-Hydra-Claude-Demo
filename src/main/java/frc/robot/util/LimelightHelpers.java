@@ -966,7 +966,7 @@ public class LimelightHelpers {
     /**
      * Gets the horizontal offset from the crosshair to the target in degrees.
      * @param limelightName Name of the Limelight camera ("" for default)
-     * @return Horizontal offset angle in degrees
+     * @return Horizontal offset hoodExtension in degrees
      */
     public static double getTX(String limelightName) {
         return getLimelightNTDouble(limelightName, "tx");
@@ -975,7 +975,7 @@ public class LimelightHelpers {
     /**
      * Gets the vertical offset from the crosshair to the target in degrees.
      * @param limelightName Name of the Limelight camera ("" for default)
-     * @return Vertical offset angle in degrees
+     * @return Vertical offset hoodExtension in degrees
      */
     public static double getTY(String limelightName) {
         return getLimelightNTDouble(limelightName, "ty");
@@ -984,7 +984,7 @@ public class LimelightHelpers {
     /**
      * Gets the horizontal offset from the principal pixel/point to the target in degrees.  This is the most accurate 2d metric if you are using a calibrated camera and you don't need adjustable crosshair functionality.
      * @param limelightName Name of the Limelight camera ("" for default)
-     * @return Horizontal offset angle in degrees
+     * @return Horizontal offset hoodExtension in degrees
      */
     public static double getTXNC(String limelightName) {
         return getLimelightNTDouble(limelightName, "txnc");
@@ -993,7 +993,7 @@ public class LimelightHelpers {
     /**
      * Gets the vertical offset from the principal pixel/point to the target in degrees. This is the most accurate 2d metric if you are using a calibrated camera and you don't need adjustable crosshair functionality.
      * @param limelightName Name of the Limelight camera ("" for default)
-     * @return Vertical offset angle in degrees
+     * @return Vertical offset hoodExtension in degrees
      */
     public static double getTYNC(String limelightName) {
         return getLimelightNTDouble(limelightName, "tync");
@@ -1606,9 +1606,9 @@ public class LimelightHelpers {
      * @param forward Forward offset in meters
      * @param side Side offset in meters
      * @param up Up offset in meters
-     * @param roll Roll angle in degrees
-     * @param pitch Pitch angle in degrees
-     * @param yaw Yaw angle in degrees
+     * @param roll Roll hoodExtension in degrees
+     * @param pitch Pitch hoodExtension in degrees
+     * @param yaw Yaw hoodExtension in degrees
      */
     public static void setCameraPose_RobotSpace(String limelightName, double forward, double side, double up, double roll, double pitch, double yaw) {
         double[] entries = new double[6];

@@ -1,6 +1,6 @@
 package frc.robot.subsystems.launcher.interpolator;
 
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
 
-public record LaunchConfig(Angle angle, AngularVelocity speed) {}
+public record LaunchConfig(Distance hoodExtension, AngularVelocity speed) {}

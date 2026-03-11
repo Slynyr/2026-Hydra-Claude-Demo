@@ -1,5 +1,7 @@
 package frc.robot.subsystems.feeder;
 
+import static edu.wpi.first.units.Units.*;
+
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -19,7 +21,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
-import frc.robot.Constants;
 
 public class FeederIOTalonFX implements FeederIO {
     
@@ -30,6 +31,8 @@ public class FeederIOTalonFX implements FeederIO {
     private final StatusSignal<Voltage> feederDeviceVoltage;
     private final StatusSignal<Current> feederDeviceCurrent;
     private final StatusSignal<Temperature> feederDeviceTemp;
+
+    private Supplier<AngularVelocity> setpoint = () -> RotationsPerSecond.of(0.0);
 
     public FeederIOTalonFX(int feederID) {
         feederMotor = new TalonFX(feederID);
@@ -44,22 +47,18 @@ public class FeederIOTalonFX implements FeederIO {
             .withSensorToMechanismRatio(FeederConstants.GEARING);
         feederMotorConfig.apply(encoderConfigs);
 
-        final Slot0Configs feederPidConfigs = Constants.IS_TUNING 
-        ? new Slot0Configs()
-            .withKP(FeederConstants.PID.getP())
-            .withKI(FeederConstants.PID.getI())
-            .withKD(FeederConstants.PID.getD())
-            .withKV(FeederConstants.kV)
-        : new Slot0Configs()
-            .withKP(FeederConstants.TALONFX_PID.kP)
-            .withKI(FeederConstants.TALONFX_PID.kI)
-            .withKD(FeederConstants.TALONFX_PID.kD)
-            .withKV(FeederConstants.kV);
-        feederMotorConfig.apply(feederPidConfigs);
+        Slot0Configs feederPidConfigs = new Slot0Configs()
+			.withKP(FeederConstants.TALONFX_PID.kP)
+			.withKI(FeederConstants.TALONFX_PID.kI)
+			.withKD(FeederConstants.TALONFX_PID.kD)
+			.withKV(FeederConstants.kV)
+            .withKS(FeederConstants.kS);
+
+		feederMotorConfig.apply(feederPidConfigs);
 
         feederMotorConfig.apply(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
 
-        feederMotor.setNeutralMode(NeutralModeValue.Brake);
+        feederMotor.setNeutralMode(NeutralModeValue.Coast);
 
         feederDeviceVelocity = feederMotor.getVelocity();
         feederDevicePosition = feederMotor.getPosition();
@@ -87,6 +86,7 @@ public class FeederIOTalonFX implements FeederIO {
 
     @Override
     public void runRPS(Supplier<AngularVelocity> velocity) {
+        setpoint = velocity;
         VelocityVoltage velocityVoltage = new VelocityVoltage(velocity.get())
                                         .withSlot(0)
                                         .withFeedForward(0);
@@ -123,6 +123,7 @@ public class FeederIOTalonFX implements FeederIO {
         inputs.appliedVoltage = feederDeviceVoltage.getValue();
         inputs.appliedCurrent = feederDeviceCurrent.getValue();
         inputs.motorTemperature = feederDeviceTemp.getValueAsDouble();
+        inputs.setpoint = setpoint.get();
     }
 
 }

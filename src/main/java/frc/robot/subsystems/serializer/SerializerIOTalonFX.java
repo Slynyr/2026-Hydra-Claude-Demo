@@ -58,7 +58,7 @@ public class SerializerIOTalonFX implements SerializerIO {
         m_indexerMotor.setNeutralMode(NeutralModeValue.Brake);
         m_BottomFeederMotor.setNeutralMode(NeutralModeValue.Brake);
 
-        m_BottomFeederMotor.setControl(new Follower(indexerId, MotorAlignmentValue.Opposed));
+        m_BottomFeederMotor.setControl(new Follower(indexerId, MotorAlignmentValue.Aligned));
 
         indexerDeviceVelocity = m_indexerMotor.getVelocity();
         indexerDevicePosition = m_indexerMotor.getPosition();

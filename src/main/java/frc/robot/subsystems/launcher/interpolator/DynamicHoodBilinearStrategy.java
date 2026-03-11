@@ -3,20 +3,20 @@ package frc.robot.subsystems.launcher.interpolator;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import org.littletonrobotics.junction.Logger;
 
 import static edu.wpi.first.units.Units.*;
 
 /**
- * Interpolates a {@link LaunchConfig} (angular velocity and shoot angle) given a displacement to shoot the fuel.
+ * Interpolates a {@link LaunchConfig} (angular velocity and shoot hoodExtension) given a displacement to shoot the
+ * fuel.
  * <p>
- * The angular velocity and launch angle are separated into 2 different functions, only correlated by the common
+ * The angular velocity and launch hoodExtension are separated into 2 different functions, only correlated by the common
  * independent variable (distance).
  *
  * @author Logan Dhillon, FRC 5409 Chargers
  * @apiNote This strategy internally uses a {@link BilinearStrategy}; the test points in the {@link BilinearStrategy}
  * will be used here.
+ * @deprecated This strategy was ruled performatively impractical and will not be updated since Feb. 2026.
  */
 public class DynamicHoodBilinearStrategy extends BilinearStrategy {
     private static final Angle ANGLE_ADJUSTMENT = Degrees.of(5);
@@ -33,9 +33,9 @@ public class DynamicHoodBilinearStrategy extends BilinearStrategy {
      *
      * @param targetVelocity target/theoretical velocity
      * @param realVelocity   actual velocity of the motor
-     * @param hoodAngle      measured hood angle
+     * @param hoodAngle      measured hood hoodExtension
      *
-     * @return new hood angle
+     * @return new hood hoodExtension
      */
     public Angle computeHoodAdjustment(
             AngularVelocity targetVelocity,
@@ -57,17 +57,18 @@ public class DynamicHoodBilinearStrategy extends BilinearStrategy {
 
     @Override
     public void periodic() {
-        if (lastConfig == null) return;
-
-        // update hood before returning interpolation
-        Angle err = computeHoodAdjustment(
-                lastConfig.speed(),
-                this.launcher.getVelocity(),
-                this.launcher.getHoodAngle(),
-                lastConfig.angle()
-        );
-        Logger.recordOutput("Launcher/Interpolator/DynamicHoodAdjustment", err);
-        CommandScheduler.getInstance().schedule(this.launcher.setHoodAngle(() -> lastConfig.angle().plus(err)));
+//        if (lastConfig == null) return;
+//
+//        // update hood before returning interpolation
+//        Angle err = computeHoodAdjustment(
+//                lastConfig.speed(),
+//                this.launcher.getVelocity(),
+//                this.launcher.getHoodAngle(),
+//                lastConfig.hoodExtension()
+//        );
+//        Logger.recordOutput("Launcher/Interpolator/DynamicHoodAdjustment", err);
+//        CommandScheduler.getInstance().schedule(this.launcher.setHoodAngle(() -> lastConfig.hoodExtension().plus
+//        (err)));
     }
 
     @Override

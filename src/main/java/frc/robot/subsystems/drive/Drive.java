@@ -209,12 +209,12 @@ public class Drive extends SubsystemBase {
                 lastModulePositions[moduleIndex] = modulePositions[moduleIndex];
             }
 
-            // Update gyro angle
+            // Update gyro hoodExtension
             if (gyroInputs.isConnected) {
-                // Use the real gyro angle
+                // Use the real gyro hoodExtension
                 rawGyroRotation = gyroInputs.odometryYawPositions[i];
             } else {
-                // Use the angle delta from the kinematics and module deltas
+                // Use the hoodExtension delta from the kinematics and module deltas
                 Twist2d twist = kinematics.toTwist2d(moduleDeltas);
                 rawGyroRotation = rawGyroRotation.plus(new Rotation2d(twist.dtheta));
             }

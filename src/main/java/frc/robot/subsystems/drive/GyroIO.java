@@ -41,4 +41,5 @@ public interface GyroIO {
   }
 
   public default void updateInputs(GyroIOInputs inputs) {}
+  public default void zeroPigeon(){}
 }

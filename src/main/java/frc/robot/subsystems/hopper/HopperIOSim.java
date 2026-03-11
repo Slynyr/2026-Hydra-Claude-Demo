@@ -1,10 +1,8 @@
 package frc.robot.subsystems.hopper;
 
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.Kilograms;
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Volts;
+import static edu.wpi.first.units.Units.*;
+
+import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
@@ -66,9 +64,9 @@ public class HopperIOSim implements HopperIO {
     }
 
     @Override
-    public void setSetpoint(Distance setpoint) {
-        pid.setSetpoint(setpoint.in(Meters));
-        simSetpoint = setpoint;
+    public void setSetpoint(Supplier<Distance> setpoint) {
+        pid.setSetpoint(setpoint.get().in(Meters));
+        simSetpoint = setpoint.get();
         running = true;
     }
 

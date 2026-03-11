@@ -49,20 +49,20 @@ public final class Constants {
         public static final int INTAKE_ROLLER_MOTOR    = 29;
 
         // LAUNCHER
-        public static final int LAUNCHER_CANCODER     = 1;
+        public static final int LAUNCHER_CANCODER     = 26;
         public static final int LAUNCHER_MOTOR_1      = 24;
         public static final int LAUNCHER_MOTOR_2      = 25;
-        public static final int LAUNCHER_HOOD_SERVO_1 = 4;
-        public static final int LAUNCHER_HOOD_SERVO_2 = 5;
+        public static final int LAUNCHER_HOOD_SERVO_1 = 8;
+        public static final int LAUNCHER_HOOD_SERVO_2 = 9;
         public static final int LAUNCHER_ULTRASONIC_CHANNEL = 1;
 
 
         // FEEDER
-        public static final int FEEDER_MOTOR_TOP    = 0; // TODO: jaden will update these
-        public static final int FEEDER_MOTOR_BOTTOM = 0;
+        public static final int FEEDER_MOTOR_TOP    = 33; // TODO: jaden will update these
+        public static final int FEEDER_MOTOR_BOTTOM = 27;
 
         // HOPPER
-        public static final int HOPPER_MOTOR_ID     = 20;
+        public static final int HOPPER_MOTOR_ID     = 30;
 
         // SERIALIZER
         public static final int SERIALIZER_MOTOR = 31;
@@ -72,17 +72,23 @@ public final class Constants {
     }
 
     public static final class kAutoAlign {
-        public static final PIDConstants ALIGN_PID = new PIDConstants(4.9, 0.0, 0.28);
+        public static final PIDConstants ALIGN_PID = 
+        new PIDConstants
+        (1.75, 
+        0.0, 
+        0.28);
+        // 4.9, 0, 0.28
 
         public static final Distance TRANSLATION_TOLERANCE;
         public static final Angle    ROTATION_TOLERANCE;
+        public static final AngularVelocity    ROTATION_VELOCITY_TOLERANCE;
 
         public static final Distance TRANSLATION_TOLERANCE_CLIMB_PREP;
         public static final Angle    ROTATION_TOLERANCE_CLIMB_PREP;
 
         public static final LinearVelocity VELOCITY_TOLERANCE            = MetersPerSecond.of(0.18);
         public static final LinearVelocity AUTO_VELOCITY_TOLERANCE       = MetersPerSecond.of(0.15);
-        //Tune to allow the climber prep pose to only affect approach angle + keep velocity
+        //Tune to allow the climber prep pose to only affect approach hoodExtension + keep velocity
         public static final LinearVelocity VELOCITY_TOLERANCE_CLIMB_PREP = MetersPerSecond.of(1);
 
         public static final AngularVelocity AUTO_ANGULAR_VELOCITY_TOLERANCE = DegreesPerSecond.of(0.15);
@@ -92,16 +98,22 @@ public final class Constants {
             if (IS_TUNING) {
                 TRANSLATION_TOLERANCE = Centimeters.of(0.00);
                 ROTATION_TOLERANCE = Degrees.of(0.00);
+                ROTATION_VELOCITY_TOLERANCE = DegreesPerSecond.of(0.0);
 
                 TRANSLATION_TOLERANCE_CLIMB_PREP = Centimeter.of(0.0);
                 ROTATION_TOLERANCE_CLIMB_PREP = Degrees.of(0.00);
-            } else {
-                TRANSLATION_TOLERANCE = Centimeters.of(2.00);
-                ROTATION_TOLERANCE = Degrees.of(1.25);
 
-                //Tune to allow the climber prep pose to only affect approach angle
+
+            } else {
+
+                TRANSLATION_TOLERANCE = Centimeters.of(4.00);
+                ROTATION_TOLERANCE = Degrees.of(1.25);
+                ROTATION_VELOCITY_TOLERANCE = DegreesPerSecond.of(10.0);
+
+                //Tune to allow the climber prep pose to only affect approach hoodExtension
                 TRANSLATION_TOLERANCE_CLIMB_PREP = Centimeters.of(2.00);
                 ROTATION_TOLERANCE_CLIMB_PREP = Degrees.of(1.25);
+
             }
         }
 
@@ -185,6 +197,17 @@ public final class Constants {
         // TODO: GET A REAL NUMBER NOT A GUESS
         public static final LinearVelocity BUMP_TRAVERSAL_SPEED = FeetPerSecond.of(5.5);
         public static final Time           SETTLING_TIME        = Seconds.of(1);
+    }
+
+    public static final class GameCommandsConstants{
+        public static final Time        WAIT_TIME_BEFORE_AGITATE            = Milliseconds.of(500);
+        public static final Time        WAIT_TIME_BEFORE_INTAKE_EXTENSION   = Milliseconds.of(500);
+        public static final Time        AUTO_LAUNCH_WAIT_TIME               = Seconds.of(5);
+        public static final Distance    EXTEND_POINT                         = Centimeters.of(23.5);
+        public static final Distance    RETRACT_POINT                        = EXTEND_POINT.minus(Centimeters.of(7.5));
+        // TODO: TUNE THIS VALUE
+        public static final AngularVelocity PASSING_RPS                     = RotationsPerSecond.of(50);
+        public static final Distance PASSING_HOOD_ANGLE                     = Millimeters.of(50);
     }
 
     public static final class kField{

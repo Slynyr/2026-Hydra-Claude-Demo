@@ -84,7 +84,7 @@ public class FeederIOSim implements FeederIO {
         inputs.appliedCurrent = Amps.of(feederSim.getCurrentDrawAmps());
         numberOfRotations += getVelocityRPS().in(RotationsPerSecond)*0.02;
         inputs.motorPosition = Rotations.of(numberOfRotations);
-        inputs.setpoint = simSetpoint;
+        inputs.setpoint = RotationsPerSecond.of(simSetpoint);
 
     }
 

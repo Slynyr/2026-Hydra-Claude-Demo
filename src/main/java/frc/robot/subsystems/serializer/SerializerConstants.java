@@ -7,8 +7,10 @@ public final class SerializerConstants {
     
     public static final Current ORTONA_SPARK_MAX_CURRENT_LIMIT = Amps.of(30);
     public static final boolean ORTONA_INDEXER_MOTOR_INVERTED = false;
+
+    public static final double SERIALIZING_VOLTAGE = 10;
      
-    public static final Current TALON_FX_CURRENT_LIMIT = Amps.of(30);
+    public static final Current TALON_FX_CURRENT_LIMIT = Amps.of(20);
     public static final double GEARING = 1.0/3.0;
 
 }

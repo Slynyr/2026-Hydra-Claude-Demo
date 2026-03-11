@@ -18,7 +18,7 @@ public class Feeder extends SubsystemBase {
 
     private FeederInputsAutoLogged inputs;
     private FeederIO io;
-    private static AngularVelocity targetRPS;
+    public AngularVelocity targetRPS;
     
     public Feeder(FeederIO io) {
         SmartDashboard.putData("Feeder/PID", FeederConstants.PID);

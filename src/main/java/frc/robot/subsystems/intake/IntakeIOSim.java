@@ -103,7 +103,7 @@ public class IntakeIOSim implements IntakeIO {
       extensionSim.setInputVoltage(volts);
       extensionSim.update(0.02);
 
-      inputs.extensionPosition = extensionSim.getPositionMeters();
+    //   inputs.extensionPosition = extensionSim.getPositionMeters();
       inputs.isExtended = extensionSim.getPositionMeters() >= Extension.EXTENSION_MAX_DISTANCE.in(Meters) - 0.01;
       inputs.isRetracted = extensionSim.getPositionMeters() <= Extension.EXTENSION_MIN_DISTANCE.in(Meters) + 0.01;
       inputs.extensionVelocity = MetersPerSecond.of(extensionSim.getVelocityMetersPerSecond());

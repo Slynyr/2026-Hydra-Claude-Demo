@@ -224,7 +224,7 @@ public class AlignHelper {
      * Calculates rotation difference for rotation2d
      * @param r1 1st rotation2d
      * @param r2 2nd rotation2d
-     * @return The angle between them
+     * @return The hoodExtension between them
      */
     public static Angle rotationDifference(Rotation2d r1, Rotation2d r2) {
         double difference = r1.getRadians() - r2.getRadians();

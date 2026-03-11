@@ -2,12 +2,15 @@ package frc.robot.subsystems.elevator;
 
 import static edu.wpi.first.units.Units.Meters;
 
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -20,7 +23,6 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
-import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.util.PhoenixUtil;
 
 public class ElevatorIOTalonFX implements ElevatorIO {
@@ -32,7 +34,8 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     private CurrentLimitsConfigs m_currentConfig;
 
     private FeedbackConfigs m_encoderConfigs;
-    private Slot0Configs m_pidConfig;
+    private Slot0Configs m_pidSlowConfig;
+    private Slot1Configs m_pidFastConfig;
 
     private PositionVoltage m_request;
 
@@ -42,7 +45,11 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     private StatusSignal<Temperature> mainMotorTemp;
     private StatusSignal<Current> mainMotorTorqueCurrent;
 
-
+    private LoggedNetworkNumber fastKP = new LoggedNetworkNumber("Elevator/fast_kP", ElevatorConstants.TALONFX_FAST_PID.kP);
+    private LoggedNetworkNumber fastkI = new LoggedNetworkNumber("Elevator/fast_kI", ElevatorConstants.TALONFX_FAST_PID.kI);
+    private LoggedNetworkNumber fastkD = new LoggedNetworkNumber("Elevator/fast_kD",ElevatorConstants.TALONFX_FAST_PID.kD);
+    private LoggedNetworkNumber kG = new LoggedNetworkNumber("Elevator/kG",ElevatorConstants.kG);
+    
     public ElevatorIOTalonFX(int mainMotorID) {
 
         m_motor = new TalonFX(mainMotorID);
@@ -58,14 +65,21 @@ public class ElevatorIOTalonFX implements ElevatorIO {
             .withSensorToMechanismRatio(ElevatorConstants.GEARING);
         m_motorConfig.apply(m_encoderConfigs);
 
-        m_pidConfig = new Slot0Configs()
-            .withKP(ElevatorConstants.TALONFX_PID.kP)
-            .withKI(ElevatorConstants.TALONFX_PID.kI)
-            .withKD(ElevatorConstants.TALONFX_PID.kD);
+        m_pidSlowConfig = new Slot0Configs()
+            .withKP(ElevatorConstants.TALONFX_SLOW_PID.kP)
+            .withKI(ElevatorConstants.TALONFX_SLOW_PID.kI)
+            .withKD(ElevatorConstants.TALONFX_SLOW_PID.kD);
 
-        m_motorConfig.apply(m_pidConfig);
+        m_pidFastConfig = new Slot1Configs()
+            .withKP(ElevatorConstants.TALONFX_FAST_PID.kP)
+            .withKI(ElevatorConstants.TALONFX_FAST_PID.kI)
+            .withKD(ElevatorConstants.TALONFX_FAST_PID.kD)
+            .withKG(ElevatorConstants.kG);
 
-        m_motorConfig.apply(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
+        m_motorConfig.apply(m_pidSlowConfig);
+        m_motorConfig.apply(m_pidFastConfig);
+
+        m_motorConfig.apply(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
 
         m_motor.setNeutralMode(NeutralModeValue.Brake);
 
@@ -106,7 +120,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
      */
     @Override
     public void stopMotor() {
-        m_motor.stopMotor();
+        m_motor.setVoltage(0);;
     }
 
     /**
@@ -131,8 +145,10 @@ public class ElevatorIOTalonFX implements ElevatorIO {
      * @param setpoint setpoint value
      */
     @Override
-    public void setSetpoint(Distance setpoint) {
-        PhoenixUtil.tryUntilOk(3,() -> m_motor.setControl(m_request.withPosition(setpoint.in(Meters))));;
+    public void setSetpoint(Distance setpoint,int slot) {
+        PhoenixUtil.tryUntilOk(3,
+        () -> m_motor.setControl(m_request.withPosition(setpoint.in(Meters))
+        .withSlot(slot)));;
 
     }
 
@@ -142,6 +158,13 @@ public class ElevatorIOTalonFX implements ElevatorIO {
      */
     @Override
     public void updateInputs(ElevatorInputs inputs) {
+        // m_motor.getConfigurator().apply(
+        //         new Slot1Configs()
+        //                 .withKP(fastKP.get())
+        //                 .withKI(fastkI.get())
+        //                 .withKD(fastkD.get())
+        //                 .withKG(kG.get()));
+
         //Update all variables values for the main motors
         inputs.isMainMotorConnected = BaseStatusSignal.refreshAll(
             motorPosition,

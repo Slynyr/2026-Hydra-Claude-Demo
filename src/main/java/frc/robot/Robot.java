@@ -15,6 +15,10 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.commands.DriveCommands;
+import frc.robot.commands.GameCommands;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.util.RebuiltTimer;
 
@@ -87,6 +91,22 @@ public class Robot extends LoggedRobot {
 
         SignalLogger.enableAutoLogging(false);
         rebuiltTimer = new RebuiltTimer();
+
+        // stop all subsystems on disabled
+        new Trigger(DriverStation::isDisabled)
+                .onTrue(
+                        Commands.parallel(
+                                GameCommands.stopLaunching(
+                                        robotContainer.sys_launcher,
+                                        robotContainer.sys_feeder,
+                                        robotContainer.sys_serializer,
+                                        robotContainer.sys_intake
+                                ),
+                                Commands.runOnce(robotContainer.sys_drive::stop),
+                                robotContainer.sys_hopper.setVoltage(0),
+                                robotContainer.sys_elevator.startManualMove(0)
+                        ).ignoringDisable(true)
+                );
     }
 
     /** This function is called periodically during all modes. */
@@ -111,6 +131,7 @@ public class Robot extends LoggedRobot {
 
         rebuiltTimer.trackShift();
         rebuiltTimer.periodic(robotContainer.sys_drive);
+        Logger.recordOutput("DistToHub", DriveCommands.distToHub(robotContainer.sys_drive));
     }
 
     /** This function is called once when the robot is disabled. */
@@ -153,7 +174,7 @@ public class Robot extends LoggedRobot {
         if (autonomousCommand != null) {
             autonomousCommand.cancel();
         }
-        robotContainer.sys_drive.brakeMode();
+        // robotContainer.sys_drive.brakeMode();
         rebuiltTimer.getAutoWinner();
     }
 

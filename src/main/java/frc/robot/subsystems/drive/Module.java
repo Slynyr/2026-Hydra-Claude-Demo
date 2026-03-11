@@ -113,7 +113,7 @@ public class Module {
     io.setTurnOpenLoop(0.0);
   }
 
-  /** Returns the current turn angle of the module. */
+  /** Returns the current turn hoodExtension of the module. */
   public Rotation2d getAngle() {
     return inputs.turnPosition;
   }
@@ -128,12 +128,12 @@ public class Module {
     return inputs.driveVelocityRadPerSec.in(RadiansPerSecond) * constants.WheelRadius;
   }
 
-  /** Returns the module position (turn angle and drive position). */
+  /** Returns the module position (turn hoodExtension and drive position). */
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(getPositionMeters(), getAngle());
   }
 
-  /** Returns the module state (turn angle and drive velocity). */
+  /** Returns the module state (turn hoodExtension and drive velocity). */
   public SwerveModuleState getState() {
     return new SwerveModuleState(getVelocityMetersPerSec(), getAngle());
   }

@@ -5,23 +5,28 @@ import static edu.wpi.first.units.Units.*;
 import java.util.ArrayList;
 import java.util.Objects;
 
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.Constants.ClimbingPositions;
+import frc.robot.Constants.GameCommandsConstants;
 import frc.robot.Constants.kAutoAlign;
 import frc.robot.Constants.kBump;
-import frc.robot.Constants.kField;
+import frc.robot.Constants;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.feeder.Feeder;
+import frc.robot.subsystems.hopper.Hopper;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.launcher.Launcher;
+import frc.robot.subsystems.serializer.Serializer;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.AutoPath;
-import frc.robot.util.FieldConstants.Hub;
 import frc.robot.util.FieldConstants.LinesHorizontal;
 
 public class Autos {
 
-	public static ArrayList<AutoPath> getAutoPaths(Drive drive, Vision vision){
+	public static ArrayList<AutoPath> getAutoPaths(Drive drive, Vision vision, Launcher launcher, Feeder feeder, Intake intake, Hopper hopper, Serializer serializer, Elevator elevator){
 		ArrayList<AutoPath> autoPaths = new ArrayList<>();
 
 		// LEFT SIDE AUTOS:
@@ -30,7 +35,6 @@ public class Autos {
 				"LeftBump-Intake-CloseFar-Score-LeftClimb",
 
 				// Angled Starting pose:
-				// new Pose2d(3.565,5.400, new Rotation2d(Degrees.of(-146.651))),
 				new Pose2d(3.565,5.400, new Rotation2d(Degrees.of(38.572))),
 
 				// Starting Pose: 
@@ -52,12 +56,9 @@ public class Autos {
 					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
 					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
 				),
-                Objects.requireNonNull(AutoPath.followPath("Left-Bump-Intake-CloseFar")).alongWith(Commands.print("Intake start (GameCommands)")),
-                Commands.parallel(
-                    // Follow path from center of neutral zone to left of field
-                    AutoPath.followPath("Left-Bump-Intake-CloseFar"),
-                    Commands.print("Intake start (GameCommands)")
-                ),
+
+                Objects.requireNonNull(AutoPath.followPath("Left-Bump-Intake-CloseFar"))
+                    .alongWith(GameCommands.startIntake(intake, hopper)),
 
 				// Align back to bump known position
 				DriveCommands.alignToPoint(
@@ -66,7 +67,9 @@ public class Autos {
 					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
 					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
 				),
-                Commands.print("Intake rollers stop?"),
+
+                // TODO: DETERMINE IF INTAKE ROLLERS NEED TO BE STOPPED
+                // intake.stopRoller(),
 
 				// neutral zone -> alliance zone
 				DriveCommands.crossBump(
@@ -77,34 +80,14 @@ public class Autos {
 					kBump.SETTLING_TIME
 				),
 
-				// Score -> call GameCommands.launchFuel() make sure that includes hopper actuation
-				DriveCommands.alignToHeading(
-					drive, 
-					() -> DriveCommands.getRotation2d(
-						drive, 
-						kField.BLUE_HUB
-					).plus(Rotation2d.k180deg)
-				),
-				Commands.waitTime(Seconds.of(5)),
+                Commands.deadline(
+                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME), 
+                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(drive), drive, launcher, feeder, serializer, intake)
+                ),
+                
+                GameCommands.stopLaunching(launcher, feeder, serializer, intake)
 
-				// Align to climber prep -> Call GameCommands.climb()
-				DriveCommands.alignToPoint(
-					drive,
-					ClimbingPositions.LEFT_PREP::getPose,
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION,
-					kAutoAlign.TRANSLATION_TOLERANCE_CLIMB_PREP,
-					kAutoAlign.ROTATION_TOLERANCE_CLIMB_PREP,
-					kAutoAlign.VELOCITY_TOLERANCE_CLIMB_PREP
-				),
-
-				// Align to climb
-				DriveCommands.alignToPoint(
-					drive,
-					ClimbingPositions.LEFT::getPose,
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_CLIMB, 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_CLIMB
-				)
+                // GameCommands.autoClimb(drive, elevator, ClimbingPositions.LEFT_PREP::getPose, ClimbingPositions.LEFT::getPose)
 			)
 		);
 
@@ -134,12 +117,8 @@ public class Autos {
 				),
 
 				// Follow path from center of neutral zone to left of field
-                Objects.requireNonNull(AutoPath.followPath("Left-Bump-Intake-FarClose")).alongWith(Commands.print("Intake start (GameCommands)")),
-
-                // Commands.parallel(
-                //     AutoPath.followPath("Left-Bump-Intake-FarClose"),
-                //     Commands.print("Intake start (GameCommands)")
-                // ),
+                Objects.requireNonNull(AutoPath.followPath("Left-Bump-Intake-FarClose"))
+                    .alongWith(GameCommands.startIntake(intake, hopper)),
 
 				// Align back to bump known position
 				DriveCommands.alignToPoint(
@@ -148,7 +127,9 @@ public class Autos {
 					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
 					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
 				),
-                Commands.print("Stop intake rollers?"),
+
+                // TODO: DETERMINE IF WE NEED TO STOP INTAKE ROLLERS
+                // intake.stopRoller(),
 
 				// neutral zone -> alliance zone
 				DriveCommands.crossBump(
@@ -159,34 +140,14 @@ public class Autos {
 					kBump.SETTLING_TIME
 				),
 
-				// Score -> call GameCommands.launchFuel() make sure that includes hopper actuation
-				DriveCommands.alignToHeading(
-					drive, 
-					() -> DriveCommands.getRotation2d(
-						drive, 
-						kField.BLUE_HUB
-					).plus(Rotation2d.k180deg)
-				),
-				Commands.waitTime(Seconds.of(5)),
+                Commands.deadline(
+                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME), 
+                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(drive), drive, launcher, feeder, serializer, intake)
+                ),
 
-				// Align to climber prep -> call GameCommands.climb() 
-				DriveCommands.alignToPoint(
-					drive,
-					ClimbingPositions.LEFT_PREP::getPose,
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION,
-					kAutoAlign.TRANSLATION_TOLERANCE_CLIMB_PREP,
-					kAutoAlign.ROTATION_TOLERANCE_CLIMB_PREP,
-					kAutoAlign.VELOCITY_TOLERANCE_CLIMB_PREP
-				),
+                GameCommands.stopLaunching(launcher, feeder, serializer, intake)
 
-				// Align to climb
-				DriveCommands.alignToPoint(
-					drive,
-					ClimbingPositions.LEFT::getPose,
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_CLIMB, 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_CLIMB
-				)
+                // GameCommands.autoClimb(drive, elevator, ClimbingPositions.LEFT_PREP::getPose, ClimbingPositions.LEFT::getPose)
 			)
 		);
 
@@ -219,11 +180,8 @@ public class Autos {
 					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
 				),
 				// Follow path from center of neutral zone to right of field
-				Objects.requireNonNull(AutoPath.followPath("Right-Bump-Intake-CloseFar")).alongWith(Commands.print("Intake start (GameCommands)")),
-                // Commands.parallel(
-                //     AutoPath.followPath("Right-Bump-Intake-CloseFar"),
-                //     Commands.print("Intake start (GameCommands)")
-                // ),
+				Objects.requireNonNull(AutoPath.followPath("Right-Bump-Intake-CloseFar"))
+                .alongWith(GameCommands.startIntake(intake, hopper)),
 
 				// Align back to bump known position
 				DriveCommands.alignToPoint(
@@ -233,7 +191,8 @@ public class Autos {
 					() -> MetersPerSecondPerSecond.of(8.0)
 				),
 
-                Commands.print("Stop intake rollers?"),
+                // TODO: DETERMINE IF NEEDED TO STOP INTAKING
+                // intake.stopRoller(),
 
 				// neutral zone -> alliance zone
 				DriveCommands.crossBump(
@@ -243,34 +202,14 @@ public class Autos {
 					kBump.SETTLING_TIME
 				),
 
-				// Score
-				DriveCommands.alignToHeading(
-					drive, 
-					() -> DriveCommands.getRotation2d(
-						drive, 
-						kField.BLUE_HUB
-					).plus(Rotation2d.k180deg)
-				),
-				Commands.waitTime(Seconds.of(5)),
+                Commands.deadline(
+                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME), 
+                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(drive), drive, launcher, feeder, serializer, intake)
+                ),
+                
+                GameCommands.stopLaunching(launcher, feeder, serializer, intake)
 
-				// Align to climber prep -> Should be calling GameCommands.climb()
-				DriveCommands.alignToPoint(
-					drive,
-						ClimbingPositions.RIGHT_PREP::getPose,
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION,
-					kAutoAlign.TRANSLATION_TOLERANCE_CLIMB_PREP,
-					kAutoAlign.ROTATION_TOLERANCE_CLIMB_PREP,
-					kAutoAlign.VELOCITY_TOLERANCE_CLIMB_PREP
-				),
-
-				// Align to climb
-				DriveCommands.alignToPoint(
-					drive,
-						ClimbingPositions.RIGHT::getPose,
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_CLIMB, 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_CLIMB
-				)
+                // GameCommands.autoClimb(drive, elevator, ClimbingPositions.RIGHT_PREP::getPose, ClimbingPositions.RIGHT::getPose)
 			)
 		);
 
@@ -306,12 +245,8 @@ public class Autos {
 					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
 				),
 				// Follow path from right of field to center of neutral zone 
-				Objects.requireNonNull(AutoPath.followPath("Right-Bump-Intake-FarClose")).alongWith(Commands.print("Intake start (GameCommands)")),
-
-                // Commands.parallel(
-                //     AutoPath.followPath("Right-Bump-Intake-FarClose"),
-                //     Commands.print("Intake start (GameCommands)")
-                // ),
+				Objects.requireNonNull(AutoPath.followPath("Right-Bump-Intake-FarClose"))
+                .alongWith(GameCommands.startIntake(intake, hopper)),
 
 				// Align back to bump known position
 				DriveCommands.alignToPoint(
@@ -321,7 +256,8 @@ public class Autos {
 					() -> MetersPerSecondPerSecond.of(8.0)
 				),
 
-                Commands.print("Stop intake rollers?"),
+                // TODO: DETERMINE IF THERE IS A NEED TO STOP INTAKE ROLLERS
+                // intake.stopRoller(),
 
 				// neutral zone -> alliance zone
 				DriveCommands.crossBump(
@@ -331,50 +267,31 @@ public class Autos {
 					kBump.SETTLING_TIME
 				),
 
-				// Score -> Should be calling GameCommands.launchFuel()
-				DriveCommands.alignToHeading(
-					drive, 
-					() -> DriveCommands.getRotation2d(
-						drive, 
-						kField.BLUE_HUB
-					).plus(Rotation2d.k180deg)
-				),
-				Commands.waitTime(Seconds.of(5)),
+                Commands.deadline(
+                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME), 
+                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(drive), drive, launcher, feeder, serializer, intake)
+                ),
+                
+                GameCommands.stopLaunching(launcher, feeder, serializer, intake)
 
-				// Align to climber prep -> Should be calling GameCommands.climb()
-				DriveCommands.alignToPoint(
-					drive,
-					ClimbingPositions.RIGHT_PREP::getPose,
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION,
-					kAutoAlign.TRANSLATION_TOLERANCE_CLIMB_PREP,
-					kAutoAlign.ROTATION_TOLERANCE_CLIMB_PREP,
-					kAutoAlign.VELOCITY_TOLERANCE_CLIMB_PREP
-				),
-
-				// Align to climb
-				DriveCommands.alignToPoint(
-					drive,
-					ClimbingPositions.RIGHT::getPose,
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_CLIMB, 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_CLIMB
-				)
+                // GameCommands.autoClimb(drive, elevator, ClimbingPositions.RIGHT_PREP::getPose, ClimbingPositions.RIGHT::getPose)
 			)
 		); 
 
-		autoPaths.add(
-			new AutoPath(
-				"Test-Path",
-				new Pose2d(2,7,Rotation2d.k180deg),
-				DriveCommands.alignToPoint(
-					drive, 
-					() -> new Pose2d(2,7,Rotation2d.kZero), 
-					() -> MetersPerSecond.of(1), 
-					() -> MetersPerSecondPerSecond.of(2)
-				),
-				AutoPath.followPath("TestPath")
-			)
-		);
+        if (Constants.IS_TUNING)
+            autoPaths.add(
+                new AutoPath(
+                    "Test-Path",
+                    new Pose2d(2,7,Rotation2d.k180deg),
+                    DriveCommands.alignToPoint(
+                        drive, 
+                        () -> new Pose2d(2,7,Rotation2d.kZero), 
+                        () -> MetersPerSecond.of(1), 
+                        () -> MetersPerSecondPerSecond.of(2)
+                    ),
+                    AutoPath.followPath("TestPath")
+                )
+            );
         
 
         autoPaths.add(
@@ -386,18 +303,13 @@ public class Autos {
                     () -> new Pose2d(3.127,4.011,Rotation2d.k180deg), 
                     () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
                     () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION),
-                // Score -> Should be calling GameCommands.launchFuel()
-				DriveCommands.alignToHeading(
-					drive, 
-					() -> DriveCommands.getRotation2d(
-						drive, 
-						new Pose2d(
-						new Translation2d(Hub.topCenterPoint.getMeasureX(), Hub.topCenterPoint.getMeasureY()), 
-						Rotation2d.kZero
-						)
-					).plus(Rotation2d.k180deg)
-				),
-				Commands.waitTime(Seconds.of(5))
+
+                Commands.deadline(
+                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME), 
+                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(drive), drive, launcher, feeder, serializer, intake)
+                ),
+                
+                GameCommands.stopLaunching(launcher, feeder, serializer, intake)
             )
         );
 
@@ -407,7 +319,8 @@ public class Autos {
                 new Pose2d(3.565,5.958,Rotation2d.k180deg),
 
                 // Go from starting point to depot
-                Objects.requireNonNull(AutoPath.followPath("Start-Depot")).alongWith(Commands.print("Intake Start (GameCommands)")),
+                Objects.requireNonNull(AutoPath.followPath("Start-Depot"))
+                .alongWith(GameCommands.startIntake(intake, hopper)),
 
                 // Align to scoring point
                 DriveCommands.alignToPoint(
@@ -417,34 +330,15 @@ public class Autos {
                     () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
                 ),
 
-                // Score -> Should be calling GameCommands.launchFuel()
-				DriveCommands.alignToHeading(
-					drive, 
-					() -> DriveCommands.getRotation2d(
-						drive, 
-						kField.BLUE_HUB
-					).plus(Rotation2d.k180deg)
-				),
-				Commands.waitTime(Seconds.of(5)),
+                Commands.deadline(
+                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME), 
+                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(drive), drive, launcher, feeder, serializer, intake)
+                ),
+                
+                GameCommands.stopLaunching(launcher, feeder, serializer, intake)
 
-                // Align to climber prep -> call GameCommands.climb() 
-				DriveCommands.alignToPoint(
-					drive,
-					ClimbingPositions.LEFT_PREP::getPose,
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION,
-					kAutoAlign.TRANSLATION_TOLERANCE_CLIMB_PREP,
-					kAutoAlign.ROTATION_TOLERANCE_CLIMB_PREP,
-					kAutoAlign.VELOCITY_TOLERANCE_CLIMB_PREP
-				),
+                // GameCommands.autoClimb(drive, elevator, ClimbingPositions.LEFT_PREP::getPose, ClimbingPositions.LEFT::getPose)
 
-				// Align to climb
-				DriveCommands.alignToPoint(
-					drive,
-					ClimbingPositions.LEFT::getPose,
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_CLIMB, 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_CLIMB
-				)
             )
         );
 
@@ -459,45 +353,27 @@ public class Autos {
                     drive, 
                     () -> new Pose2d(0.473, 0.670, Rotation2d.k180deg), 
                     () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
-                    () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
-                ).alongWith(Commands.print("Start Intake (GameCommands)")),
+                    () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION  
+                )
+                .alongWith(GameCommands.startIntake(intake, hopper)),
                 // Time to wait for outpost dump
                 Commands.waitSeconds(2),
 
-                 DriveCommands.alignToPoint(
+                DriveCommands.alignToPoint(
                     drive, 
                     () -> new Pose2d(0.902, 0.670, Rotation2d.k180deg), 
                     () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
                     () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
                 ),
-                // Score -> Should be calling GameCommands.launchFuel()
-				DriveCommands.alignToHeading(
-					drive, 
-					() -> DriveCommands.getRotation2d(
-						drive, 
-						kField.BLUE_HUB
-					).plus(Rotation2d.k180deg)
-				),
-				Commands.waitTime(Seconds.of(5)),
+                
+                Commands.deadline(
+                    Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME), 
+                    GameCommands.autoLaunch(() -> DriveCommands.distToHub(drive), drive, launcher, feeder, serializer, intake)
+                ),
+                
+                GameCommands.stopLaunching(launcher, feeder, serializer, intake)
 
-                // Align to climber prep -> call GameCommands.climb() 
-				DriveCommands.alignToPoint(
-					drive,
-					ClimbingPositions.RIGHT_PREP::getPose,
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION,
-					kAutoAlign.TRANSLATION_TOLERANCE_CLIMB_PREP,
-					kAutoAlign.ROTATION_TOLERANCE_CLIMB_PREP,
-					kAutoAlign.VELOCITY_TOLERANCE_CLIMB_PREP
-				),
-
-				// Align to climb
-				DriveCommands.alignToPoint(
-					drive,
-					ClimbingPositions.RIGHT::getPose,
-					() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_CLIMB, 
-					() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_CLIMB
-				)
+                // GameCommands.autoClimb(drive, elevator, ClimbingPositions.RIGHT_PREP::getPose, ClimbingPositions.RIGHT::getPose)
             )
         );
 

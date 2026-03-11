@@ -19,7 +19,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -56,8 +55,8 @@ import com.pathplanner.lib.util.FlippingUtil;
 public class DriveCommands {
   private static final double DEADBAND = 0.1;
   private static final double TRIGGER_DEADBAND = 0.01;
-  private static final double ANGLE_KP = 7.0;
-  private static final double ANGLE_KD = 0.4;
+  private static final double ANGLE_KP = 5.0; // 7
+  private static final double ANGLE_KD = 0.1; // 0.4
   private static final double ANGLE_MAX_VELOCITY = 8.0;
   private static final double ANGLE_MAX_ACCELERATION = 20.0;
   private static final double FF_START_DELAY = 2.0; // Secs
@@ -160,7 +159,7 @@ public class DriveCommands {
 
   /**
    * Field relative drive command using joystick for linear control and PID for angular control.
-   * Possible use cases include snapping to an angle, aiming at a vision target, or controlling
+   * Possible use cases include snapping to an hoodExtension, aiming at a vision target, or controlling
    * absolute rotation with a joystick.
    */
   public static Command joystickDriveAtAngle(
@@ -327,7 +326,6 @@ public class DriveCommands {
 
   @SuppressWarnings("resource")
   public static Command alignToHeading(Drive drive, Supplier<Rotation2d> target){
-
     PIDController headingController =
       new PIDController(
         ANGLE_KP, 
@@ -350,41 +348,59 @@ public class DriveCommands {
 
         double omega = 
           headingController.calculate(robotRotation.getRadians(), targetRotation.getRadians());
+        
+        if (Math.abs(omega) < 0.2){ // some tuned value
+            omega = 0;
+            isAligned = true;
+        } else {
+            isAligned = false;
+        }
 
-        drive.runVelocity(drive.getFieldRelativeSpeeds(omega));
+        drive.runVelocity(
+            ChassisSpeeds.fromFieldRelativeSpeeds(0.0,0.0, omega, drive.getRotation()));
 
         Logger.recordOutput("AutoAlign/TargetRotation", targetRotation);
         Logger.recordOutput("AutoAlign/OmegaOutput", omega);
+        Logger.recordOutput("AutoAlign/isAligned", isAligned);
 
       }, drive)
-    ).until(() -> {
-        Rotation2d robotRotation = drive.getRotation();
-        Rotation2d targetRotation = target.get();
-
-        Angle difference = AlignHelper.rotationDifference(targetRotation, robotRotation);
-
-        AngularVelocity rotationSpeed = RadiansPerSecond.of(drive.getChassisSpeeds().omegaRadiansPerSecond);
-
-        Logger.recordOutput("AutoAlign/Angle To Alignment [degrees]", difference.in(Degrees));
-        Logger.recordOutput("AutoAlign/Velocity [degrees per s]", rotationSpeed.in(DegreesPerSecond));
-
-        return difference.lte(kAutoAlign.ROTATION_TOLERANCE);
-
-    }).andThen(
-        Commands.runOnce(() -> {
-          drive.stop();
-          isAligned = true;
-        }, drive)
     );
+    // .until(() -> {
+    //     Rotation2d robotRotation = drive.getRotation();
+    //     Rotation2d targetRotation = target.get();
+
+    //     Angle difference = AlignHelper.rotationDifference(targetRotation, robotRotation);
+
+    //     AngularVelocity rotationSpeed = RadiansPerSecond.of(drive.getChassisSpeeds().omegaRadiansPerSecond);
+
+    //     Logger.recordOutput("AutoAlign/Angle To Alignment [degrees]", difference.in(Degrees));
+    //     Logger.recordOutput("AutoAlign/Velocity [degrees per s]", rotationSpeed.in(DegreesPerSecond));
+
+    //     if (difference.lte(kAutoAlign.ROTATION_TOLERANCE)
+    //             && rotationSpeed.lte(kAutoAlign.ROTATION_VELOCITY_TOLERANCE))
+    //         alignedCounter[0]++;
+        
+
+    //     return difference.lte(kAutoAlign.ROTATION_TOLERANCE)
+    //             && rotationSpeed.lte(kAutoAlign.ROTATION_VELOCITY_TOLERANCE);
+
+    // })
+    // .andThen(
+    //     Commands.runOnce(() -> {
+    //       drive.stop();
+    //       isAligned = true;
+    //     }, drive)
+    // );
   }
 
   public static Command crossBump(Drive drive, Vision vision, Supplier<Rotation2d> targetHeading, Supplier<LinearVelocity> speed, Time timeout){
+    //  -----------------SIM----------------
     if (Constants.CURRENT_MODE == Mode.SIM)
         return Commands.sequence(
-            DriveCommands.alignToHeading(
-                drive, 
-                targetHeading
-            ),
+            // DriveCommands.alignToHeading(
+            //     drive, 
+            //     targetHeading
+            // ),
             Commands.run(() -> drive.runVelocity(
                 ChassisSpeeds.fromFieldRelativeSpeeds(
                     new ChassisSpeeds(
@@ -397,12 +413,16 @@ public class DriveCommands {
             Commands.runOnce(drive::stop)
         );
 
+    // ---------- REAL -----------
     return Commands.sequence(
-        DriveCommands.alignToHeading(
-            drive, 
-            targetHeading
-        ),
-        Commands.runOnce(() -> DID_GET_OFF_GROUND.set(false)),
+        // DriveCommands.alignToHeading(
+        //     drive, 
+        //     targetHeading
+        // ),
+        Commands.runOnce(() -> {
+            DID_GET_OFF_GROUND.set(false);
+            lastTime.set(-1);
+        }),
         Commands.run(() -> drive.runVelocity(
             ChassisSpeeds.fromFieldRelativeSpeeds(
                 new ChassisSpeeds(
@@ -419,22 +439,61 @@ public class DriveCommands {
             if (!DID_GET_OFF_GROUND.get()) return false;
 
             // TODO: Tune for real robot value
-            if (drive.getTilt().gt(Degrees.of(2.5))){ // should be much lower on real robot
+            if (drive.getTilt().gt(Degrees.of(2.0)) && lastTime.get() == -1){ // should be much lower on real robot
+            //     lastTime.set(-2);
+            // }
+
+            // if (drive.getTilt().lte(Degrees.of(2.0)) && lastTime.get() == -2) {
                 lastTime.set(System.currentTimeMillis());
             }
 
-            Logger.recordOutput("Drive/BumpTimer", System.currentTimeMillis() - lastTime.get());
+            double dt = System.currentTimeMillis() - lastTime.get();
+            Logger.recordOutput("Drive/BumpTimer", dt);
+            Logger.recordOutput("Drive/BumpTimeout", timeout.in(Millisecond));
 
-            return (drive.getTilt().lte(Degrees.of(2.5)) && (System.currentTimeMillis() - lastTime.get() > timeout.in(Millisecond) || vision.hasTarget()));
+
+            return (
+                drive.getTilt().lte(Degrees.of(3.5)) 
+                && 
+                (
+                    dt > timeout.in(Millisecond) 
+            // || vision.hasTarget()
+            )
+            );
         }),
         Commands.runOnce(drive::stop)
     );
   }
 
+  public static Command crossBumpDeadline(Drive drive, Supplier<LinearVelocity> speed){
+    return Commands.deadline(
+        Commands.sequence(
+            // Robot starts on bump
+            Commands.waitUntil(() -> drive.getTilt().gte(Degrees.of(3))),
+            // Reaches top of bump
+            Commands.waitUntil(() -> drive.getTilt().lte(Degrees.of(3))),
+            // Reaches flat ground again
+            Commands.waitUntil(() -> drive.getTilt().lte(Degrees.of(3)))
+        ), 
+        Commands.run(() -> drive.runVelocity(
+            ChassisSpeeds.fromFieldRelativeSpeeds(
+                new ChassisSpeeds(
+                    speed.get(),
+                    MetersPerSecond.of(0.0),
+                    RadiansPerSecond.of(0.0)
+                ),
+                drive.getRotation())
+        ), drive)
+    ).andThen(
+        drive::stop,
+        drive
+    );
+  }
+
   public static Distance distToHub(Drive drive){
     Pose2d hubPose = Constants.kField.BLUE_HUB;
-    if (AutoBuilder.shouldFlip())
-        hubPose = FlippingUtil.flipFieldPose(hubPose);
+   if (AutoBuilder.shouldFlip())
+       hubPose = Constants.kField.RED_HUB;
 
     return Meters.of((drive.getPose().getTranslation().getDistance(hubPose.getTranslation())));
   }
@@ -451,6 +510,10 @@ public class DriveCommands {
       targetPose.getX() - drive.getPose().getX(),
       targetPose.getY() - drive.getPose().getY()
     );
+  }
+
+  public static Rotation2d getRotationToHub(Drive drive){
+    return getRotation2d(drive, Constants.kField.BLUE_HUB).plus(Rotation2d.k180deg);
   }
 
   public static LinearVelocity getBumpSpeed(LinearVelocity speed) {

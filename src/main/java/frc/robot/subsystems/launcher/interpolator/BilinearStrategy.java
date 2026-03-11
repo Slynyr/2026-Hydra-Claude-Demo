@@ -1,28 +1,27 @@
 package frc.robot.subsystems.launcher.interpolator;
 
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 
 import static edu.wpi.first.units.Units.*;
 
 /**
- * Interpolates a {@link LaunchConfig} (angular velocity and shoot angle) given a displacement to shoot the fuel.
+ * Interpolates a {@link LaunchConfig} (angular velocity and shoot hoodExtension) given a displacement to shoot the fuel.
  * <p>
- * The angular velocity and launch angle are separated into 2 different functions, only correlated by the common
+ * The angular velocity and launch hoodExtension are separated into 2 different functions, only correlated by the common
  * independent variable (distance).
  *
  * @author Logan Dhillon, FRC 5409 Chargers
  */
 public class BilinearStrategy extends LaunchStrategy {
-    private static final InterpolatingDoubleTreeMap ANGLE_INTERPOLATOR    = new InterpolatingDoubleTreeMap();
+    private static final InterpolatingDoubleTreeMap HOOD_INTERPOLATOR = new InterpolatingDoubleTreeMap();
     private static final InterpolatingDoubleTreeMap VELOCITY_INTERPOLATOR = new InterpolatingDoubleTreeMap();
 
     @Override
     public LaunchConfig interpolate(Distance displacement) {
         return new LaunchConfig(
-                Radians.of(ANGLE_INTERPOLATOR.get(displacement.in(Meters))),
+                Millimeters.of(HOOD_INTERPOLATOR.get(displacement.in(Meters))),
                 RotationsPerSecond.of(VELOCITY_INTERPOLATOR.get(displacement.in(Meters)))
         );
     }
@@ -35,18 +34,18 @@ public class BilinearStrategy extends LaunchStrategy {
     /**
      * Adds a test point to the 2 tree maps used internally by the data interpolator
      *
-     * @param angle    angle that the fuel was shot at
+     * @param hoodExt  extension of the hood when the fuel was shot
      * @param speed    angular velocity that the fuel was shot at
      * @param distance total distance the fuel traveled
      */
-    private static void addData(Angle angle, AngularVelocity speed, Distance distance) {
-        ANGLE_INTERPOLATOR.put(distance.in(Meters), angle.in(Radians));
+    private static void addData(Distance hoodExt, AngularVelocity speed, Distance distance) {
+        HOOD_INTERPOLATOR.put(distance.in(Meters), hoodExt.in(Millimeters));
         VELOCITY_INTERPOLATOR.put(distance.in(Meters), speed.in(RotationsPerSecond));
     }
 
     static {
         // ==== TESTING DATA FOR PROTOTYPE LAUNCHER ====
-        addData(Degrees.of(30), RotationsPerSecond.of(46), Meters.of(2.0975));
-        addData(Degrees.of(37), RotationsPerSecond.of(54.5), Meters.of(4.0375));
+        addData(Millimeters.of(50), RotationsPerSecond.of(42), Meters.of(2.310));
+        addData(Millimeters.of(75), RotationsPerSecond.of(54), Meters.of(4.730));
     }
 }
