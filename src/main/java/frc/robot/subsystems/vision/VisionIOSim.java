@@ -4,6 +4,7 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.util.LimelightHelpers;
 import frc.robot.util.LimelightHelpers.PoseEstimate;
 import frc.robot.util.LimelightHelpers.RawFiducial;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -98,7 +99,7 @@ public class VisionIOSim implements VisionIO {
     }
 
     @Override
-    public PoseEstimate estimatePose(Drive drive) {
+    public LimelightHelpers.PoseEstimate estimatePose(Drive drive) {
         List<PhotonPipelineResult> results = cam.getAllUnreadResults();
         if (results.isEmpty()) return null;
 

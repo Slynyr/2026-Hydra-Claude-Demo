@@ -36,9 +36,14 @@ public class VisionIOLimelight implements VisionIO {
 //        DebugCommand.register("Fused LL", setIMUMode(IMUMode.FUSED));
 //        DebugCommand.register("Internal LL", setIMUMode(IMUMode.INTERNAL));
 
+        // disable throttle
         LimelightHelpers.SetThrottle(limelightName, VisionConstants.THROTTLE_DISABLED);
         LimelightHelpers.SetIMUMode(limelightName, IMUMode.FUSED.ID);
 
+        // enable rewind
+        LimelightHelpers.setRewindEnabled(limelightName, true);
+
+        // forward ports to network
         forwardLimelightPorts();
     }
 
@@ -52,6 +57,10 @@ public class VisionIOLimelight implements VisionIO {
         return Commands.runOnce(
                 () -> LimelightHelpers.SetIMUMode(limelightName, mode.ID)
         ).ignoringDisable(true);
+    }
+
+    public void captureClip() {
+        LimelightHelpers.triggerRewindCapture(limelightName, VisionConstants.CAPTURE_VIDEO_DURATION);
     }
 
     @Override
@@ -113,7 +122,7 @@ public class VisionIOLimelight implements VisionIO {
 
     /**
      * Updates the current robot orientation in {@link LimelightHelpers}, then gets the
-     * {@link frc.robot.util.LimelightHelpers.PoseEstimate} using WPI Blue MegaTag2.
+     * {@link LimelightHelpers.PoseEstimate} using WPI Blue MegaTag2.
      *
      * @param drive Drive subsystem to get rotation from
      */

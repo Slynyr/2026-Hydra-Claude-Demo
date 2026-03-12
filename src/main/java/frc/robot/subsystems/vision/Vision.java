@@ -46,6 +46,10 @@ public class Vision extends SubsystemBase {
         drive.addVisionMeasurement(estimate.pose, estimate.timestampSeconds, deriveStdDevs(estimate.avgTagDist));
     }
 
+    public void captureClip() {
+        io.captureClip();
+    }
+
     /**
      * Derives the standard deviation of background noise in the fiducial pose estimation given the factors from
      * constants

@@ -41,4 +41,6 @@ public class VisionConstants {
             new Translation3d(Inches.of(-11.639), Inches.of(-1.623), Inches.of(20.027)),
             new Rotation3d(Degrees.of(0.0), Degrees.of(5.0), Degrees.of(180.0))
     );
+
+    public static final double CAPTURE_VIDEO_DURATION = 25;
 }

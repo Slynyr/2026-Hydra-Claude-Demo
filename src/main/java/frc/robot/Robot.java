@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.DriveCommands;
 import frc.robot.util.RebuiltTimer;
@@ -86,6 +87,9 @@ public class Robot extends LoggedRobot {
         // stop all subsystems on disabled
         new Trigger(DriverStation::isDisabled)
                 .onTrue(robotContainer.onDisable().ignoringDisable(true));
+
+        new Trigger(DriverStation::isTeleop)
+                .onTrue(Commands.runOnce(robotContainer.sys_vision::captureClip));
     }
 
     /** This function is called periodically during all modes. */
