@@ -51,5 +51,7 @@ public class LauncherConstants {
         public static final int SERVO_DEADBAND_CENTER = 1500;
         public static final int SERVO_DEADBAND_MIN    = 1200;
         public static final int MIN_PULSE_WIDTH       = 1000;
+
+        public static final int HOOD_INVALIDATION_THRESHOLD_MM = 5;
     }
 }

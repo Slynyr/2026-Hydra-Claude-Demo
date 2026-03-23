@@ -51,6 +51,11 @@ public interface VisionIO {
     default void setCameraOffset() {}
 
     /**
+     * Sets if the vision IO should only use the fused IMU mode.
+     */
+    default void setForceFusedIMU(boolean forceFusedIMU) {}
+
+    /**
      * Estimate the current pose using AprilTags
      *
      * @param drive Drive subsystem to get rotation from

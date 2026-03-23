@@ -56,6 +56,10 @@ public interface IntakeIO {
      */
     default void setSetpoint(Distance position) {}
 
+    default Distance getSetpoint() {
+        return Meters.of(0);
+    }
+
     /**
      * Sets both motors to coastMode
      */

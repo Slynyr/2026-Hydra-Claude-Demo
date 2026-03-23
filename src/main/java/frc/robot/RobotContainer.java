@@ -9,6 +9,8 @@ package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.util.FlippingUtil;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -22,13 +24,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.Constants.ClimbingPositions;
-import frc.robot.Constants.DeviceID;
-import frc.robot.Constants.Mode;
-import frc.robot.Constants.kBump;
+import frc.robot.Constants.*;
 import frc.robot.commands.Autos;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.GameCommands;
@@ -42,17 +42,11 @@ import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.feeder.FeederIO;
 import frc.robot.subsystems.feeder.FeederIOSim;
 import frc.robot.subsystems.feeder.FeederIOTalonFX;
-import frc.robot.subsystems.hopper.Hopper;
-import frc.robot.subsystems.hopper.HopperIO;
-import frc.robot.subsystems.hopper.HopperIOSim;
-import frc.robot.subsystems.hopper.HopperIOTalonFX;
+import frc.robot.subsystems.hopper.*;
 import frc.robot.subsystems.intake.*;
 import frc.robot.subsystems.launcher.*;
 import frc.robot.subsystems.launcher.interpolator.LaunchStrategy;
-import frc.robot.subsystems.serializer.Serializer;
-import frc.robot.subsystems.serializer.SerializerIO;
-import frc.robot.subsystems.serializer.SerializerIOSim;
-import frc.robot.subsystems.serializer.SerializerIOTalonFX;
+import frc.robot.subsystems.serializer.*;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
@@ -65,8 +59,10 @@ import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.Arena2026Rebuilt;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 import java.util.ArrayList;
+import java.util.function.BooleanSupplier;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -95,6 +91,10 @@ public class RobotContainer {
     private ClimbingPositions selectedClimbingPrepPosition = ClimbingPositions.LEFT_PREP;
 
     private Distance manualLaunchDistance = Meters.of(2);
+
+    public BooleanSupplier shouldLaunch = () -> true;
+
+    public LoggedNetworkBoolean launcherShouldIdle = new LoggedNetworkBoolean("Launcher/ShouldIdle", false);
 
     // Controllers
     private final CommandXboxController primaryController   = new CommandXboxController(0);
@@ -151,7 +151,8 @@ public class RobotContainer {
                         DeviceID.LAUNCHER_MOTOR_1,
                         DeviceID.LAUNCHER_MOTOR_2,
                         DeviceID.LAUNCHER_HOOD_SERVO_1,
-                        DeviceID.LAUNCHER_HOOD_SERVO_2));
+                        DeviceID.LAUNCHER_HOOD_SERVO_2),
+                    sys_drive);
             }
             // Sim robot, instantiate physics sim IO implementations
             case SIM -> {
@@ -188,7 +189,7 @@ public class RobotContainer {
                 sys_feeder = new Feeder(new FeederIOSim());
                 sys_hopper = new Hopper(new HopperIOSim());
 
-                sys_launcher = new Launcher(new LauncherIOSim());
+                sys_launcher = new Launcher(new LauncherIOSim(), sys_drive);
             }
             // Replayed robot, disable IO implementations
             default -> {
@@ -205,7 +206,7 @@ public class RobotContainer {
                 sys_serializer = new Serializer(new SerializerIO() {});
                 sys_elevator = new Elevator(new ElevatorIO() {});
                 sys_feeder = new Feeder(new FeederIO() {});
-                sys_launcher = new Launcher(new LauncherIO() {});
+                sys_launcher = new Launcher(new LauncherIO() {}, sys_drive);
             }
         }
 
@@ -242,6 +243,15 @@ public class RobotContainer {
                         )
         );
 
+        new Trigger(() -> sys_launcher.getCurrentCommand() == null && DriverStation.isEnabled() && launcherShouldIdle.get())
+                .onTrue(sys_launcher.runVelocity(() -> LauncherConstants.Launcher.LAUNCHER_IDLE_SPEED)
+                    .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+
+        new Trigger(() -> kField.NEUTRAL_ZONE.contains(sys_drive.getPose().getTranslation()))
+                .onTrue(Commands.runOnce(() -> Logger.recordOutput("Drive/InNeutralZone", true)))
+                .onFalse(Commands.runOnce(() -> Logger.recordOutput("Drive/InNeutralZone", false)));
+
+        // TODO: When have time, test these 2 (Test if the robot can check if it is neutral zone or not)
 //        new Trigger(() -> kField.NEUTRAL_ZONE.contains(sys_drive.getPose().getTranslation()))
 //            .onTrue(Commands.runOnce(() -> shouldLaunch = () -> false))
 //            .onFalse(Commands.runOnce(() -> shouldLaunch = () -> true));
@@ -259,9 +269,10 @@ public class RobotContainer {
                 simConfig.setSimulationWorldPose(path.getStartingPose());
         }
         if (autoChooser.get() instanceof PathPlannerAuto auto) {
-            sys_drive.setPose(auto.getStartingPose());
+            Pose2d pose = AutoBuilder.shouldFlip() ? FlippingUtil.flipFieldPose(auto.getStartingPose()) : auto.getStartingPose();
+            sys_drive.setPose(pose);
             if (Constants.CURRENT_MODE == Mode.SIM)
-                simConfig.setSimulationWorldPose(auto.getStartingPose());
+                simConfig.setSimulationWorldPose(pose);
         }
     }
 
@@ -347,89 +358,100 @@ public class RobotContainer {
         );
 
         primaryController.start()
-                         .and(primaryController.back())
-                         .onTrue(Commands.runOnce(() -> sys_drive.setPose(new Pose2d(0, 0, Rotation2d.k180deg)))
-                                         .ignoringDisable(true));
+            .and(primaryController.back())
+            .onTrue(
+                Commands.runOnce(() -> sys_drive.setPose(new Pose2d(0, 0, Rotation2d.k180deg)))
+                    .ignoringDisable(true)
+            );
 
         primaryController.rightBumper()
-                         .whileTrue(
-                                 // Commands.defer(
-                                 // () -> Commands.either(
-                                 GameCommands.autoLaunch(() -> DriveCommands.distToHub(sys_drive), this)
-                                 // ,
-                                 // GameCommands.manualPass(sys_launcher, sys_feeder, sys_serializer, sys_intake),
-                                 // shouldLaunch
-                                 // ),
-                                 // Set.of(sys_launcher, sys_feeder, sys_serializer, sys_intake)
-                                 // )
-                         )
-                         .onFalse(GameCommands.stopLaunching(this));
-
-        primaryController.leftBumper()
-                         .onTrue(
-                                 GameCommands.startIntake(this)
-                         );
+            .whileTrue(
+                    GameCommands.autoLaunch(
+                        () -> DriveCommands.distToHub(sys_drive),
+                        () -> -primaryController.getLeftY(),
+                        () -> -primaryController.getLeftX(),
+                        this
+                    )
+            )
+            .onFalse(
+                GameCommands.stopLaunching(this)
+            );
 
         primaryController.y()
-                         .whileTrue(
-                                 GameCommands.autoClimb(
-                                         this,
-                                         () -> selectedClimbingPrepPosition.pose,
-                                         () -> selectedClimbingPosition.pose
-                                 )
-                         );
+                        .onTrue(
+                            GameCommands.startIntake(this)
+                        );
+
+        primaryController.leftBumper()
+                        .whileTrue(GameCommands.manualPass(
+                                () -> kField.RIGHT_HALF.contains(sys_drive.getPose().getTranslation()),
+                                () -> -primaryController.getLeftY(),
+                                () -> -primaryController.getLeftX(),
+                                this));
 
         primaryController.x()
-                         .onTrue(
-                                 GameCommands.retract(this)
-                         );
+                        .onTrue(
+                          GameCommands.retract(this)
+                        );
+
+        primaryController.b()
+                        .onTrue(sys_intake.setRollerVoltage(0));
 
         primaryController.a()
                          .onTrue(Commands.runOnce(() -> DriveCommands.setSpeed(kBump.BUMP_SPEED_MODIFIER)))
                          .onFalse(Commands.runOnce(() -> DriveCommands.setSpeed(1.0)));
 
         primaryController.povDown()
-                         .whileTrue(GameCommands.manualLaunch(() -> manualLaunchDistance, this))
-                         .onFalse(GameCommands.stopLaunching(this));
+                        .whileTrue(GameCommands.manualLaunch(() -> manualLaunchDistance, this))
+                        .onFalse(GameCommands.stopLaunching(this));
 
-        secondaryController.x()
-                           .onTrue(GameCommands.retract(this));
+        secondaryController.b()
+                        .onTrue(GameCommands.retract(this));
 
         secondaryController.a()
-                           .whileTrue(GameCommands.agitateIntake(sys_intake));
+                        .whileTrue(GameCommands.agitateSystem(this));
 
-        secondaryController.y()
-                           .onTrue(sys_intake.setRollerVoltage(-IntakeConstants.Roller.INTAKE_VOLTAGE))
-                           .onFalse(sys_intake.setRollerVoltage(IntakeConstants.Roller.INTAKE_VOLTAGE));
+        // TODO: temp buttons to zero intake/hopper
+        secondaryController.rightBumper()
+                .onTrue(sys_intake.setExtensionVoltage(-2)
+                            .alongWith(sys_hopper.setVoltage(-2)))
+                .onFalse(sys_intake.setExtensionVoltage(0)
+                            .alongWith(sys_hopper.setVoltage(0)));
 
-        secondaryController.povUp()
-                           .onTrue(Launcher.incrementSpeedOffset(
-                                   LauncherConstants.Launcher.LAUNCH_SPEED_OFFSET_INCREMENT));
+        secondaryController.x()
+                        .onTrue(sys_intake.setRollerVoltage(-IntakeConstants.Roller.INTAKE_VOLTAGE))
+                        .onFalse(sys_intake.setRollerVoltage(IntakeConstants.Roller.INTAKE_VOLTAGE));
 
-        secondaryController.povDown()
-                           .onTrue(Launcher.incrementSpeedOffset(
-                                   LauncherConstants.Launcher.LAUNCH_SPEED_OFFSET_INCREMENT.times(-1)));
-
-        secondaryController.povLeft()
-                           .onTrue(prepClimberPositionCommand(ClimbingPositions.LEFT));
 
         secondaryController.povRight()
-                           .onTrue(prepClimberPositionCommand(ClimbingPositions.RIGHT));
+                        .onTrue(sys_serializer.setVoltage(SerializerConstants.SERIALIZING_VOLTAGE))
+                        .onFalse(sys_serializer.setVoltage(0));
+
+        secondaryController.y()
+                        .onTrue(GameCommands.reverseRollers(this))
+                        .onFalse(GameCommands.stopSerializing(this).alongWith(sys_feeder.setVoltage(0)));
+
+        secondaryController.povLeft()
+                        .onTrue(sys_serializer.setVoltage(-SerializerConstants.SERIALIZING_VOLTAGE))
+                        .onFalse(sys_serializer.setVoltage(0));
+
+        secondaryController.povUp()
+                        .onTrue(Launcher.incrementSpeedOffset(RotationsPerSecond.of(1)));
+
+        secondaryController.povDown()
+                        .onTrue(Launcher.incrementSpeedOffset(RotationsPerSecond.of(-1)));
 
         // TODO: GET MANUAL LAUNCH DISTANCE THAT WE WANT TO USE
         new Trigger(() -> secondaryController.getLeftX() > 0.5)
-                .onTrue(prepManualLaunchDistance(Meters.of(2.0)));
+                    .onTrue(prepManualLaunchDistance(Meters.of(2.0)));
 
         // TODO: GET MANUAL LAUNCH DISTANCE THAT WE WANT TO USE
         new Trigger(() -> secondaryController.getLeftX() < 0.5)
-                .onTrue(prepManualLaunchDistance(Meters.of(4.0)));
-        // BUTTONS TO TEST CODE
-        // TODO: remove some of these when merging to main, or maybe make a DebugCommand interface
+                    .onTrue(prepManualLaunchDistance(Meters.of(4.0)));
 
         SmartDashboard.putNumber("Hood Angle [mm]", 0);
-        SmartDashboard.putData(
-                "Set Hood Angle",
-                sys_launcher.setHoodExtension(() -> Millimeter.of(SmartDashboard.getNumber("Hood Angle [mm]", 0))));
+        SmartDashboard.putData("Set Hood Angle",
+                               sys_launcher.setHoodExtension(() -> Millimeter.of(SmartDashboard.getNumber("Hood Angle [mm]", 0))));
 
         SmartDashboard.putData("Hopper/Coast", sys_hopper.coastMode().ignoringDisable(true)); //TODO remove when main
         SmartDashboard.putData("Hopper/Brake", sys_hopper.brakeMode().ignoringDisable(true)); //TODO remove when main
@@ -455,12 +477,12 @@ public class RobotContainer {
         );
     }
 
-    private Command prepManualLaunchDistance(Distance distance) {
+    private Command prepManualLaunchDistance(Distance distance){
         return Commands.runOnce(
-                () -> {
-                    manualLaunchDistance = distance;
-                    Logger.recordOutput("ManualLaunchDistance", manualLaunchDistance);
-                }
+            () -> {
+                manualLaunchDistance = distance;
+                Logger.recordOutput("ManualLaunchDistance", manualLaunchDistance);
+            }
         );
     }
 

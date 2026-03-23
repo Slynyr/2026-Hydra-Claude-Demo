@@ -30,10 +30,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
+import frc.robot.Constants.PassingPositions;
 import frc.robot.Constants.kAutoAlign;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.AlignHelper;
+import frc.robot.util.MathUtils;
 import frc.robot.util.ProfiledController;
 
 import static edu.wpi.first.units.Units.*;
@@ -44,6 +46,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -217,7 +220,8 @@ public class DriveCommands {
               Logger.recordOutput("AutoAlign/MaxAcceleration [Rotations per s^2]", RotationsPerSecondPerSecond.of(ANGLE_MAX_ACCELERATION));
               Logger.recordOutput("AutoAlign/Angle to Alignment [Degrees]", difference.in(Degrees));
 
-              if (drive.getRotation().getRadians() == rotationSupplier.get().getRadians())
+//              TODO: TUNE THIS PERCENTAGE TO BE ABLE TO LAUNCH FASTER
+              if (MathUtils.withinTolerance(drive.getRotation().getRadians(), rotationSupplier.get().getRadians(), 2))
                   isAligned = true;
             },
             drive)
@@ -514,6 +518,12 @@ public class DriveCommands {
 
   public static Rotation2d getRotationToHub(Drive drive){
     return getRotation2d(drive, Constants.kField.BLUE_HUB).plus(Rotation2d.k180deg);
+  }
+
+  public static Rotation2d getRotationToPassingPosition(Drive drive, BooleanSupplier isRightHalf){
+    return getRotation2d(drive, isRightHalf.getAsBoolean() 
+                    ? AutoBuilder.shouldFlip() ? PassingPositions.LEFT.getPose() : PassingPositions.RIGHT.getPose() 
+                    : AutoBuilder.shouldFlip() ? PassingPositions.RIGHT.getPose() : PassingPositions.LEFT.getPose() ).plus(Rotation2d.k180deg);
   }
 
   public static LinearVelocity getBumpSpeed(LinearVelocity speed) {

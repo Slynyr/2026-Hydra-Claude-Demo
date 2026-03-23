@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.commands.Autos;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.LimelightHelpers;
 import org.littletonrobotics.junction.Logger;
@@ -20,8 +21,9 @@ import static edu.wpi.first.units.Units.Meters;
 public class VisionIOLimelight implements VisionIO {
     private final String limelightName;
 
-    private double lastPrxLatency     = 0;
-    private double disconnectedFrames = 0;
+    private double  lastPrxLatency     = 0;
+    private double  disconnectedFrames = 0;
+    private boolean forceFusedIMU      = false;
 
     public VisionIOLimelight(String limelightName) {
         this.limelightName = limelightName;
@@ -38,7 +40,9 @@ public class VisionIOLimelight implements VisionIO {
 
         // disable throttle
         LimelightHelpers.SetThrottle(limelightName, VisionConstants.THROTTLE_DISABLED);
-        LimelightHelpers.SetIMUMode(limelightName, IMUMode.FUSED.ID);
+        LimelightHelpers.SetIMUMode(limelightName, IMUMode.FUSED.id);
+
+        LimelightHelpers.SetFiducialIDFiltersOverride(limelightName, VisionConstants.TAG_FILTER);
 
         // enable rewind
         LimelightHelpers.setRewindEnabled(limelightName, true);
@@ -55,7 +59,7 @@ public class VisionIOLimelight implements VisionIO {
 
     private Command setIMUMode(IMUMode mode) {
         return Commands.runOnce(
-                () -> LimelightHelpers.SetIMUMode(limelightName, mode.ID)
+                () -> LimelightHelpers.SetIMUMode(limelightName, mode.id)
         ).ignoringDisable(true);
     }
 
@@ -131,22 +135,26 @@ public class VisionIOLimelight implements VisionIO {
         ChassisSpeeds speeds = drive.getChassisSpeeds();
         Rotation2d yaw = drive.getRotation();
 
-        if (VisionConstants.ALLOW_FUSED_GYRO_ESTIMATIONS &&
-            DriverStation.isEnabled() && // enabled
+        if (forceFusedIMU ||
+            Autos.autoPoseUpdate.getAsBoolean() ||
+            (VisionConstants.ALLOW_FUSED_GYRO_ESTIMATIONS &&
+             DriverStation.isEnabled() && // enabled
 //          TODO: tune this value (0.25)
-            LimelightHelpers.getTA(limelightName) >= 0.25 && // confident tag
-            Math.abs(speeds.vxMetersPerSecond) < 0.1 && // bot not moving
-            Math.abs(speeds.vyMetersPerSecond) < 0.1 &&
-            Math.abs(speeds.omegaRadiansPerSecond) < 0.1) {
-            LimelightHelpers.SetIMUMode(limelightName, IMUMode.FUSED.ID); // use fused IMU
+             LimelightHelpers.getTA(limelightName) >= 0.25 && // confident tag
+             Math.abs(speeds.vxMetersPerSecond) < 0.1 && // bot not moving
+             Math.abs(speeds.vyMetersPerSecond) < 0.1 &&
+             Math.abs(speeds.omegaRadiansPerSecond) < 0.1)) {
+            LimelightHelpers.SetIMUMode(limelightName, IMUMode.FUSED.id); // use fused IMU
             // ...and get estimate for bot pose in FUSED mode
             yaw = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelightName).pose.getRotation();
             logGryoMode(IMUMode.FUSED);
-            LimelightHelpers.SetIMUMode(limelightName, IMUMode.FUSED.ID);
+            LimelightHelpers.SetIMUMode(limelightName, IMUMode.FUSED.id);
         } else {
             logGryoMode(IMUMode.EXTERNAL);
-            LimelightHelpers.SetIMUMode(limelightName, IMUMode.EXTERNAL.ID);
+            LimelightHelpers.SetIMUMode(limelightName, IMUMode.EXTERNAL.id);
         }
+
+        Logger.recordOutput("Vision/ForceFusedIMU", forceFusedIMU);
 
         LimelightHelpers.SetRobotOrientation(
                 limelightName,
@@ -155,10 +163,14 @@ public class VisionIOLimelight implements VisionIO {
         return LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
     }
 
+    public void setForceFusedIMU(boolean forceFusedIMU) {
+        this.forceFusedIMU = forceFusedIMU;
+    }
+
     @Override
     public void setRotation(Rotation2d rotation) {
         // use fused IMU when setting rotation
-        LimelightHelpers.SetIMUMode(limelightName, IMUMode.FUSED.ID);
+        LimelightHelpers.SetIMUMode(limelightName, IMUMode.FUSED.id);
         LimelightHelpers.SetRobotOrientation(
                 limelightName, rotation.getDegrees(),
                 0, 0, 0, 0, 0);
@@ -178,10 +190,10 @@ public class VisionIOLimelight implements VisionIO {
         FUSED(1),
         INTERNAL(2);
 
-        public final int ID;
+        public final int id;
 
         IMUMode(int num) {
-            ID = num;
+            id = num;
         }
     }
 }

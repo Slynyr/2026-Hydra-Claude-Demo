@@ -7,10 +7,12 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.intake.IntakeConstants.Extension;
 import frc.robot.util.Checkmate;
+import frc.robot.util.MathUtils;
 import frc.robot.util.Checkmate.TestResult;
 import org.littletonrobotics.junction.Logger;
 
@@ -18,6 +20,7 @@ import java.util.function.Supplier;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Milliseconds;
 
 public class Intake extends SubsystemBase {
     private final IntakeIO               io;
@@ -122,7 +125,14 @@ public class Intake extends SubsystemBase {
      * @return A command that moves the intake to the specified position when executed.
      */
     public Command setSetpoint(Supplier<Distance> setpoint) {
-        return Commands.runOnce(() -> io.setSetpoint(Meters.of(setpoint.get().in(Meters))));
+        return Commands.sequence(
+            Commands.runOnce(() -> io.setSetpoint(Meters.of(setpoint.get().in(Meters)))),
+            Commands.waitTime(Milliseconds.of(2000)),
+            Commands.run(() -> {
+                if (MathUtils.withinTolerance(io.getSetpoint().in(Meters), io.getPosition().in(Meters), 5))
+                    io.setSetpoint(io.getPosition());
+            }).until(() -> MathUtils.withinTolerance(io.getSetpoint().in(Meters), io.getPosition().in(Meters), 5))
+        ).withInterruptBehavior(InterruptionBehavior.kCancelSelf);
     }
 
     /**

@@ -12,24 +12,39 @@ import frc.robot.Constants.GameCommandsConstants;
 import frc.robot.Constants.kAutoAlign;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.elevator.ElevatorConstants;
+import frc.robot.subsystems.feeder.FeederConstants;
+import frc.robot.subsystems.hopper.HopperConstants;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.intake.IntakeConstants.Extension;
 import frc.robot.subsystems.serializer.SerializerConstants;
 
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import static edu.wpi.first.units.Units.Milliseconds;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 public class GameCommands {
 
-    public static Command autoLaunch(Supplier<Distance> distanceSupplier, RobotContainer robot) {
+    public static Command autoLaunch(
+            Supplier<Distance> distanceSupplier,
+            DoubleSupplier joystickX,
+            DoubleSupplier joystickY,
+            RobotContainer robot
+    ) {
         return Commands.parallel(
-                DriveCommands.alignToHeading(
+                DriveCommands.joystickDriveAtAngle(
                         robot.sys_drive,
+                        joystickX,
+                        joystickY,
                         () -> DriveCommands.getRotationToHub(robot.sys_drive)
                 ),
                 Commands.sequence(
+                        Commands.runOnce(() -> Logger.recordOutput("GameCommands/StartingLaunchSequence", true)),
                         Commands.parallel(
                                 Commands.waitUntil(DriveCommands::isAligned),
                                 robot.sys_launcher.launchFuel(distanceSupplier, robot.sys_feeder)
@@ -41,7 +56,7 @@ public class GameCommands {
 
                         Commands.waitTime(GameCommandsConstants.WAIT_TIME_BEFORE_AGITATE),
 
-                        agitateIntake(robot.sys_intake)
+                        agitateSystem(robot)
                 )
         );
     }
@@ -52,33 +67,45 @@ public class GameCommands {
 
                 Commands.waitUntil(robot.sys_launcher::isLauncherAtSpeed),
 
-                robot.sys_elevator.setVoltage(SerializerConstants.SERIALIZING_VOLTAGE),
+                robot.sys_serializer.setVoltage(SerializerConstants.SERIALIZING_VOLTAGE),
 
                 Commands.waitTime(GameCommandsConstants.WAIT_TIME_BEFORE_AGITATE),
 
-                agitateIntake(robot.sys_intake)
+                agitateSystem(robot)
         );
     }
 
     /**
      * Drive aligns to face target manually
      */
-    public static Command manualPass(RobotContainer robot) {
-        return Commands.sequence(
-
-                Commands.parallel(
-                        robot.sys_launcher.runVelocity(() -> GameCommandsConstants.PASSING_RPS),
-                        robot.sys_launcher.setHoodExtension(() -> GameCommandsConstants.PASSING_HOOD_ANGLE)
-
+    public static Command manualPass(
+            BooleanSupplier isRightHalf,
+            DoubleSupplier joystickX,
+            DoubleSupplier joystickY,
+            RobotContainer robot
+    ){
+        return Commands.parallel(
+                DriveCommands.joystickDriveAtAngle(
+                        robot.sys_drive,
+                        joystickX,
+                        joystickY,
+                        () -> DriveCommands.getRotationToPassingPosition(robot.sys_drive, isRightHalf)
                 ),
+                Commands.sequence(
+                        Commands.parallel(
+                                robot.sys_launcher.runVelocity(() -> GameCommandsConstants.PASSING_RPS),
+                                robot.sys_launcher.setHoodExtension(() -> GameCommandsConstants.PASSING_HOOD_ANGLE),
+                                robot.sys_feeder.runVelocity(() -> GameCommandsConstants.PASSING_RPS)
+                        ),
 
-                Commands.waitUntil(robot.sys_launcher::isLauncherAtSpeed),
+                        Commands.waitUntil(robot.sys_launcher::isLauncherAtSpeed),
 
-                robot.sys_serializer.setVoltage(SerializerConstants.SERIALIZING_VOLTAGE),
+                        robot.sys_serializer.setVoltage(SerializerConstants.SERIALIZING_VOLTAGE),
 
-                Commands.waitTime(GameCommandsConstants.WAIT_TIME_BEFORE_AGITATE),
+                        Commands.waitTime(GameCommandsConstants.WAIT_TIME_BEFORE_AGITATE),
 
-                agitateIntake(robot.sys_intake)
+                        agitateSystem(robot)
+                )
 
         );
     }
@@ -114,31 +141,45 @@ public class GameCommands {
         );
     }
 
-    public static Command autoClimb(RobotContainer robot, Supplier<Pose2d> prepPose, Supplier<Pose2d> climbPose) {
-        return Commands.sequence(
-                Commands.parallel(
-                        DriveCommands.alignToPoint(
-                                robot.sys_drive,
-                                prepPose,
-                                () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY,
-                                () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION,
-                                kAutoAlign.TRANSLATION_TOLERANCE_CLIMB_PREP,
-                                kAutoAlign.ROTATION_TOLERANCE_CLIMB_PREP,
-                                kAutoAlign.VELOCITY_TOLERANCE_CLIMB_PREP
-                        ),
-                        robot.sys_elevator.setSetpointAndWait(ElevatorConstants.kSetpoints.ELEVATOR_UP, 0)
-                ),
-
-                DriveCommands.alignToPoint(
-                        robot.sys_drive,
-                        climbPose,
-                        () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_CLIMB,
-                        () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_CLIMB
-                ),
-
-                robot.sys_elevator.setSetpointAndWait(ElevatorConstants.kSetpoints.ELEVATOR_DOWN, 0)
+    public static Command agitateSystem(RobotContainer robot) {
+        return Commands.parallel(
+                robot.sys_intake.setRollerVoltage(IntakeConstants.Roller.AGITATE_VOLTAGE),
+                Commands.repeatingSequence(
+                        robot.sys_intake.setSetpoint(() -> Extension.RETRACT_POINT)
+                                .alongWith(robot.sys_hopper.setSetpoint(() -> HopperConstants.RETRACT_POINT)),
+                        Commands.waitTime(Milliseconds.of(750)),
+                        robot.sys_intake.setSetpoint(() -> Extension.EXTEND_POINT)
+                                .alongWith(robot.sys_hopper.setSetpoint(() -> HopperConstants.EXTEND_POINT)),
+                        Commands.waitTime(Milliseconds.of(750))
+                )
         );
     }
+
+    // public static Command autoClimb(RobotContainer robot, Supplier<Pose2d> prepPose, Supplier<Pose2d> climbPose) {
+    //     return Commands.sequence(
+    //             Commands.parallel(
+    //                     DriveCommands.alignToPoint(
+    //                             robot.sys_drive,
+    //                             prepPose,
+    //                             () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY,
+    //                             () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION,
+    //                             kAutoAlign.TRANSLATION_TOLERANCE_CLIMB_PREP,
+    //                             kAutoAlign.ROTATION_TOLERANCE_CLIMB_PREP,
+    //                             kAutoAlign.VELOCITY_TOLERANCE_CLIMB_PREP
+    //                     ),
+    //                     robot.sys_elevator.setSetpointAndWait(ElevatorConstants.kSetpoints.ELEVATOR_UP, 0)
+    //             ),
+
+    //             DriveCommands.alignToPoint(
+    //                     robot.sys_drive,
+    //                     climbPose,
+    //                     () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_CLIMB,
+    //                     () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_CLIMB
+    //             ),
+
+    //             robot.sys_elevator.setSetpointAndWait(ElevatorConstants.kSetpoints.ELEVATOR_DOWN, 0)
+    //     );
+    // }
 
     /**
      * Stops launcher, feeder and calls {@link GameCommands#stopSerializing(RobotContainer)}
@@ -156,6 +197,14 @@ public class GameCommands {
                 robot.sys_serializer.stop(),
                 robot.sys_intake.stop(),
                 robot.sys_intake.stopRoller()
+        );
+    }
+
+    public static Command reverseRollers(RobotContainer robot) {
+        return Commands.parallel(
+                robot.sys_serializer.setVoltage(-SerializerConstants.SERIALIZING_VOLTAGE),
+                robot.sys_feeder.setVoltage(-FeederConstants.FEEDER_REVERSE_VOLTAGE),
+                robot.sys_launcher.runVelocity(() -> RotationsPerSecond.of(-20))
         );
     }
 }

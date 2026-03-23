@@ -154,6 +154,10 @@ public final class IntakeIOTalonFX implements IntakeIO {
         extensionMotor.set(0.0);
     }
 
+    public Distance getSetpoint() {
+        return setpoint;
+    }
+
     /**
      * Gets current motor position
      *
@@ -162,6 +166,8 @@ public final class IntakeIOTalonFX implements IntakeIO {
     public Distance getPosition() {
         return Meters.of(extensionPosition.getValueAsDouble() * Extension.UNIT_CONVERSION_FACTOR);
     }
+
+    
 
     /**
      * Updates the inputs of the intake subsystem

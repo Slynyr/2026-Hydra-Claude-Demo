@@ -12,6 +12,9 @@ public class VisionConstants {
     public static final int DISCONNECTION_TIMEOUT    = 5;
     public static final int THROTTLE_DISABLED        = 200;
 
+    public static final int[] TAG_FILTER = new int[]{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19,
+                                                      20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
+
     /**
      * If enabled, the {@link VisionIOLimelight} will use
      * {@link frc.robot.subsystems.vision.VisionIOLimelight.IMUMode#FUSED} estimations if the detected AprilTag is

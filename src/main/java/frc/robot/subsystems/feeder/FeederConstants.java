@@ -14,4 +14,5 @@ public final class FeederConstants {
     public static final double GEARING = 1.0 / 3.0;
 
     public static final Current CURRENT_LIMIT = Amps.of(30);
-}  
+    public static final double FEEDER_REVERSE_VOLTAGE = 6;
+}
