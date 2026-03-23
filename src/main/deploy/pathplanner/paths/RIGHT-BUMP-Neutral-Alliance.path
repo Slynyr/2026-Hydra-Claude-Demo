@@ -4,12 +4,12 @@
     {
       "anchor": {
         "x": 5.921,
-        "y": 2.756
+        "y": 2.461
       },
       "prevControl": null,
       "nextControl": {
         "x": 4.833495956606434,
-        "y": 2.7606703746954637
+        "y": 2.465670374695464
       },
       "isLocked": false,
       "linkedName": "RIGHT-Neutral-BUMP-START"
@@ -17,23 +17,28 @@
     {
       "anchor": {
         "x": 2.383,
-        "y": 2.756
+        "y": 2.461
       },
       "prevControl": {
         "x": 4.278526432226862,
-        "y": 2.759478750160645
+        "y": 2.464478750160645
       },
       "nextControl": null,
       "isLocked": false,
       "linkedName": null
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.7843523997370156,
+      "rotationDegrees": -45.0
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
-    "maxVelocity": 1.5,
+    "maxVelocity": 3.0,
     "maxAcceleration": 3.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
@@ -48,7 +53,7 @@
   "folder": "RIGHT",
   "idealStartingState": {
     "velocity": 1.5,
-    "rotation": -135.0
+    "rotation": -45.0
   },
   "useDefaultConstraints": false
 }

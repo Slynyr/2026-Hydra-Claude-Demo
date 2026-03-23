@@ -221,7 +221,8 @@ public class DriveCommands {
               Logger.recordOutput("AutoAlign/Angle to Alignment [Degrees]", difference.in(Degrees));
 
 //              TODO: TUNE THIS PERCENTAGE TO BE ABLE TO LAUNCH FASTER
-              if (MathUtils.withinTolerance(drive.getRotation().getRadians(), rotationSupplier.get().getRadians(), 2))
+//              if (MathUtil.isNear(Degrees.of(drive.getRotation().getDegrees()), Degrees.of(rotationSupplier.get().getDegrees()), 1.5))
+              if (MathUtils.isAngleNear(drive.getRotation(), rotationSupplier.get(), Degrees.of(1.5)))
                   isAligned = true;
             },
             drive)

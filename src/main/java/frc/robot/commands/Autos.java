@@ -17,8 +17,8 @@ import static edu.wpi.first.units.Units.*;
 
 public class Autos {
     public static final EventTrigger autoPoseUpdate = new EventTrigger("Vision_Trigger");
-	public static final Pose2d LEFT_BUMP_STARTING_POSE = new Pose2d(3.496, 5.585, Rotation2d.fromDegrees(45));
-	public static final Pose2d RIGHT_BUMP_STARTING_POSE = new Pose2d(3.560,2.461, Rotation2d.fromDegrees(-45));
+	public static final Pose2d LEFT_BUMP_STARTING_POSE = new Pose2d(3.496, 5.585, Rotation2d.fromDegrees(0));
+	public static final Pose2d RIGHT_BUMP_STARTING_POSE = new Pose2d(3.560,2.461, Rotation2d.fromDegrees(0));
 
 	public static ArrayList<AutoPath> getAutoPaths(RobotContainer robot) {
 		ArrayList<AutoPath> autoPaths = new ArrayList<>();
@@ -157,7 +157,7 @@ public class Autos {
 			new AutoPath(
 				"RIGHT-Bump-Intake-FarClose-Score",
 
-				new Pose2d(3.560,2.461, Rotation2d.fromDegrees(-45)),
+				RIGHT_BUMP_STARTING_POSE,
 				
                 // cross RIGHT BUMP from ALLIANCE zone to NEUTRAL zone 
                 Objects.requireNonNull(AutoPath.followPath("RIGHT-BUMP-Alliance-Neutral"))

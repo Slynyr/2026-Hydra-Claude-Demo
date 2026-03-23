@@ -127,7 +127,7 @@ public class Intake extends SubsystemBase {
     public Command setSetpoint(Supplier<Distance> setpoint) {
         return Commands.sequence(
             Commands.runOnce(() -> io.setSetpoint(Meters.of(setpoint.get().in(Meters)))),
-            Commands.waitTime(Milliseconds.of(2000)),
+            Commands.waitTime(Milliseconds.of(800)),
             Commands.run(() -> {
                 if (MathUtils.withinTolerance(io.getSetpoint().in(Meters), io.getPosition().in(Meters), 5))
                     io.setSetpoint(io.getPosition());
@@ -199,19 +199,19 @@ public class Intake extends SubsystemBase {
                 new Rotation3d(0.0, 0.0, Math.toRadians(0.0))
         );
 
-        boolean overCurrent = inputs.extensionTorqueCurrent.gt(IntakeConstants.Extension.CRASH_CURRENT_THRESHOLD);
-
-        if (DriverStation.isEnabled()) {
-            if (overCurrent && !inputs.isCrashDetected) {
-                setpoint = getPosition();
-                inputs.isCrashDetected = true;
-                io.coastMode();
-            } else if (!overCurrent && inputs.isCrashDetected) {
-                io.setSetpoint(setpoint);
-                inputs.isCrashDetected = false;
-                io.brakeMode();
-            }
-        }
+//        boolean overCurrent = inputs.extensionTorqueCurrent.gt(IntakeConstants.Extension.CRASH_CURRENT_THRESHOLD);
+//
+//        if (DriverStation.isEnabled()) {
+//            if (overCurrent && !inputs.isCrashDetected) {
+//                setpoint = getPosition();
+//                inputs.isCrashDetected = true;
+//                io.coastMode();
+//            } else if (!overCurrent && inputs.isCrashDetected) {
+//                io.setSetpoint(setpoint);
+//                inputs.isCrashDetected = false;
+//                io.brakeMode();
+//            }
+//        }
 
         Logger.recordOutput("Components/Intake", extenderPose);
         SmartDashboard.putData("Intake/PID", Extension.SIM_PID);

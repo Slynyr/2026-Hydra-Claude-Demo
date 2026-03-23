@@ -7,7 +7,9 @@
     "LEFT",
     "RIGHT"
   ],
-  "autoFolders": [],
+  "autoFolders": [
+    "New Folder"
+  ],
   "defaultMaxVel": 3.75,
   "defaultMaxAccel": 6.0,
   "defaultMaxAngVel": 540.0,

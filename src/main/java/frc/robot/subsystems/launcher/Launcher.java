@@ -12,6 +12,8 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants.GameCommandsConstants;
+import frc.robot.Constants.kField;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.feeder.Feeder;
@@ -56,11 +58,21 @@ public class Launcher extends SubsystemBase {
         // try to update the hood every 500 ms
         new Trigger(() -> automaticHoodTimer.advanceIfElapsed(0.5))
                 .onTrue(Commands.runOnce(() -> {
-                    Logger.recordOutput("Launcher/ShouldInvalidateHood", true);
-                    LaunchConfig launchEstimate = strategy.interpolate(DriveCommands.distToHub(drive));
-                    Logger.recordOutput("Launcher/HoodEstimateDifferential", launchEstimate.hoodExtension().minus(hoodSetpoint.get()).abs(Millimeters));
-                    if (launchEstimate.hoodExtension().minus(hoodSetpoint.get()).abs(Millimeters) >= Hood.HOOD_INVALIDATION_THRESHOLD_MM) {
-                        hoodSetpoint.set(launchEstimate.hoodExtension());
+                    // outside neutral: automatic hood to hub
+                    if (!kField.NEUTRAL_ZONE.contains(drive.getPose().getTranslation())){
+                        Logger.recordOutput("Launcher/ShouldInvalidateHood", true);
+                        Logger.recordOutput("Launcher/AutoHoodMode", "AllianceShoot");
+                        LaunchConfig launchEstimate = strategy.interpolate(DriveCommands.distToHub(drive));
+                        Logger.recordOutput("Launcher/HoodEstimateDifferential", launchEstimate.hoodExtension().minus(hoodSetpoint.get()).abs(Millimeters));
+                        if (launchEstimate.hoodExtension().minus(hoodSetpoint.get()).abs(Millimeters) >= Hood.HOOD_INVALIDATION_THRESHOLD_MM) {
+                            hoodSetpoint.set(launchEstimate.hoodExtension());
+                        }
+                    }
+
+                    // inside neutral: set to passing
+                    else {
+                        hoodSetpoint.set(GameCommandsConstants.PASSING_HOOD_ANGLE);
+                        Logger.recordOutput("Launcher/AutoHoodMode", "NeutralPass");
                     }
                 }))
                 .onFalse(Commands.runOnce(() -> 
@@ -127,7 +139,7 @@ public class Launcher extends SubsystemBase {
      * @return true or false
      */
     public boolean isLauncherAtSpeed() {
-        return MathUtils.withinTolerance(getVelocity().in(RotationsPerSecond), realLaunchSpeedRps, 0.05);
+        return MathUtils.withinTolerance(getVelocity().in(RotationsPerSecond), realLaunchSpeedRps, 5);
     }
 
     /**

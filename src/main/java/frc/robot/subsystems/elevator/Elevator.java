@@ -84,10 +84,11 @@ public class Elevator extends SubsystemBase {
     public void periodic() {
         io.updateInputs(inputs);
 
+        // TODO: write as a triggered command if the elevator is implemented
         // Safety: Stop elevator if current exceeds 50A
-        if (inputs.supplyCurrent.gte(ElevatorConstants.SPIKE_CURRENT)) {
-            io.stopMotor();
-        }
+//        if (inputs.supplyCurrent.gte(ElevatorConstants.SPIKE_CURRENT)) {
+//            io.stopMotor();
+//        }
 
         Logger.processInputs("Elevator", inputs);
 

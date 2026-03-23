@@ -196,7 +196,7 @@ public final class Constants {
         /**
          * Percentage of max speed
          */
-        public static final double         BUMP_SPEED_MODIFIER  = 0.4;
+        public static final double         BUMP_SPEED_MODIFIER  = 0.8;
         // TODO: GET A REAL NUMBER NOT A GUESS
         public static final LinearVelocity BUMP_TRAVERSAL_SPEED = FeetPerSecond.of(5.5);
         public static final Time           SETTLING_TIME        = Seconds.of(1);

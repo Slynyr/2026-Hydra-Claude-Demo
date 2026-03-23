@@ -1,5 +1,7 @@
 package frc.robot.subsystems.serializer;
 
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -28,6 +30,8 @@ public class SerializerIOTalonFX implements SerializerIO {
     private final StatusSignal<Voltage>         bottomFeederDeviceVoltage;
     private final StatusSignal<Current>         bottomFeederDeviceCurrent;
     private final StatusSignal<Temperature>     bottomFeederDeviceTemp;
+
+    private Voltage targetVoltage = Volts.of(0);
 
     /**
      * @param serializerId motor can id of the serializer itself
@@ -90,6 +94,7 @@ public class SerializerIOTalonFX implements SerializerIO {
 
     @Override
     public void setVoltage(double voltage) {
+        targetVoltage = Volts.of(voltage);
         motor.setVoltage(voltage);
     }
 
@@ -130,5 +135,7 @@ public class SerializerIOTalonFX implements SerializerIO {
         inputs.lowerFeederVoltage = bottomFeederDeviceVoltage.getValue();
         inputs.lowerFeederCurrent = bottomFeederDeviceCurrent.getValue();
         inputs.lowerFeederTemperature = bottomFeederDeviceTemp.getValueAsDouble();
+
+        inputs.targetVoltage = targetVoltage;
     }
 }

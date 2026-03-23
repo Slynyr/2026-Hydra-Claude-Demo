@@ -73,7 +73,7 @@
   "folder": "CloseFar-Autos-OnHold",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 45.0
+    "rotation": -45.0
   },
   "useDefaultConstraints": false
 }

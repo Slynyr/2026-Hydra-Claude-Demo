@@ -5,6 +5,7 @@ import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.subsystems.drive.Drive;
@@ -47,6 +48,7 @@ public class Vision extends SubsystemBase {
     }
 
     public void captureClip() {
+        Logger.recordOutput("Event/Vision/CaptureClip", Timer.getFPGATimestamp());
         io.captureClip();
     }
 

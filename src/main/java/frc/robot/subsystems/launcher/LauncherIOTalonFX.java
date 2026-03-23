@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.Timer;
 import java.util.function.Supplier;
 
 import static edu.wpi.first.units.Units.Millimeters;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 public class LauncherIOTalonFX implements LauncherIO {
     // Motors and sensors
@@ -30,6 +31,8 @@ public class LauncherIOTalonFX implements LauncherIO {
     private double servo2Setpoint;
     private double servo1DisabledSetpoint;
     private double servo2DisabledSetpoint;
+
+    public AngularVelocity targetVelocity    = RotationsPerSecond.of(0.0);
 
     // status signals
     private final StatusSignal<MagnetHealthValue> magnetHealth;
@@ -133,7 +136,8 @@ public class LauncherIOTalonFX implements LauncherIO {
 
         // Feedback configs
         FeedbackConfigs feedbackConfigs = new FeedbackConfigs()
-                .withRotorToSensorRatio(LauncherConstants.Launcher.SENSOR_RATIO)
+                // .withSensorToMechanismRatio(LauncherConstants.Launcher.SENSOR_RATIO);
+               .withRotorToSensorRatio(LauncherConstants.Launcher.SENSOR_RATIO)
                 .withRemoteCANcoder(encoder);
         leaderConfig.apply(feedbackConfigs);
         followerConfig.apply(feedbackConfigs);
@@ -152,12 +156,16 @@ public class LauncherIOTalonFX implements LauncherIO {
 //            servo1Setpoint = servo2DisabledSetpoint;
 //            servo2Setpoint = servo2DisabledSetpoint;
 //        }));
+
+        // leaderMotor.optimizeBusUtilization();
+        // followerMotor.optimizeBusUtilization();
+        // encoder.optimizeBusUtilization();
     }
 
     // Run systems
     @Override
     public void runVelocity(Supplier<AngularVelocity> velocity) {
-
+        targetVelocity = velocity.get();
         leaderMotor.setControl(
                 new VelocityVoltage(velocity.get())
                         .withSlot(0)
@@ -248,6 +256,8 @@ public class LauncherIOTalonFX implements LauncherIO {
         inputs.launcherFollowerVoltage = launcherFollowerVoltage.getValue();
         inputs.launcherFollowerCurrent = launcherFollowerCurrent.getValue();
         inputs.launcherFollowerVelocity = launcherFollowerVelocity.getValue();
+
+        inputs.targetVelocity = targetVelocity;
 
         // Hood
         inputs.hoodServo1Pos = Millimeters.of(servo1CurPos);

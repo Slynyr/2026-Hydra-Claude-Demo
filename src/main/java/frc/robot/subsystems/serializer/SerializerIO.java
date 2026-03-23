@@ -25,6 +25,8 @@ public interface SerializerIO {
         public double          lowerFeederTemperature = 0.0;
         public Angle           lowerFeederPosition    = Degrees.of(0.0);
         public AngularVelocity lowerFeederVelocity    = RotationsPerSecond.of(0.0);
+
+        public Voltage targetVoltage = Volts.of(0);
     }
 
     default void updateInputs(SerializerInputs inputs) {}

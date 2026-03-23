@@ -131,6 +131,11 @@ public class VisionIOSim implements VisionIO {
     }
 
     @Override
+    public void captureClip() {
+        System.out.println("Capturing clip");
+    }
+
+    @Override
     public void simulationPeriodic() {
         sim_vision.update(sim_drive.getSimulatedDriveTrainPose());
         Logger.recordOutput("Simulation/Vision/RobotPose", sim_vision.getRobotPose());

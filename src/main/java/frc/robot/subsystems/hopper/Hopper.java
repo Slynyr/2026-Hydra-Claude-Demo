@@ -117,19 +117,19 @@ public class Hopper extends SubsystemBase {
         pose = new Pose3d(inputs.motorPosition.in(Meters), 0, 0, new Rotation3d());
         Logger.recordOutput("Components/Hopper", pose);
 
-        boolean overCurrent = inputs.torqueCurrent.gt(HopperConstants.DAMAGE_DETECTION_CURRENT);
-
-        if (DriverStation.isEnabled() && HopperConstants.CRASH_DETECTION_ENABLED) {
-            if (overCurrent && !inputs.isCrashDetected) {
-                inputs.isCrashDetected = true;
-                lastCrashPosition = io.getPosition();
-                io.coastMode();
-                io.setMotorVoltage(0);
-            } else if (!overCurrent && inputs.isCrashDetected) {
-                inputs.isCrashDetected = false;
-                io.brakeMode();
-                io.setSetpoint(() -> lastCrashPosition);
-            }
-        }
+//        boolean overCurrent = inputs.torqueCurrent.gt(HopperConstants.DAMAGE_DETECTION_CURRENT);
+//
+//        if (DriverStation.isEnabled() && HopperConstants.CRASH_DETECTION_ENABLED) {
+//            if (overCurrent && !inputs.isCrashDetected) {
+//                inputs.isCrashDetected = true;
+//                lastCrashPosition = io.getPosition();
+//                io.coastMode();
+//                io.setMotorVoltage(0);
+//            } else if (!overCurrent && inputs.isCrashDetected) {
+//                inputs.isCrashDetected = false;
+//                io.brakeMode();
+//                io.setSetpoint(() -> lastCrashPosition);
+//            }
+//        }
     }
 }
