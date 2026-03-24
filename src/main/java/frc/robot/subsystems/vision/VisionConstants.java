@@ -14,7 +14,7 @@ public class VisionConstants {
     public static final int DISCONNECTION_TIMEOUT    = 5;
     public static final int THROTTLE_DISABLED        = 200;
 
-    public static final int[] TAG_FILTER = new int[]{ 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27 };
+    public static final int[] TAG_FILTER = new int[]{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27 };
 
     /**
      * If enabled, the {@link VisionIOLimelight} will use
@@ -26,11 +26,11 @@ public class VisionConstants {
     /**
      * 1σ translation error at zero distance (meters)
      */
-    public static final double XY_STDDEV_BASE_METERS  = 0.10;
+    public static final double XY_STDDEV_BASE_METERS  = 0.15;
     /**
      * Additional translation error per meter of tag distance
      */
-    public static final double XY_STDDEV_PER_METER    = 0.05;
+    public static final double XY_STDDEV_PER_METER    = 0.015;
     /**
      * 1σ rotation error at zero distance (deg)
      */
