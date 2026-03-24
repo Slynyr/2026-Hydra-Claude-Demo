@@ -119,6 +119,7 @@ public class Robot extends LoggedRobot {
         rebuiltTimer.trackShift();
         rebuiltTimer.periodic(robotContainer.sys_drive);
         Logger.recordOutput("DistToHub", DriveCommands.distToHub(robotContainer.sys_drive));
+        Logger.recordOutput("Controls/AahanControls", robotContainer.aahanControls);
     }
 
     /** This function is called once when the robot is disabled. */

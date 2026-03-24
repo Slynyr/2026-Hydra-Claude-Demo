@@ -100,6 +100,8 @@ public class RobotContainer {
     private final CommandXboxController primaryController   = new CommandXboxController(0);
     private final CommandXboxController secondaryController = new CommandXboxController(1);
 
+    public boolean aahanControls = false;
+
     private final Alert primaryDisconnectedAlert   = new Alert(
             "Primary Controller Disconnected!",
             AlertType.kError
@@ -216,6 +218,17 @@ public class RobotContainer {
 
         // Configure the button bindings
         configureButtonBindings();
+
+        SmartDashboard.putData(
+            "Aahan Controls Set",
+            Commands.runOnce(() -> {
+                aahanControls = !aahanControls;
+                Logger.recordOutput("Controls/AahanControls", aahanControls);
+            }).ignoringDisable(true)
+        );
+        
+        Logger.recordOutput("Controls/AahanControls", aahanControls);
+
 
         SmartDashboard.putData("Reset", Commands.runOnce(this::resetPose).ignoringDisable(true));
 
@@ -353,7 +366,9 @@ public class RobotContainer {
                         sys_drive,
                         () -> -primaryController.getLeftY(),
                         () -> -primaryController.getLeftX(),
-                        () -> -(primaryController.getRightTriggerAxis() - primaryController.getLeftTriggerAxis())
+                        () -> -(aahanControls
+                                ? primaryController.getRightX()
+                                : primaryController.getRightTriggerAxis() - primaryController.getLeftTriggerAxis())
                 )
         );
 
