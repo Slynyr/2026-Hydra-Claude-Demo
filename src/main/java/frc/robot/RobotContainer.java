@@ -398,8 +398,8 @@ public class RobotContainer {
                         .onTrue(sys_intake.setRollerVoltage(0));
 
         primaryController.a()
-                         .onTrue(Commands.runOnce(() -> DriveCommands.setSpeed(kBump.BUMP_SPEED_MODIFIER)))
-                         .onFalse(Commands.runOnce(() -> DriveCommands.setSpeed(1.0)));
+                         .onTrue(Commands.runOnce(() -> DriveCommands.setTranslationSpeed(kBump.BUMP_SPEED_MODIFIER)))
+                         .onFalse(Commands.runOnce(() -> DriveCommands.setTranslationSpeed(1.0)));
 
         primaryController.povDown()
                         .whileTrue(GameCommands.manualLaunch(() -> manualLaunchDistance, this))

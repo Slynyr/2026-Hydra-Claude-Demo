@@ -66,7 +66,9 @@ public class DriveCommands {
   private static final double FF_RAMP_RATE = 0.1; // Volts/Sec  Last year -> 1.0
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
-  private static double speedModifier = 1.0;
+  private static double translationSpeedModifier = 1.0;
+  private static double rotationSpeedModifier = 0.5;
+
   private static boolean isAligned = false;
 
   /**
@@ -94,24 +96,44 @@ public class DriveCommands {
         .getTranslation();
   }
 
-  // Increase drive speed
-  public static Command setSpeedHigh(Drive drive) {
+  // Increase drive translation speed
+  public static Command setRotationSpeedHigh(Drive drive) {
     return Commands.run(
-            () -> speedModifier = 1.0);
+            () -> rotationSpeedModifier = 1.0);
   }
 
-  // Decrease drive speed
-  public static Command setSpeedLow(Drive drive) {
+  // Decrease drive translation speed
+  public static Command setRotationSpeedLow(Drive drive) {
     return Commands.run(
-            () -> speedModifier = 0.5);
+            () -> rotationSpeedModifier = 0.5);
     }
 
-  public static void setSpeed(double speed){
-    speedModifier = speed;
+  public static void setRotationSpeed(double speed){
+    rotationSpeedModifier = speed;
   }
 
-  public static double getSpeed(){
-    return speedModifier;
+  public static double getRotationSpeed(){
+    return rotationSpeedModifier;
+  }
+
+  // Increase drive translation speed
+  public static Command setTranslationSpeedHigh(Drive drive) {
+    return Commands.run(
+            () -> translationSpeedModifier = 1.0);
+  }
+
+  // Decrease drive translation speed
+  public static Command setTranslationSpeedLow(Drive drive) {
+    return Commands.run(
+            () -> translationSpeedModifier = 0.5);
+    }
+
+  public static void setTranslationSpeed(double speed){
+    translationSpeedModifier = speed;
+  }
+
+  public static double getTranslationSpeed(){
+    return translationSpeedModifier;
   }
 
   public static boolean isAligned(){
@@ -143,9 +165,9 @@ public class DriveCommands {
 
           // Convert to field relative speeds & send command
           ChassisSpeeds speeds = new ChassisSpeeds(
-                  linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec() * speedModifier,
-                  linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec() * speedModifier,
-                  omega * drive.getMaxAngularSpeedRadPerSec() * speedModifier);
+                  linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec() * translationSpeedModifier,
+                  linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec() * translationSpeedModifier,
+                  omega * drive.getMaxAngularSpeedRadPerSec() * rotationSpeedModifier);
 
           boolean isFlipped =
               DriverStation.getAlliance().isPresent()
@@ -201,8 +223,8 @@ public class DriveCommands {
               // Convert to field relative speeds & send command
               ChassisSpeeds speeds =
                   new ChassisSpeeds(
-                      linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec() * speedModifier,
-                      linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec() * speedModifier,
+                      linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec() * translationSpeedModifier,
+                      linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec() * translationSpeedModifier,
                       omega);
               boolean isFlipped =
                   DriverStation.getAlliance().isPresent()

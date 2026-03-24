@@ -204,7 +204,7 @@ public final class Constants {
 
     public static final class GameCommandsConstants {
         public static final Time WAIT_TIME_BEFORE_AGITATE          = Milliseconds.of(500);
-        public static final Time WAIT_TIME_BEFORE_INTAKE_EXTENSION = Milliseconds.of(500);
+        public static final Time WAIT_TIME_BEFORE_INTAKE_EXTENSION = Milliseconds.of(100);
         public static final Time AUTO_LAUNCH_WAIT_TIME             = Seconds.of(5);
 
         // TODO: TUNE THIS VALUE
