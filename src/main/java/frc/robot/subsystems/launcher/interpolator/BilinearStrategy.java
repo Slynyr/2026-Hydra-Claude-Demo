@@ -44,8 +44,11 @@ public class BilinearStrategy extends LaunchStrategy {
     }
 
     static {
-        // ==== TESTING DATA FOR PROTOTYPE LAUNCHER ====
+        addData(Millimeters.of(45), RotationsPerSecond.of(40), Meters.of(1.83));
         addData(Millimeters.of(50), RotationsPerSecond.of(42), Meters.of(2.310));
+        addData(Millimeters.of(65), RotationsPerSecond.of(43.5), Meters.of(2.802));
+        addData(Millimeters.of(70), RotationsPerSecond.of(45.5), Meters.of(3.16));
         addData(Millimeters.of(75), RotationsPerSecond.of(54), Meters.of(4.730));
+        addData(Millimeters.of(75), RotationsPerSecond.of(57), Meters.of(5.006));
     }
 }
