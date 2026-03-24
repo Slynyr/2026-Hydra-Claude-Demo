@@ -424,7 +424,7 @@ public class RobotContainer {
                         .onTrue(GameCommands.retract(this));
 
         secondaryController.a()
-                        .whileTrue(GameCommands.agitateSystem(this));
+                        .whileTrue(GameCommands.agitateThenRetract(this));
 
         // TODO: temp buttons to zero intake/hopper
         secondaryController.rightBumper()

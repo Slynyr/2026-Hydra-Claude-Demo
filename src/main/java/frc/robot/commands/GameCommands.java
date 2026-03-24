@@ -27,6 +27,7 @@ import org.littletonrobotics.junction.Logger;
 
 import static edu.wpi.first.units.Units.Milliseconds;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.Seconds;
 
 public class GameCommands {
 
@@ -56,7 +57,7 @@ public class GameCommands {
 
                         Commands.waitTime(GameCommandsConstants.WAIT_TIME_BEFORE_AGITATE),
 
-                        agitateSystem(robot)
+                        agitateThenRetract(robot)
                 )
         );
     }
@@ -71,7 +72,7 @@ public class GameCommands {
 
                 Commands.waitTime(GameCommandsConstants.WAIT_TIME_BEFORE_AGITATE),
 
-                agitateSystem(robot)
+                agitateThenRetract(robot)
         );
     }
 
@@ -104,7 +105,7 @@ public class GameCommands {
 
                         Commands.waitTime(GameCommandsConstants.WAIT_TIME_BEFORE_AGITATE),
 
-                        agitateSystem(robot)
+                        agitateThenRetract(robot)
                 )
 
         );
@@ -147,13 +148,25 @@ public class GameCommands {
                 Commands.repeatingSequence(
                         robot.sys_intake.setSetpoint(() -> Extension.RETRACT_POINT)
                                 .alongWith(robot.sys_hopper.setSetpoint(() -> HopperConstants.RETRACT_POINT)),
-                        Commands.waitTime(Milliseconds.of(750)),
+                        Commands.waitTime(Milliseconds.of(150)),
                         robot.sys_intake.setSetpoint(() -> Extension.EXTEND_POINT)
                                 .alongWith(robot.sys_hopper.setSetpoint(() -> HopperConstants.EXTEND_POINT)),
-                        Commands.waitTime(Milliseconds.of(750))
+                        Commands.waitTime(Milliseconds.of(150))
                 )
         );
     }
+
+    public static Command agitateThenRetract(RobotContainer robot) {
+        return Commands.sequence(
+                agitateSystem(robot).withTimeout(Seconds.of(5.0)),
+                Commands.parallel(
+                        robot.sys_intake.setRollerVoltage(IntakeConstants.Roller.AGITATE_VOLTAGE),
+                        robot.sys_intake.retract(),
+                        robot.sys_hopper.retract()
+                )
+        );
+    }
+
 
     // public static Command autoClimb(RobotContainer robot, Supplier<Pose2d> prepPose, Supplier<Pose2d> climbPose) {
     //     return Commands.sequence(
@@ -196,7 +209,8 @@ public class GameCommands {
         return Commands.parallel(
                 robot.sys_serializer.stop(),
                 robot.sys_intake.stop(),
-                robot.sys_intake.stopRoller()
+                robot.sys_intake.stopRoller(),
+                robot.sys_hopper.stopMotor()
         );
     }
 
