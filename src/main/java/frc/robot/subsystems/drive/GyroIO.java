@@ -42,4 +42,5 @@ public interface GyroIO {
 
   public default void updateInputs(GyroIOInputs inputs) {}
   public default void zeroPigeon(){}
+  public default void setPigeonYaw(Rotation2d rotation2d){}
 }

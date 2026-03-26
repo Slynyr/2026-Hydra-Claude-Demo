@@ -32,7 +32,7 @@ public class VisionIOLimelight implements VisionIO {
 
         new Trigger(DriverStation::isDisabled)
                 .onTrue(setIMUMode(IMUMode.FUSED).alongWith(setThrottle(VisionConstants.THROTTLE_DISABLED)))
-                .onFalse(setIMUMode(IMUMode.INTERNAL).alongWith(setThrottle(0)));
+                .onFalse(setIMUMode(IMUMode.EXTERNAL).alongWith(setThrottle(0)));
 
        SmartDashboard.putData("Throttle-0 LL", setThrottle(0).ignoringDisable(true));
        SmartDashboard.putData("Throttle-100 LL", setThrottle(100).ignoringDisable(true));
@@ -134,7 +134,9 @@ public class VisionIOLimelight implements VisionIO {
     @Override
     public LimelightHelpers.PoseEstimate estimatePose(Drive drive) {
         ChassisSpeeds speeds = drive.getChassisSpeeds();
-        Rotation2d yaw = drive.getRotation();
+        Rotation2d yaw = drive.getRawGyroRotation();
+
+        Logger.recordOutput("Vision/DriveYaw", yaw);
 
         if (LimelightHelpers.getTA(limelightName) < MINIMUM_TARGET_AREA.getAsDouble()) {
             Logger.recordOutput("Vision/PoseEstimateStatus", "REJECT");
@@ -151,6 +153,7 @@ public class VisionIOLimelight implements VisionIO {
             // ...and get estimate for bot pose in FUSED mode
             yaw = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelightName).pose.getRotation();
             logGryoMode(IMUMode.FUSED);
+            Logger.recordOutput("Vision/FusedYaw", yaw);
             Logger.recordOutput("Vision/PoseEstimateStatus", "MEGA_TAG_1");
             LimelightHelpers.SetIMUMode(limelightName, IMUMode.FUSED.id);
         } else {
@@ -161,6 +164,7 @@ public class VisionIOLimelight implements VisionIO {
 
         Logger.recordOutput("Vision/ForceFusedIMU", forceFusedIMU);
 
+        Logger.recordOutput("Vision/UsedYaw", yaw);
         LimelightHelpers.SetRobotOrientation(
                 limelightName,
                 yaw.getDegrees(), 0, 0, 0, 0, 0);
