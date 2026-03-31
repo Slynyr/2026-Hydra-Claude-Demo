@@ -23,6 +23,8 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import java.util.Queue;
 
+import org.littletonrobotics.junction.Logger;
+
 /** IO implementation for Pigeon 2. */
 public class GyroIOPigeon2 implements GyroIO {
   private final Pigeon2 pigeon =
@@ -46,6 +48,8 @@ public class GyroIOPigeon2 implements GyroIO {
   private final StatusSignal<AngularVelocity> pitchVelocity = pigeon.getAngularVelocityYDevice();
     private final StatusSignal<AngularVelocity> rollVelocity = pigeon.getAngularVelocityXDevice();
 
+    private final StatusSignal<Boolean> motionStackLate = pigeon.getFault_DataAcquiredLate();
+
 
   public GyroIOPigeon2() {
     if (TunerConstants.DrivetrainConstants.Pigeon2Configs != null) {
@@ -63,6 +67,7 @@ public class GyroIOPigeon2 implements GyroIO {
     yawVelocity.setUpdateFrequency(DriveConstants.ODOMETRY_VELOCITY_UPDATE_FREQUENCY);
     pitchVelocity.setUpdateFrequency(DriveConstants.ODOMETRY_VELOCITY_UPDATE_FREQUENCY);
     rollVelocity.setUpdateFrequency(DriveConstants.ODOMETRY_VELOCITY_UPDATE_FREQUENCY);
+    motionStackLate.setUpdateFrequency(DriveConstants.ODOMETRY_VELOCITY_UPDATE_FREQUENCY);
 
     pigeon.optimizeBusUtilization();
 
@@ -78,6 +83,8 @@ public class GyroIOPigeon2 implements GyroIO {
 
   @Override
   public void updateInputs(GyroIOInputs inputs) {
+    Logger.recordOutput("Gyro/Faults/MotionDataStackLate", motionStackLate.getValue());
+
     inputs.isConnected = BaseStatusSignal.refreshAll(yaw, yawVelocity, pitch, pitchVelocity, roll, rollVelocity).equals(StatusCode.OK);
 
     inputs.yawPosition =    Rotation2d.fromDegrees(yaw.getValueAsDouble());

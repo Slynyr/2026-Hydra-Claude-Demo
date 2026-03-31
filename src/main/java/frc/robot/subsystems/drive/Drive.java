@@ -383,7 +383,8 @@ public class Drive extends SubsystemBase {
 
     /** Returns the current odometry rotation. */
     public Rotation2d getRotation() {
-        return getPose().getRotation();
+        // return getPose().getRotation();
+        return getRawGyroRotation();
     }
 
     public Rotation2d getRawGyroRotation() {

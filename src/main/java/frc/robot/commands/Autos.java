@@ -33,13 +33,13 @@ public class Autos {
 				LEFT_BUMP_STARTING_POSE,
 
                 // CROSS LEFT BUMP FROM ALLIANCE ZONE TO NEUTRAL ZONE 
-                Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Alliance-Neutral")),
-				 
-                // FOLLOW INTAKE PATH, FROM LEFT OF FIELD TOWARDS CENTER OF FIELD (ENDING VELOCITY OF 1.5 m/s) 
                 Commands.deadline(
-                    Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-FarClose")),
+                    Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Alliance-Neutral")),
                     GameCommands.startIntake(robot)
                 ),
+				 
+                // FOLLOW INTAKE PATH, FROM LEFT OF FIELD TOWARDS CENTER OF FIELD (ENDING VELOCITY OF 1.5 m/s) 
+                Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-FarClose")),
 
                 // GO FROM ENDING OF INTAKE POSITION BACK TO BUMP POSITION 
                 Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-END-FarClose-To-BUMP")),
@@ -58,14 +58,14 @@ public class Autos {
                 
             	LEFT_BUMP_STARTING_POSE,
 
-                // CROSS LEFT BUMP FROM ALLIANCE ZONE TO NEUTRAL ZONE
-                Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Alliance-Neutral")),
-
-                // FOLLOW INTAKE PATH, FROM LEFT OF FIELD TOWARDS CENTER OF FIELD (ENDING VELOCITY OF 1.5 m/s)
+               // CROSS LEFT BUMP FROM ALLIANCE ZONE TO NEUTRAL ZONE 
                 Commands.deadline(
-                    Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-FarClose")),
+                    Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Alliance-Neutral")),
                     GameCommands.startIntake(robot)
                 ),
+				 
+                // FOLLOW INTAKE PATH, FROM LEFT OF FIELD TOWARDS CENTER OF FIELD (ENDING VELOCITY OF 1.5 m/s) 
+                Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-FarClose")),
 
                 // GO FROM ENDING OF INTAKE POSITION BACK TO BUMP POSITION
                 Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-END-FarClose-To-BUMP")),
@@ -107,13 +107,13 @@ public class Autos {
 					LEFT_BUMP_STARTING_POSE,
 
 					// CROSS LEFT BUMP FROM ALLIANCE ZONE TO NEUTRAL ZONE
-					Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Alliance-Neutral")),
-
-					// FOLLOW INTAKE PATH, FROM LEFT OF FIELD TOWARDS CENTER OF FIELD (ENDING VELOCITY OF 1.5 m/s)
                     Commands.deadline(
-                        Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-FarClose")), 
+					    Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Alliance-Neutral")),
                         GameCommands.startIntake(robot)
                     ),
+
+					// FOLLOW INTAKE PATH, FROM LEFT OF FIELD TOWARDS CENTER OF FIELD (ENDING VELOCITY OF 1.5 m/s)
+                    Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-FarClose")), 
 
                     // GO FROM ENDING OF INTAKE POSITION BACK TO BUMP POSITION
                     Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-END-FarClose-To-BUMP")),
@@ -136,13 +136,13 @@ public class Autos {
 					),
 
 					//	GO BACK OVER BUMP
-					Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Alliance-Neutral")),
+                    Commands.deadline(
+    					Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Alliance-Neutral")),
+                        GameCommands.startIntake(robot)
+                    ),
 
                     // FOLLOW INTAKE PATH, FROM LEFT OF FIELD TOWARDS CENTER OF FIELD (ENDING VELOCITY OF 1.5 m/s)
-                    Commands.deadline(
-                        Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-FarClose")), 
-                        GameCommands.startIntake(robot)
-                    )
+                    Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-FarClose"))
 				)
 		);
 
@@ -154,13 +154,14 @@ public class Autos {
 				RIGHT_BUMP_STARTING_POSE,
 				
                 // cross RIGHT BUMP from ALLIANCE zone to NEUTRAL zone 
-                Objects.requireNonNull(AutoPath.followPath("RIGHT-BUMP-Alliance-Neutral")),
-
-                // follow INTAKE PATH, from RIGHT of field TOWARDS CENTER of field (ENDING VELOCITY OF 1.5 m/s)
                 Commands.deadline(
-    				Objects.requireNonNull(AutoPath.followPath("RIGHT-INTAKE-FarClose")),
+                    Objects.requireNonNull(AutoPath.followPath("RIGHT-BUMP-Alliance-Neutral")),
                     GameCommands.startIntake(robot)
                 ),
+
+                // follow INTAKE PATH, from RIGHT of field TOWARDS CENTER of field (ENDING VELOCITY OF 1.5 m/s)
+                Objects.requireNonNull(AutoPath.followPath("RIGHT-INTAKE-FarClose")),
+
                 // GO FROM ENDING OF INTAKE POSITION BACK TO BUMP POSITION 
                 Objects.requireNonNull(AutoPath.followPath("RIGHT-INTAKE-END-FarClose-To-BUMP")),
 
@@ -179,14 +180,14 @@ public class Autos {
 
 						RIGHT_BUMP_STARTING_POSE,
 
-						// cross RIGHT BUMP from ALLIANCE zone to NEUTRAL zone
-						Objects.requireNonNull(AutoPath.followPath("RIGHT-BUMP-Alliance-Neutral")),
+						// cross RIGHT BUMP from ALLIANCE zone to NEUTRAL zone 
+                        Commands.deadline(
+                            Objects.requireNonNull(AutoPath.followPath("RIGHT-BUMP-Alliance-Neutral")),
+                            GameCommands.startIntake(robot)
+                        ),
 
-						// follow INTAKE PATH, from RIGHT of field TOWARDS CENTER of field (ENDING VELOCITY OF 1.5 m/s)
-						Commands.deadline(
-							Objects.requireNonNull(AutoPath.followPath("RIGHT-INTAKE-FarClose")),
-							GameCommands.startIntake(robot)
-					    ),
+                        // follow INTAKE PATH, from RIGHT of field TOWARDS CENTER of field (ENDING VELOCITY OF 1.5 m/s)
+                        Objects.requireNonNull(AutoPath.followPath("RIGHT-INTAKE-FarClose")),
 
 						// GO FROM ENDING OF INTAKE POSITION BACK TO BUMP POSITION
 						Objects.requireNonNull(AutoPath.followPath("RIGHT-INTAKE-END-FarClose-To-BUMP")),
@@ -209,15 +210,13 @@ public class Autos {
 						),
 
 						//	GO BACK OVER BUMP
-						Objects.requireNonNull(AutoPath.followPath("RIGHT-BUMP-Alliance-Neutral")),
+                        Commands.deadline(
+						    Objects.requireNonNull(AutoPath.followPath("RIGHT-BUMP-Alliance-Neutral")),
+                            GameCommands.startIntake(robot)
+                        ),
 
 						// follow INTAKE PATH, from RIGHT of field TOWARDS CENTER of field (ENDING VELOCITY OF 1.5 m/s)
-                        Commands.deadline(
-                            Objects.requireNonNull(AutoPath.followPath("RIGHT-INTAKE-FarClose")), 
-                            GameCommands.startIntake(robot)
-                        )
-
-
+                        Objects.requireNonNull(AutoPath.followPath("RIGHT-INTAKE-FarClose"))
 				)
 		);
 

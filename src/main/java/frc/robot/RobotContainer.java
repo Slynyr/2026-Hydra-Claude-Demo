@@ -420,36 +420,51 @@ public class RobotContainer {
                         .onTrue(sys_intake.setRollerVoltage(0));
 
         primaryController.a()
-                         .onTrue(Commands.runOnce(() -> DriveCommands.setTranslationSpeed(kBump.BUMP_SPEED_MODIFIER)))
-                         .onFalse(Commands.runOnce(() -> DriveCommands.setTranslationSpeed(1.0)));
+                         .onTrue(Commands.runOnce(() -> {
+                            DriveCommands.setTranslationSpeed(1.0); 
+                            DriveCommands.setRotationSpeed(1.0);
+                        }))
+                         .onFalse(Commands.runOnce(() -> {
+                            DriveCommands.setTranslationSpeed(0.6); 
+                            DriveCommands.setRotationSpeed(0.5);
+                        }));
 
-        primaryController.povLeft()                 .onTrue(
-                            Commands.runOnce(() -> {
-                                sys_drive.setPose(new Pose2d(0, 0, Rotation2d.k180deg));
-                                sys_drive.resetGyro();
-                            }).ignoringDisable(true));
+        primaryController.povLeft()
+                .multiPress(2, 1)
+                .onTrue(Commands.runOnce(() -> {
+                            sys_drive.setPose(new Pose2d(0, 0, Rotation2d.k180deg));
+                            sys_drive.resetGyro();
+                }).ignoringDisable(true));
 
         primaryController.povRight()
                         .whileTrue(GameCommands.manualLaunch(() -> manualLaunchDistance, this))
                         .onFalse(GameCommands.stopLaunching(this));
 
-        secondaryController.b()
-                        .onTrue(GameCommands.retract(this));
-
         secondaryController.a()
                         .whileTrue(GameCommands.agitateThenRetract(this));
 
         // TODO: temp buttons to zero intake/hopper
-        secondaryController.rightBumper()
-                .onTrue(sys_intake.setExtensionVoltage(-2)
-                            .alongWith(sys_hopper.setVoltage(-2)))
-                .onFalse(sys_intake.setExtensionVoltage(0)
-                            .alongWith(sys_hopper.setVoltage(0)));
+        // secondaryController.rightBumper()
+        //         .onTrue(sys_intake.setExtensionVoltage(-2)
+        //                     .alongWith(sys_hopper.setVoltage(-2)))
+        //         .onFalse(sys_intake.setExtensionVoltage(0)
+        //                     .alongWith(sys_hopper.setVoltage(0)));
 
         secondaryController.x()
                         .onTrue(sys_intake.setRollerVoltage(-IntakeConstants.Roller.INTAKE_VOLTAGE))
                         .onFalse(sys_intake.setRollerVoltage(IntakeConstants.Roller.INTAKE_VOLTAGE));
 
+        // manual move intake extenson
+        secondaryController.rightBumper()
+                    .onTrue(sys_intake.setExtensionVoltage(-3))
+                    .onFalse(sys_intake.setExtensionVoltage(0));
+
+        secondaryController.leftBumper()
+                    .onTrue(sys_intake.setExtensionVoltage(3))
+                    .onFalse(sys_intake.setExtensionVoltage(0));
+
+        secondaryController.b().multiPress(2, 1)
+                    .onTrue(sys_intake.zeroExtension());
 
         secondaryController.povRight()
                         .onTrue(sys_serializer.setVoltage(SerializerConstants.SERIALIZING_VOLTAGE))

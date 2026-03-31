@@ -128,6 +128,11 @@ public final class IntakeIOTalonFX implements IntakeIO {
         extensionMotor.setControl(positionControl.withPosition(position.in(Meters)).withSlot(0));
     }
 
+    @Override
+    public void zeroExtension() {
+        extensionMotor.setPosition(0);
+    }
+
     /**
      * Sets motor to coastMode
      *

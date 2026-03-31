@@ -83,6 +83,8 @@ public interface IntakeIO {
     default Distance getPosition() {
         return null;
     }
+
+    default void zeroExtension() {}
 }
 
   
