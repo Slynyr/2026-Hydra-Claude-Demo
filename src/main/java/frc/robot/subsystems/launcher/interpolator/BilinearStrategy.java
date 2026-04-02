@@ -7,7 +7,8 @@ import edu.wpi.first.units.measure.Distance;
 import static edu.wpi.first.units.Units.*;
 
 /**
- * Interpolates a {@link LaunchConfig} (angular velocity and shoot hoodExtension) given a displacement to shoot the fuel.
+ * Interpolates a {@link LaunchConfig} (angular velocity and shoot hoodExtension) given a displacement to shoot the
+ * fuel.
  * <p>
  * The angular velocity and launch hoodExtension are separated into 2 different functions, only correlated by the common
  * independent variable (distance).
@@ -15,7 +16,7 @@ import static edu.wpi.first.units.Units.*;
  * @author Logan Dhillon, FRC 5409 Chargers
  */
 public class BilinearStrategy extends LaunchStrategy {
-    private static final InterpolatingDoubleTreeMap HOOD_INTERPOLATOR = new InterpolatingDoubleTreeMap();
+    private static final InterpolatingDoubleTreeMap HOOD_INTERPOLATOR     = new InterpolatingDoubleTreeMap();
     private static final InterpolatingDoubleTreeMap VELOCITY_INTERPOLATOR = new InterpolatingDoubleTreeMap();
 
     @Override

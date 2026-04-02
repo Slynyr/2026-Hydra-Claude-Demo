@@ -37,8 +37,6 @@ public final class Constants {
         REPLAY
     }
 
-    public static final boolean IS_CLIMBER_ATTACHED = false;
-
     /**
      * Device IDs store references to real hardware (e.g. CAN IDs, network hostnames, IPs, etc.). It is best practice to
      * store all device IDs in this subclass and use them in {@link RobotContainer} instead of hardcoding them
@@ -73,6 +71,9 @@ public final class Constants {
         public static final int SERIALIZER_MOTOR = 31;
 
         // CLIMBER
+        /**
+         * @deprecated there is no climber motor attached
+         */
         public static final int CLIMBER_MOTOR = 32;
     }
 

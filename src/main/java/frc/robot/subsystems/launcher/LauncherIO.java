@@ -32,7 +32,7 @@ public interface LauncherIO {
         public Current         launcherFollowerCurrent     = Amps.of(0);
         public AngularVelocity launcherFollowerVelocity    = RotationsPerSecond.of(0.0);
 
-        public AngularVelocity targetVelocity    = RotationsPerSecond.of(0.0);
+        public AngularVelocity targetVelocity = RotationsPerSecond.of(0.0);
 
         // Hood
         public Distance hoodServo1Pos    = Meters.of(0.0);

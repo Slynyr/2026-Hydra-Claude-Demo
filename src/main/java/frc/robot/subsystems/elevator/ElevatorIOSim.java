@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.elevator.ElevatorConstants.*;
 
+@Deprecated
 public class ElevatorIOSim implements ElevatorIO {
     private final ElevatorSim   elevator;
     private final PIDController controller;

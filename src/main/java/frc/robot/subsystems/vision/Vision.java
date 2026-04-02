@@ -5,14 +5,16 @@ import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.LimelightHelpers;
+import frc.robot.util.LogHelper;
 import org.littletonrobotics.junction.Logger;
 
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Radians;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 /**
@@ -21,10 +23,10 @@ import static frc.robot.subsystems.vision.VisionConstants.*;
 public class Vision extends SubsystemBase {
     private final VisionIO               io;
     private final VisionInputsAutoLogged inputs;
-    private final Alert disconnectedAlert = new Alert(
-            "Limelight appears to be disconnected. (TIMEOUT)", Alert.AlertType.kError);
+    private final Alert                  disconnectedAlert = new Alert(
+            "Limelight appears to be disconnected. (TIMEOUT)", AlertType.kError);
 
-    private final Alert tempAlert = new Alert("LL Temp", Alert.AlertType.kWarning);
+    private final Alert tempAlert = new Alert("LL Temp", AlertType.kWarning);
 
     public Vision(VisionIO io) {
         this.io = io;
@@ -48,7 +50,7 @@ public class Vision extends SubsystemBase {
     }
 
     public void captureClip() {
-        Logger.recordOutput("Event/Vision/CaptureClip", Timer.getFPGATimestamp());
+        LogHelper.logEvent("Vision/CaptureClip");
         io.captureClip();
     }
 
@@ -62,18 +64,12 @@ public class Vision extends SubsystemBase {
      */
     private Vector<N3> deriveStdDevs(double avgTagDist) {
         double xy = XY_STDDEV_BASE_METERS + XY_STDDEV_PER_METER * avgTagDist * avgTagDist;
-        double rotationXY = Math.toRadians(THETA_STDDEV_BASE_DEG + THETA_STDDEV_PER_METER * avgTagDist * avgTagDist);
-        SmartDashboard.putNumber("Vision/xy", xy);
-        SmartDashboard.putNumber("Vision/rotationXY", rotationXY);
-        // TODO: this should be tested
-        return VecBuilder.fill(
-                xy, xy,
-                rotationXY
-        );
-    }
+        double theta = Math.toRadians(THETA_STDDEV_BASE_DEG + THETA_STDDEV_PER_METER * avgTagDist * avgTagDist);
 
-    public void setForceFusedIMU(boolean forceFusedIMU) {
-        io.setForceFusedIMU(forceFusedIMU);
+        Logger.recordOutput("Vision/TranslationalStdDev", Meters.of(xy));
+        Logger.recordOutput("Vision/RotationalStdDev", Radians.of(theta));
+
+        return VecBuilder.fill(xy, xy, theta);
     }
 
     /**

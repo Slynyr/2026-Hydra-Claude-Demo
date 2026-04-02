@@ -7,6 +7,7 @@ import edu.wpi.first.units.measure.Mass;
 
 import static edu.wpi.first.units.Units.*;
 
+@Deprecated
 public final class ElevatorConstants {
     public static final Current  CURRENT_LIMIT = Amps.of(30.0);
     public static final double   GEARING       = 20.0 / 1.0;

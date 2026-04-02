@@ -4,7 +4,13 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Radians;
 
+/**
+ * Basic math utility functions for use throughout robot code
+ *
+ * @author Logan Dhillon
+ */
 public class MathUtils {
     /**
      * Calculates if a value is within another value, given a percentage tolerance
@@ -32,5 +38,27 @@ public class MathUtils {
         double diff = Math.abs(actual.getDegrees() - target.getDegrees()) % 360;
         if (diff > 180) diff = 360 - diff;
         return diff <= tolerance.in(Degrees);
+    }
+
+    /**
+     * Calculates rotation difference for rotation2d
+     *
+     * @param a 1st rotation2d
+     * @param b 2nd rotation2d
+     *
+     * @return angle between them
+     */
+    public static Angle rotationDifference(Rotation2d a, Rotation2d b) {
+        double difference = a.getRadians() - b.getRadians();
+
+        difference = (difference + Math.PI) % (2 * Math.PI) - Math.PI;
+
+        while (difference < -Math.PI)
+            difference += 2 * Math.PI;
+
+        while (difference > Math.PI)
+            difference -= 2 * Math.PI;
+
+        return Radians.of(Math.abs(difference));
     }
 }

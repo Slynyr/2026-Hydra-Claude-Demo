@@ -3,7 +3,6 @@ package frc.robot.subsystems.vision;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.LimelightHelpers;
-import frc.robot.util.LimelightHelpers.PoseEstimate;
 import org.littletonrobotics.junction.AutoLog;
 
 /**
@@ -49,11 +48,6 @@ public interface VisionIO {
      * Sets the camera offset and return nothing
      */
     default void setCameraOffset() {}
-
-    /**
-     * Sets if the vision IO should only use the fused IMU mode.
-     */
-    default void setForceFusedIMU(boolean forceFusedIMU) {}
 
     /**
      * Estimate the current pose using AprilTags

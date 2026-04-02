@@ -20,19 +20,16 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 public class LauncherIOTalonFX implements LauncherIO {
     // Motors and sensors
-    private final TalonFX     leaderMotor;
-    private final TalonFX followerMotor;
-    private final Servo       hoodServo;
-    private final Servo       hoodServo2;
+    private final TalonFX leaderMotor;
+    private final Servo   hoodServo;
+    private final Servo   hoodServo2;
 
     private double servo1CurPos;
     private double servo2CurPos;
     private double servo1Setpoint;
     private double servo2Setpoint;
-    private double servo1DisabledSetpoint;
-    private double servo2DisabledSetpoint;
 
-    public AngularVelocity targetVelocity    = RotationsPerSecond.of(0.0);
+    public AngularVelocity targetVelocity = RotationsPerSecond.of(0.0);
 
     // status signals
     private final StatusSignal<MagnetHealthValue> magnetHealth;
@@ -56,7 +53,7 @@ public class LauncherIOTalonFX implements LauncherIO {
     ) {
         // Motors and sensors
         leaderMotor = new TalonFX(launcherCanID);
-        followerMotor = new TalonFX(launcherFollowerCanID);
+        TalonFX followerMotor = new TalonFX(launcherFollowerCanID);
         CANcoder encoder = new CANcoder(launcherCANCoderID);
         hoodServo = new Servo(servoChannel);
         hoodServo2 = new Servo(servoChannel2);
@@ -137,29 +134,12 @@ public class LauncherIOTalonFX implements LauncherIO {
         // Feedback configs
         FeedbackConfigs feedbackConfigs = new FeedbackConfigs()
                 // .withSensorToMechanismRatio(LauncherConstants.Launcher.SENSOR_RATIO);
-               .withRotorToSensorRatio(LauncherConstants.Launcher.SENSOR_RATIO)
+                .withRotorToSensorRatio(LauncherConstants.Launcher.SENSOR_RATIO)
                 .withRemoteCANcoder(encoder);
         leaderConfig.apply(feedbackConfigs);
         followerConfig.apply(feedbackConfigs);
 
         followerMotor.setControl(new Follower(launcherCanID, MotorAlignmentValue.Opposed));
-
-//        new Trigger(DriverStation::isDisabled).onTrue(Commands.runOnce(() -> {
-//            // update disabled pos to store
-//            servo1DisabledSetpoint = servo1Setpoint;
-//            servo2DisabledSetpoint = servo2Setpoint;
-//            // and update the real setpoint
-//            servo1Setpoint = servo1CurPos;
-//            servo2Setpoint = servo2CurPos;
-//        })).onFalse(Commands.runOnce(() -> {
-//            // restore disabled setpoints
-//            servo1Setpoint = servo2DisabledSetpoint;
-//            servo2Setpoint = servo2DisabledSetpoint;
-//        }));
-
-        // leaderMotor.optimizeBusUtilization();
-        // followerMotor.optimizeBusUtilization();
-        // encoder.optimizeBusUtilization();
     }
 
     // Run systems
@@ -192,7 +172,7 @@ public class LauncherIOTalonFX implements LauncherIO {
         servo1Setpoint = appliedSetpoint;
         appliedSetpoint = (targetSetpoint / LauncherConstants.Hood.MAX_EXTENSION.in(Millimeters) * 2) - 1;
         hoodServo.setSpeed(appliedSetpoint);
-        
+
         appliedSetpoint = MathUtil.clamp(targetSetpoint, 0, LauncherConstants.Hood.MAX_EXTENSION.in(Millimeters));
         servo2Setpoint = appliedSetpoint;
         appliedSetpoint = (targetSetpoint / LauncherConstants.Hood.MAX_EXTENSION.in(Millimeters) * 2) - 1;
@@ -220,17 +200,6 @@ public class LauncherIOTalonFX implements LauncherIO {
 
     @Override
     public void updateInputs(LauncherInputs inputs) {
-        // if (Constants.IS_TUNING && IntakeConstants.Extension.INTAKE_IS_TUNING) {
-        //     var slot0 = new Slot0Configs()
-        //                     .withKP(IntakeConstants.Extension.PID.getP())
-        //                     .withKI(IntakeConstants.Extension.PID.getI())
-        //                     .withKD(IntakeConstants.Extension.PID.getD())
-        //                     .withKS(IntakeConstants.Extension.KS.get())
-        //                     .withKV(IntakeConstants.Extension.KV.get());
-        //     leaderMotor.getConfigurator().apply(slot0);
-        //     followerMotor.getConfigurator().apply(slot0);
-        // }
-
         // Launcher
         inputs.isCANCoderConnected = BaseStatusSignal.refreshAll(magnetHealth).isOK();
         inputs.magnetHealth = magnetHealth.getValue();

@@ -10,7 +10,6 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.util.FlippingUtil;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -22,27 +21,29 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.Constants.*;
+import frc.robot.Constants.ClimbingPositions;
+import frc.robot.Constants.DeviceID;
+import frc.robot.Constants.Mode;
+import frc.robot.Constants.kField;
 import frc.robot.commands.Autos;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.GameCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.*;
-import frc.robot.subsystems.elevator.Elevator;
-import frc.robot.subsystems.elevator.ElevatorIO;
-import frc.robot.subsystems.elevator.ElevatorIOSim;
-import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.feeder.Feeder;
 import frc.robot.subsystems.feeder.FeederIO;
 import frc.robot.subsystems.feeder.FeederIOSim;
 import frc.robot.subsystems.feeder.FeederIOTalonFX;
-import frc.robot.subsystems.hopper.*;
+import frc.robot.subsystems.hopper.Hopper;
+import frc.robot.subsystems.hopper.HopperIO;
+import frc.robot.subsystems.hopper.HopperIOSim;
+import frc.robot.subsystems.hopper.HopperIOTalonFX;
 import frc.robot.subsystems.intake.*;
 import frc.robot.subsystems.launcher.*;
 import frc.robot.subsystems.launcher.interpolator.LaunchStrategy;
@@ -62,7 +63,6 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 import java.util.ArrayList;
-import java.util.function.BooleanSupplier;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -80,10 +80,6 @@ public class RobotContainer {
     public final Feeder     sys_feeder;
     public final Hopper     sys_hopper;
     public final Launcher   sys_launcher;
-    /**
-     * THIS FIELD CAN BE NULL, ensure it is not-null before using it.
-     */
-    public final Elevator   sys_elevator;
 
     public static SwerveDriveSimulation simConfig;
 
@@ -91,8 +87,6 @@ public class RobotContainer {
     private ClimbingPositions selectedClimbingPrepPosition = ClimbingPositions.LEFT_PREP;
 
     private Distance manualLaunchDistance = Meters.of(2);
-
-    public BooleanSupplier shouldLaunch = () -> true;
 
     public LoggedNetworkBoolean launcherShouldIdle = new LoggedNetworkBoolean("Launcher/ShouldIdle", false);
 
@@ -131,13 +125,6 @@ public class RobotContainer {
                         new SerializerIOTalonFX(DeviceID.SERIALIZER_MOTOR, DeviceID.FEEDER_MOTOR_BOTTOM));
                 sys_feeder = new Feeder(new FeederIOTalonFX(DeviceID.FEEDER_MOTOR_TOP));
                 sys_vision = new Vision(new VisionIOLimelight(DeviceID.LIMELIGHT_NAME));
-
-                if (Constants.IS_CLIMBER_ATTACHED) {
-                    sys_elevator = new Elevator(new ElevatorIOTalonFX(DeviceID.CLIMBER_MOTOR));
-                } else {
-                    System.out.println("Climber not attached, will not register");
-                    sys_elevator = null;
-                }
 
                 sys_drive = new Drive(
                         new GyroIOPigeon2(),
@@ -185,7 +172,6 @@ public class RobotContainer {
                         new ModuleIOSim(simConfig.getModules()[2]),
                         new ModuleIOSim(simConfig.getModules()[3]),
                         sys_vision);
-                sys_elevator = new Elevator(new ElevatorIOSim());
                 sys_intake = new Intake(new IntakeIOSim());
                 sys_serializer = new Serializer(new SerializerIOSim());
                 sys_feeder = new Feeder(new FeederIOSim());
@@ -206,7 +192,6 @@ public class RobotContainer {
                 sys_hopper = new Hopper(new HopperIO() {});
                 sys_intake = new Intake(new IntakeIO() {});
                 sys_serializer = new Serializer(new SerializerIO() {});
-                sys_elevator = new Elevator(new ElevatorIO() {});
                 sys_feeder = new Feeder(new FeederIO() {});
                 sys_launcher = new Launcher(new LauncherIO() {}, sys_drive);
             }
@@ -454,7 +439,7 @@ public class RobotContainer {
                         .onTrue(sys_intake.setRollerVoltage(-IntakeConstants.Roller.INTAKE_VOLTAGE))
                         .onFalse(sys_intake.setRollerVoltage(IntakeConstants.Roller.INTAKE_VOLTAGE));
 
-        // manual move intake extenson
+        // manual move intake extension
         secondaryController.rightBumper()
                     .onTrue(sys_intake.setExtensionVoltage(-3))
                     .onFalse(sys_intake.setExtensionVoltage(0));
@@ -499,17 +484,18 @@ public class RobotContainer {
         SmartDashboard.putData("Set Hood Angle",
                                sys_launcher.setHoodExtension(() -> Millimeter.of(SmartDashboard.getNumber("Hood Angle [mm]", 0))));
 
-        SmartDashboard.putData("Hopper/Coast", sys_hopper.coastMode().ignoringDisable(true)); //TODO remove when main
-        SmartDashboard.putData("Hopper/Brake", sys_hopper.brakeMode().ignoringDisable(true)); //TODO remove when main
+        SmartDashboard.putData("Hopper/Coast", sys_hopper.coastMode().ignoringDisable(true));
+        SmartDashboard.putData("Hopper/Brake", sys_hopper.brakeMode().ignoringDisable(true));
 
-        SmartDashboard.putData("Intake/Coast", sys_intake.coastMode().ignoringDisable(true)); // TODO: REMOVE WHEN MAIN
-        SmartDashboard.putData("Intake/Brake", sys_intake.brakeMode().ignoringDisable(true)); // TODO: REMOVE WHEN MAIN
+        SmartDashboard.putData("Intake/Coast", sys_intake.coastMode().ignoringDisable(true));
+        SmartDashboard.putData("Intake/Brake", sys_intake.brakeMode().ignoringDisable(true));
     
-        SmartDashboard.putData("Drive/Coast", Commands.runOnce(() -> sys_drive.coastMode()).ignoringDisable(true));
-        SmartDashboard.putData("Drive/Brake", Commands.runOnce(() -> sys_drive.brakeMode()).ignoringDisable(false));
+        SmartDashboard.putData("Drive/Coast", Commands.runOnce(sys_drive::coastMode).ignoringDisable(true));
+        SmartDashboard.putData("Drive/Brake", Commands.runOnce(sys_drive::brakeMode).ignoringDisable(false));
 
     }
 
+    @Deprecated
     private Command prepClimberPositionCommand(ClimbingPositions climbingPosition) {
         return Commands.runOnce(
                 () -> {
@@ -543,16 +529,11 @@ public class RobotContainer {
      * @return command that will run on disabled
      */
     public Command onDisable() {
-        Command cmd = Commands.parallel(
+        return Commands.parallel(
                 GameCommands.stopLaunching(this),
                 Commands.runOnce(sys_drive::stop)
                 // sys_hopper.setVoltage(0)
         );
-
-        if (sys_elevator != null)
-            cmd = cmd.alongWith(sys_elevator.setVoltage(0));
-
-        return cmd;
     }
 
     /**

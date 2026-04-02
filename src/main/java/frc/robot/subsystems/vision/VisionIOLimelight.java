@@ -9,7 +9,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.commands.Autos;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.LimelightHelpers;
 import org.littletonrobotics.junction.Logger;
@@ -23,9 +22,8 @@ import static frc.robot.subsystems.vision.VisionConstants.MINIMUM_TARGET_AREA;
 public class VisionIOLimelight implements VisionIO {
     private final String limelightName;
 
-    private double  lastPrxLatency     = 0;
-    private double  disconnectedFrames = 0;
-    private boolean forceFusedIMU      = false;
+    private double lastPrxLatency     = 0;
+    private double disconnectedFrames = 0;
 
     public VisionIOLimelight(String limelightName) {
         this.limelightName = limelightName;
@@ -34,10 +32,10 @@ public class VisionIOLimelight implements VisionIO {
                 .onTrue(setIMUMode(IMUMode.FUSED).alongWith(setThrottle(VisionConstants.THROTTLE_DISABLED)))
                 .onFalse(setIMUMode(IMUMode.EXTERNAL).alongWith(setThrottle(0)));
 
-       SmartDashboard.putData("Throttle-0 LL", setThrottle(0).ignoringDisable(true));
-       SmartDashboard.putData("Throttle-100 LL", setThrottle(100).ignoringDisable(true));
-       SmartDashboard.putData("Fused LL", setIMUMode(IMUMode.FUSED).ignoringDisable(true));
-       SmartDashboard.putData("Internal LL", setIMUMode(IMUMode.INTERNAL).ignoringDisable(true));
+        SmartDashboard.putData("Throttle-0 LL", setThrottle(0).ignoringDisable(true));
+        SmartDashboard.putData("Throttle-100 LL", setThrottle(100).ignoringDisable(true));
+        SmartDashboard.putData("Fused LL", setIMUMode(IMUMode.FUSED).ignoringDisable(true));
+        SmartDashboard.putData("Internal LL", setIMUMode(IMUMode.INTERNAL).ignoringDisable(true));
 
         // disable throttle
         LimelightHelpers.SetThrottle(limelightName, VisionConstants.THROTTLE_DISABLED);
@@ -64,6 +62,7 @@ public class VisionIOLimelight implements VisionIO {
         ).ignoringDisable(true);
     }
 
+    @Override
     public void captureClip() {
         LimelightHelpers.triggerRewindCapture(limelightName, VisionConstants.CAPTURE_VIDEO_DURATION);
     }
@@ -144,11 +143,11 @@ public class VisionIOLimelight implements VisionIO {
         }
 
         if (VisionConstants.ALLOW_FUSED_GYRO_ESTIMATIONS &&
-             DriverStation.isEnabled() && // enabled
-             LimelightHelpers.getTA(limelightName) >= 1.5 && // confident tag
-             Math.abs(speeds.vxMetersPerSecond) < 0.1 && // bot not moving
-             Math.abs(speeds.vyMetersPerSecond) < 0.1 &&
-             Math.abs(speeds.omegaRadiansPerSecond) < 0.1) {
+            DriverStation.isEnabled() && // enabled
+            LimelightHelpers.getTA(limelightName) >= 1.5 && // confident tag
+            Math.abs(speeds.vxMetersPerSecond) < 0.1 && // bot not moving
+            Math.abs(speeds.vyMetersPerSecond) < 0.1 &&
+            Math.abs(speeds.omegaRadiansPerSecond) < 0.1) {
             LimelightHelpers.SetIMUMode(limelightName, IMUMode.FUSED.id); // use fused IMU
             // ...and get estimate for bot pose in FUSED mode
             yaw = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelightName).pose.getRotation();
@@ -162,18 +161,12 @@ public class VisionIOLimelight implements VisionIO {
             Logger.recordOutput("Vision/PoseEstimateStatus", "MEGA_TAG_2");
         }
 
-        Logger.recordOutput("Vision/ForceFusedIMU", forceFusedIMU);
-
         Logger.recordOutput("Vision/UsedYaw", yaw);
         LimelightHelpers.SetRobotOrientation(
                 limelightName,
                 yaw.getDegrees(), 0, 0, 0, 0, 0);
 
         return LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
-    }
-
-    public void setForceFusedIMU(boolean forceFusedIMU) {
-        this.forceFusedIMU = forceFusedIMU;
     }
 
     @Override
