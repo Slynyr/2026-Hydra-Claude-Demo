@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.AnalogInput;
 
 import static edu.wpi.first.units.Units.Volts;
 
+@Deprecated
 public class FuelGaugeIOAnalogInput implements FuelGaugeIO {
     private final AnalogInput ultrasonic;
 
