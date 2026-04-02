@@ -1,24 +1,23 @@
 package frc.robot.subsystems.drive;
 
-import static edu.wpi.first.units.Units.*;
-
 import org.ironmaple.simulation.drivesims.GyroSimulation;
 
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+
 public class GyroIOSim implements GyroIO {
+    private final GyroSimulation gyro;
 
-    private final GyroSimulation gyroSim;
-
-    public GyroIOSim(GyroSimulation gyroSim) {
-        this.gyroSim = gyroSim;
+    public GyroIOSim(GyroSimulation gyro) {
+        this.gyro = gyro;
     }
 
     @Override
     public void updateInputs(GyroIOInputs inputs) {
         inputs.isConnected = true;
 
-        inputs.yawPosition = gyroSim.getGyroReading();
-        inputs.yawVelocityRadPerSec = RadiansPerSecond.of(gyroSim.getMeasuredAngularVelocity().in(RadiansPerSecond));
-        inputs.odometryYawTimestamps = new double[] {};
-        inputs.odometryYawPositions = gyroSim.getCachedGyroReadings();
+        inputs.yawPosition = gyro.getGyroReading();
+        inputs.yawVelocity = RadiansPerSecond.of(gyro.getMeasuredAngularVelocity().in(RadiansPerSecond));
+        inputs.odometryYawTimestamps = new double[]{};
+        inputs.odometryYawPositions = gyro.getCachedGyroReadings();
     }
 }

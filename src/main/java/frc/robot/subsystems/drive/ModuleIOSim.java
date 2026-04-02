@@ -13,56 +13,56 @@
 
 package frc.robot.subsystems.drive;
 
-import static edu.wpi.first.units.Units.*;
-
-import org.ironmaple.simulation.SimulatedArena;
-import org.ironmaple.simulation.drivesims.SwerveModuleSimulation;
-import org.ironmaple.simulation.motorsims.SimulatedMotorController.GenericMotorController;
 import com.ctre.phoenix6.signals.MagnetHealthValue;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.generated.TunerConstants;
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.drivesims.SwerveModuleSimulation;
+import org.ironmaple.simulation.motorsims.SimulatedMotorController.GenericMotorController;
+
+import static edu.wpi.first.units.Units.*;
 
 /**
- * Physics sim implementation of module IO. The sim models are configured using a set of module
- * constants from Phoenix. Simulation is always based on voltage control.
+ * Physics sim implementation of module IO. The sim models are configured using a set of module constants from Phoenix.
+ * Simulation is always based on voltage control.
  */
 public class ModuleIOSim implements ModuleIO {
-  // TunerConstants doesn't support separate sim constants, so they are declared locally
-  private static final double DRIVE_KP = 0.05;
-  private static final double DRIVE_KD = 0.0;
-  
-  private static final double TURN_KP = 8.0;
-  private static final double TURN_KD = 0.0;
+    // TunerConstants doesn't support separate sim constants, so they are declared locally
+    private static final double DRIVE_KP = 0.05;
+    private static final double DRIVE_KD = 0.0;
+    private static final double TURN_KP  = 8.0;
+    private static final double TURN_KD  = 0.0;
 
-  private final SwerveModuleSimulation moduleSim;
-  private final GenericMotorController driveMotor, turnMotor;
+    private final SwerveModuleSimulation moduleSim;
+    private final GenericMotorController driveMotor, turnMotor;
 
-    private boolean driveClosedLoop = false;
-    private boolean turnClosedLoop = false;
-    private PIDController driveController = new PIDController(DRIVE_KP, 0, DRIVE_KD);
-    private PIDController turnController = new PIDController(TURN_KP, 0, TURN_KD);
-    private double driveAppliedVolts = 0.0;
-    private double turnAppliedVolts = 0.0;
-    private double desiredWheelVelocityRadPerSec = 0.0;
-    private Rotation2d desiredSteerFacing = new Rotation2d();
+    private final PIDController driveController = new PIDController(DRIVE_KP, 0, DRIVE_KD);
+    private final PIDController turnController  = new PIDController(TURN_KP, 0, TURN_KD);
+
+    private boolean    driveClosedLoop               = false;
+    private boolean    turnClosedLoop                = false;
+    private double     driveAppliedVolts             = 0.0;
+    private double     turnAppliedVolts              = 0.0;
+    private double     desiredWheelVelocityRadPerSec = 0.0;
+    private Rotation2d desiredSteerFacing            = new Rotation2d();
 
     public ModuleIOSim(SwerveModuleSimulation moduleSim) {
         this.moduleSim = moduleSim;
 
-        this.driveMotor = 
-                moduleSim.useGenericMotorControllerForDrive()
+        this.driveMotor = moduleSim
+                .useGenericMotorControllerForDrive()
                 .withCurrentLimit(TunerConstants.kSlipCurrent);
 
-        this.turnMotor = 
-                moduleSim.useGenericControllerForSteer()
+        this.turnMotor = moduleSim
+                .useGenericControllerForSteer()
                 .withCurrentLimit(TunerConstants.steerInitialConfigs.CurrentLimits.getStatorCurrentLimitMeasure());
 
         // Enable wrapping for turn PID
         turnController.enableContinuousInput(-Math.PI, Math.PI);
-        SimulatedArena.getInstance().addCustomSimulation((delta) -> runControlLoops(delta));
+        SimulatedArena.getInstance().addCustomSimulation(this::runControlLoops);
     }
 
     @Override
@@ -70,25 +70,25 @@ public class ModuleIOSim implements ModuleIO {
         // Update drive inputs
         inputs.isDriveConnected = true;
         inputs.drivePositionRad = Radians.of(moduleSim.getDriveWheelFinalPosition().in(Radians));
-        inputs.driveVelocityRadPerSec = RadiansPerSecond.of(moduleSim.getDriveWheelFinalSpeed().in(RadiansPerSecond));
+        inputs.driveVelocity = RadiansPerSecond.of(moduleSim.getDriveWheelFinalSpeed().in(RadiansPerSecond));
         inputs.driveAppliedVolts = moduleSim.getDriveMotorAppliedVoltage();
         inputs.driveCurrentAmps = moduleSim.getDriveMotorStatorCurrent();
 
         // Update turn inputs
-        inputs.isTurnConnected = true;
-        inputs.turnEncoderConnected = true;
+        inputs.isTurnMotorConnected = true;
+        inputs.isTurnEncoderConnected = true;
         inputs.turnAbsolutePosition = moduleSim.getSteerAbsoluteFacing();
         inputs.turnPosition = moduleSim.getSteerAbsoluteFacing();
-        inputs.turnVelocityRadPerSec = RadiansPerSecond.of(moduleSim.getSteerAbsoluteEncoderSpeed().in(RadiansPerSecond));
+        inputs.turnVelocity = RadiansPerSecond.of(moduleSim.getSteerAbsoluteEncoderSpeed().in(RadiansPerSecond));
         inputs.turnAppliedVolts = moduleSim.getSteerMotorAppliedVoltage();
         inputs.turnCurrentAmps = moduleSim.getSteerMotorStatorCurrent();
 
         inputs.magnetHealth = MagnetHealthValue.Magnet_Green;
 
         // Update odometry inputs (50Hz because high-frequency odometry in sim doesn't matter)
-        inputs.odometryTimestamps = new double[] {Timer.getFPGATimestamp()};
-        inputs.odometryDrivePositionsRad = new double[] {inputs.drivePositionRad.in(Radians)};
-        inputs.odometryTurnPositions = new Rotation2d[] {inputs.turnPosition};
+        inputs.odometryTimestamps = new double[]{ Timer.getFPGATimestamp() };
+        inputs.odometryDrivePositionsRad = new double[]{ inputs.drivePositionRad.in(Radians) };
+        inputs.odometryTurnPositions = new Rotation2d[]{ inputs.turnPosition };
     }
 
     public void runControlLoops(double delta) {
@@ -107,16 +107,16 @@ public class ModuleIOSim implements ModuleIO {
         DCMotor motor = moduleSim.config.driveMotorConfigs.motor;
 
         double frictionTorque =
-            motor.getTorque(motor.getCurrent(0, TunerConstants.FrontLeft.DriveFrictionVoltage))
-                        * Math.signum(desiredWheelVelocityRadPerSec);
+                motor.getTorque(motor.getCurrent(0, TunerConstants.FrontLeft.DriveFrictionVoltage))
+                * Math.signum(desiredWheelVelocityRadPerSec);
 
-        double velocityFeedforwardVolts = motor.getVoltage(
+        double feedForward = motor.getVoltage(
                 frictionTorque, desiredWheelVelocityRadPerSec * moduleSim.config.DRIVE_GEAR_RATIO);
 
-        double feedBackVolts = driveController.calculate(
+        double feedback = driveController.calculate(
                 moduleSim.getDriveWheelFinalSpeed().in(RadiansPerSecond), desiredWheelVelocityRadPerSec);
 
-        driveAppliedVolts = velocityFeedforwardVolts + feedBackVolts;
+        driveAppliedVolts = feedForward + feedback;
     }
 
     public void calculateSteerControlLoops() {

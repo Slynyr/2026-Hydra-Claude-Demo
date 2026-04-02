@@ -50,7 +50,6 @@ import frc.robot.util.LocalADStarAK;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
-
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -59,59 +58,61 @@ import static edu.wpi.first.units.Units.Volts;
 
 public class Drive extends SubsystemBase {
     // TunerConstants doesn't include these constants, so they are declared locally
-    public static final double DRIVE_BASE_RADIUS =
+    public static final double DRIVE_BASE_RADIUS = Math.max(
             Math.max(
-                    Math.max(
-                            Math.hypot(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY),
-                            Math.hypot(TunerConstants.FrontRight.LocationX, TunerConstants.FrontRight.LocationY)),
-                    Math.max(
-                            Math.hypot(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
-                            Math.hypot(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)));
+                    Math.hypot(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY),
+                    Math.hypot(TunerConstants.FrontRight.LocationX, TunerConstants.FrontRight.LocationY)),
+            Math.max(
+                    Math.hypot(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
+                    Math.hypot(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY))
+    );
 
     protected static final double ODOMETRY_FREQUENCY = TunerConstants.kCANBus.isNetworkFD() ? 250.0 : 100.0;
 
-    // PathPlanner config constants
-    private static final double      ROBOT_MASS_KG = 74.088;
-    private static final double      ROBOT_MOI     = 6.883;
-    private static final double      WHEEL_COF     = 1.2;
-    private static final RobotConfig PP_CONFIG     =
-            new RobotConfig(
-                    ROBOT_MASS_KG,
-                    ROBOT_MOI,
-                    new ModuleConfig(
-                            TunerConstants.FrontLeft.WheelRadius,
-                            TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
-                            WHEEL_COF,
-                            DCMotor.getKrakenX60Foc(1)
-                                   .withReduction(TunerConstants.FrontLeft.DriveMotorGearRatio),
-                            TunerConstants.FrontLeft.SlipCurrent,
-                            1),
-                    getModuleTranslations());
+    private static final RobotConfig PP_CONFIG = new RobotConfig(
+            DriveConstants.ROBOT_MASS_KG,
+            DriveConstants.ROBOT_MOI,
+            new ModuleConfig(
+                    TunerConstants.FrontLeft.WheelRadius,
+                    TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
+                    DriveConstants.AUTO_WHEEL_COF,
+                    DCMotor.getKrakenX60Foc(1).withReduction(TunerConstants.FrontLeft.DriveMotorGearRatio),
+                    TunerConstants.FrontLeft.SlipCurrent,
+                    1),
+            getModuleTranslations()
+    );
 
     private Rotation2d rawGyroRotation = Rotation2d.kZero;
 
     protected static final Lock ODOMETRY_LOCK = new ReentrantLock();
 
-    private final GyroIO                   gyroIO;
-    private final GyroIOInputsAutoLogged   gyroInputs            = new GyroIOInputsAutoLogged();
-    private final Module[]                 modules               = new Module[4]; // FL, FR, BL, BR
-    private final SysIdRoutine             sysId;
-    private final Alert                    gyroDisconnectedAlert =
-            new Alert("Disconnected gyro, using kinematics as fallback.", AlertType.kError);
-    private final SwerveDriveKinematics    kinematics            = new SwerveDriveKinematics(getModuleTranslations());
-    private final SwerveModulePosition[]   lastModulePositions   = // For delta tracking
-            new SwerveModulePosition[]{
-                    new SwerveModulePosition(),
-                    new SwerveModulePosition(),
-                    new SwerveModulePosition(),
-                    new SwerveModulePosition()
-            };
-    private final SwerveDrivePoseEstimator poseEstimator         =
+    private final GyroIO                 gyroIO;
+    private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
+
+    /**
+     * Ordered by FL, FR, BL, BR
+     */
+    private final Module[]     modules = new Module[4];
+    private final SysIdRoutine sysId;
+
+    private final Alert gyroDisconnectedAlert = new Alert(
+            "Disconnected gyro, using kinematics as fallback.", AlertType.kError);
+
+    private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(getModuleTranslations());
+
+    /** For delta tracking */
+    private final SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[]{
+            new SwerveModulePosition(),
+            new SwerveModulePosition(),
+            new SwerveModulePosition(),
+            new SwerveModulePosition()
+    };
+
+    private final SwerveDrivePoseEstimator poseEstimator =
             new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
-    private final Vision vision;
+    private final Vision  vision;
     private final Field2d field2d;
-
 
     public Drive(
             GyroIO gyroIO,
@@ -175,7 +176,7 @@ public class Drive extends SubsystemBase {
             module.periodic();
         }
         ODOMETRY_LOCK.unlock();
-        
+
         field2d.setRobotPose(getPose());
 
         // Stop moving when disabled
@@ -253,19 +254,20 @@ public class Drive extends SubsystemBase {
         Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStates);
     }
 
-    public void runTurnVelocity(AngularVelocity velocity){
-        for (int i = 0; i < 4; i++){
+    public void runTurnVelocity(AngularVelocity velocity) {
+        for (int i = 0; i < 4; i++) {
             modules[i].setTurnVelocity(velocity);
         }
     }
-    public void runTurnVoltage(double voltage){
-        for (int i = 0; i < 4; i++){
+
+    public void runTurnVoltage(double voltage) {
+        for (int i = 0; i < 4; i++) {
             modules[i].setTurnVoltage(voltage);
         }
     }
 
-    public void runTurnSetpoint(Rotation2d setpoint){
-        for (int i = 0; i < 4; i++){
+    public void runTurnSetpoint(Rotation2d setpoint) {
+        for (int i = 0; i < 4; i++) {
             modules[i].setTurnPosition(setpoint);
         }
     }
@@ -392,17 +394,17 @@ public class Drive extends SubsystemBase {
     }
 
     public void resetGyro() {
-        gyroIO.zeroPigeon();
+        gyroIO.zero();
     }
 
-    public Angle getTilt(){
+    public Angle getTilt() {
         return gyroInputs.tilt;
     }
 
     /** Resets the current odometry pose. */
     public void setPose(Pose2d pose) {
         poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
-        gyroIO.setPigeonYaw(pose.getRotation());
+        gyroIO.setYaw(pose.getRotation());
         vision.setRotation(pose.getRotation());
     }
 

@@ -10,37 +10,45 @@ package frc.robot.subsystems.drive;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import org.littletonrobotics.junction.AutoLog;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
-import org.littletonrobotics.junction.AutoLog;
-
 public interface GyroIO {
-  @AutoLog
-  public static class GyroIOInputs {
-    public boolean isConnected = false;
+    @AutoLog
+    class GyroIOInputs {
+        public boolean isConnected = false;
 
-    public Rotation2d yawPosition = Rotation2d.kZero;
-    public Rotation2d pitchPosition = Rotation2d.kZero;
-    public Rotation2d rollPosition = Rotation2d.kZero;
-  
-    public AngularVelocity yawVelocityRadPerSec = RadiansPerSecond.of(0.0);
-    public AngularVelocity pitchVelocityRadPerSec = RadiansPerSecond.of(0.0);
-    public AngularVelocity rollVelocityRadPerSec = RadiansPerSecond.of(0.0);
+        public Rotation2d yawPosition   = Rotation2d.kZero;
+        public Rotation2d pitchPosition = Rotation2d.kZero;
+        public Rotation2d rollPosition  = Rotation2d.kZero;
 
-    public double[] odometryYawTimestamps = new double[] {};
-    public double[] odometryPitchTimestamps = new double[] {};
-    public double[] odometryRollTimestamps = new double[] {};
+        public AngularVelocity yawVelocity   = RadiansPerSecond.of(0.0);
+        public AngularVelocity pitchVelocity = RadiansPerSecond.of(0.0);
+        public AngularVelocity rollVelocity  = RadiansPerSecond.of(0.0);
 
-    public Rotation2d[] odometryYawPositions = new Rotation2d[] {};
-    public Rotation2d[] odometryPitchPositions = new Rotation2d[] {};
-    public Rotation2d[] odometryRollPositions = new Rotation2d[] {};
+        public double[] odometryYawTimestamps   = new double[]{};
+        public double[] odometryPitchTimestamps = new double[]{};
+        public double[] odometryRollTimestamps  = new double[]{};
 
-    public Angle tilt = Degrees.of(0.0);
-  }
+        public Rotation2d[] odometryYawPositions   = new Rotation2d[]{};
+        public Rotation2d[] odometryPitchPositions = new Rotation2d[]{};
+        public Rotation2d[] odometryRollPositions  = new Rotation2d[]{};
 
-  public default void updateInputs(GyroIOInputs inputs) {}
-  public default void zeroPigeon(){}
-  public default void setPigeonYaw(Rotation2d rotation2d){}
+        public Angle tilt = Degrees.of(0.0);
+    }
+
+    default void updateInputs(GyroIOInputs inputs) {}
+
+    /**
+     * Zeros the gyroscope or IMU
+     */
+    default void zero() {}
+
+    /**
+     * Sets the yaw of the gyroscope or IMU
+     * @param yaw new yaw
+     */
+    default void setYaw(Rotation2d yaw) {}
 }
