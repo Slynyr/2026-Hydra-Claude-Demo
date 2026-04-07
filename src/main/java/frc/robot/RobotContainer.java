@@ -119,7 +119,7 @@ public class RobotContainer {
                 sys_hopper = new Hopper(
                         new HopperIOTalonFX(DeviceID.HOPPER_MOTOR_ID));
                 sys_intake = new Intake(
-                        new IntakeIOTalonFX(DeviceID.INTAKE_ROLLER_MOTOR, DeviceID.INTAKE_EXTENSION_MOTOR));
+                        new IntakeIOTalonFX(DeviceID.INTAKE_ROLLER_MOTOR, DeviceID.INTAKE_ROLLER_MOTOR_2, DeviceID.INTAKE_EXTENSION_MOTOR));
 
                 sys_serializer = new Serializer(
                         new SerializerIOTalonFX(DeviceID.SERIALIZER_MOTOR, DeviceID.FEEDER_MOTOR_BOTTOM));
