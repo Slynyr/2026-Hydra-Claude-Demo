@@ -26,6 +26,7 @@ public interface ModuleIO {
         public AngularVelocity driveVelocity     = RadiansPerSecond.of(0.0);
         public Voltage         driveAppliedVolts = Volts.of(0.0);
         public Current         driveCurrentAmps  = Amps.of(0.0);
+        public Current         driveSupplyCurrentAmps  = Amps.of(0.0);
 
         public boolean         isTurnMotorConnected   = false;
         public boolean         isTurnEncoderConnected = false;
@@ -34,6 +35,7 @@ public interface ModuleIO {
         public AngularVelocity turnVelocity           = RadiansPerSecond.of(0.0);
         public Voltage         turnAppliedVolts       = Volts.of(0.0);
         public Current         turnCurrentAmps        = Amps.of(0.0);
+        public Current         turnSupplyCurrentAmps        = Amps.of(0.0);
 
         public double[]     odometryTimestamps        = new double[]{};
         public double[]     odometryDrivePositionsRad = new double[]{};
