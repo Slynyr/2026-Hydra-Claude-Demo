@@ -3,16 +3,13 @@ package frc.robot.subsystems.intake;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.intake.IntakeConstants.Extension;
 import frc.robot.util.Checkmate;
-import frc.robot.util.MathUtils;
 import frc.robot.util.Checkmate.TestResult;
 import org.littletonrobotics.junction.Logger;
 
@@ -20,7 +17,6 @@ import java.util.function.Supplier;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Milliseconds;
 
 public class Intake extends SubsystemBase {
     private final IntakeIO               io;
@@ -114,15 +110,16 @@ public class Intake extends SubsystemBase {
      * @return A command that extends the intake when executed.
      */
     public Command extend() {
-        return Commands.sequence(
-            Commands.runOnce(() -> io.setSetpoint(IntakeConstants.Extension.EXTENSION_MAX_DISTANCE)),
-            Commands.waitTime(Milliseconds.of(1000)),
-            Commands.run(() -> {
-                // Logger.recordOutput("Intake/inPosition?", io.getSetpoint().gte(io.getPosition()));
-                if (io.getPosition().gte(io.getSetpoint()))
-                    io.setSetpoint(io.getPosition());
-            }).until(() -> io.getPosition().gte(io.getSetpoint()))
-        ).withInterruptBehavior(InterruptionBehavior.kCancelSelf);
+        return setSetpoint(() -> Extension.EXTENSION_MAX_DISTANCE)
+                .andThen(Commands.waitUntil(this::isExtended))
+                .andThen(setSetpoint(this::getPosition)); // lock position to setpoint
+    }
+
+    /**
+     * @return true if at or beyond the current setpoint
+     */
+    public boolean isExtended() {
+        return io.getPosition().gte(io.getSetpoint());
     }
 
     /**
@@ -132,12 +129,12 @@ public class Intake extends SubsystemBase {
      *
      * @return A command that moves the intake to the specified position when executed.
      */
-    public Command setSetpoint(Supplier<Distance> setpoint){
+    public Command setSetpoint(Supplier<Distance> setpoint) {
         return Commands.runOnce(() -> io.setSetpoint(setpoint.get()));
     }
 
     public Command zeroExtension() {
-        return Commands.runOnce(() -> io.zeroExtension());
+        return Commands.runOnce(io::zeroExtension);
     }
 
     /**

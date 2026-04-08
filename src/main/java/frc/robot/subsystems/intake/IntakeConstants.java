@@ -12,9 +12,9 @@ import static edu.wpi.first.units.Units.*;
 public final class IntakeConstants {
 
     public static final class Extension {
-        public static final Distance EXTENSION_MIN_DISTANCE = Centimeters.of(0.5);
-        public static final Distance EXTENSION_DISTANCE     = Centimeters.of(23.5);
-        public static final Distance EXTENSION_MAX_DISTANCE = Centimeters.of(24);
+        public static final Distance EXTENSION_MIN_DISTANCE = Millimeters.of(5);
+        public static final Distance EXTENSION_MAX_DISTANCE = Millimeters.of(240);
+        public static final Distance EXTENSION_TOLERANCE    = Millimeters.of(5);
 
         public static final PIDController SIM_PID     = new PIDController(0.0, 0.0, 0.0);
         public static final PIDConstants  TALONFX_PID = new PIDConstants(5.5, 0.75, 0);
