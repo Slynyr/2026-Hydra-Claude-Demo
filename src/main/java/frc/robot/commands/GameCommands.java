@@ -4,35 +4,29 @@
 
 package frc.robot.commands;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.GameCommandsConstants;
-import frc.robot.Constants.kAutoAlign;
 import frc.robot.RobotContainer;
-import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.feeder.FeederConstants;
 import frc.robot.subsystems.hopper.HopperConstants;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.intake.IntakeConstants.Extension;
 import frc.robot.subsystems.serializer.SerializerConstants;
+import org.littletonrobotics.junction.Logger;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
-import org.littletonrobotics.junction.Logger;
-
-import static edu.wpi.first.units.Units.Milliseconds;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.*;
 
 public class GameCommands {
 
     public static Command autoLaunch(
-            Supplier<Distance> distanceSupplier,
+            Supplier<Distance> distToHub,
             DoubleSupplier joystickX,
             DoubleSupplier joystickY,
             RobotContainer robot
@@ -46,11 +40,8 @@ public class GameCommands {
                 ),
                 Commands.sequence(
                         Commands.runOnce(() -> Logger.recordOutput("GameCommands/StartingLaunchSequence", true)),
-                        Commands.parallel(
-                                Commands.waitUntil(DriveCommands::isAligned),
-                                robot.sys_launcher.launchFuel(distanceSupplier, robot.sys_feeder)
 
-                        ),
+                        Commands.waitUntil(DriveCommands::isAligned),
                         Commands.waitUntil(robot.sys_launcher::isLauncherAtSpeed),
 
                         robot.sys_serializer.setVoltage(SerializerConstants.SERIALIZING_VOLTAGE),
@@ -58,14 +49,15 @@ public class GameCommands {
                         Commands.waitTime(GameCommandsConstants.WAIT_TIME_BEFORE_AGITATE),
 
                         agitateThenRetract(robot)
-                )
+
+                ),
+                // passively spin up launcher in the background
+                robot.sys_launcher.launchFuel(distToHub, robot.sys_feeder).repeatedly()
         );
     }
 
-    public static Command manualLaunch(Supplier<Distance> distance, RobotContainer robot) {
+    public static Command manualLaunch(Supplier<Distance> distToHub, RobotContainer robot) {
         return Commands.sequence(
-                robot.sys_launcher.launchFuel(distance, robot.sys_feeder),
-
                 Commands.waitUntil(robot.sys_launcher::isLauncherAtSpeed),
 
                 robot.sys_serializer.setVoltage(SerializerConstants.SERIALIZING_VOLTAGE),
@@ -73,7 +65,7 @@ public class GameCommands {
                 Commands.waitTime(GameCommandsConstants.WAIT_TIME_BEFORE_AGITATE),
 
                 agitateThenRetract(robot)
-        );
+        ).alongWith(robot.sys_launcher.launchFuel(distToHub, robot.sys_feeder).repeatedly());
     }
 
     /**
@@ -84,7 +76,7 @@ public class GameCommands {
             DoubleSupplier joystickX,
             DoubleSupplier joystickY,
             RobotContainer robot
-    ){
+    ) {
         return Commands.parallel(
                 DriveCommands.joystickDriveAtAngle(
                         robot.sys_drive,
@@ -151,10 +143,10 @@ public class GameCommands {
                 robot.sys_intake.setRollerVoltage(IntakeConstants.Roller.AGITATE_VOLTAGE),
                 Commands.repeatingSequence(
                         robot.sys_intake.setSetpoint(() -> Extension.RETRACT_POINT)
-                                .alongWith(robot.sys_hopper.setSetpoint(() -> HopperConstants.RETRACT_POINT)),
+                                        .alongWith(robot.sys_hopper.setSetpoint(() -> HopperConstants.RETRACT_POINT)),
                         Commands.waitTime(Milliseconds.of(150)),
                         robot.sys_intake.setSetpoint(() -> Extension.EXTEND_POINT)
-                                .alongWith(robot.sys_hopper.setSetpoint(() -> HopperConstants.EXTEND_POINT)),
+                                        .alongWith(robot.sys_hopper.setSetpoint(() -> HopperConstants.EXTEND_POINT)),
                         Commands.waitTime(Milliseconds.of(150))
                 )
         );
@@ -170,7 +162,6 @@ public class GameCommands {
                 )
         );
     }
-
 
     // public static Command autoClimb(RobotContainer robot, Supplier<Pose2d> prepPose, Supplier<Pose2d> climbPose) {
     //     return Commands.sequence(

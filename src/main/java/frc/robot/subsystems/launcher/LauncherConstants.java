@@ -20,7 +20,7 @@ public class LauncherConstants {
 
         public static final LaunchStrategy DEFAULT_LAUNCH_STRATEGY = new BilinearStrategy();
 
-        public static final AngularVelocity LAUNCHER_IDLE_SPEED = RotationsPerSecond.of(30);
+        public static final AngularVelocity LAUNCHER_IDLE_SPEED = RotationsPerSecond.of(40);
     }
 
     public static class Hood {
