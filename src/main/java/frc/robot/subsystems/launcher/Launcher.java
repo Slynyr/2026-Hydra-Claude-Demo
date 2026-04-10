@@ -174,13 +174,13 @@ public class Launcher extends SubsystemBase {
                     AngularVelocity launchSpeed = c.speed().plus(getSpeedOffset());
                     logInterpolation(distance.get(), c, launchSpeed);
 
-                    return startLaunchSequence(launchSpeed, c.hoodExtension(), feeder);
+                    return startLaunchSequence(() -> launchSpeed, c::hoodExtension, feeder);
                 }, Set.of(this));
     }
 
-    public Command startLaunchSequence(AngularVelocity launchSpeed, Distance hoodExt, Feeder feeder) {
-        return runVelocity(() -> launchSpeed)
-                .alongWith(setHoodExtension(() -> hoodExt)) // set hood hoodExtension
+    public Command startLaunchSequence(Supplier<AngularVelocity> launchSpeed, Supplier<Distance> hoodExt, Feeder feeder) {
+        return runVelocity(launchSpeed)
+                .alongWith(setHoodExtension(hoodExt)) // set hood hoodExtension
                 .alongWith(feeder.setUpperFeederVelocity(this::calculateUpperFeederVelocity)); // run upper feeder at same vel.
     }
 

@@ -85,11 +85,6 @@ public class GameCommands {
                         () -> DriveCommands.getRotationToPassingPosition(robot.sys_drive, isRightHalf)
                 ),
                 Commands.sequence(
-                        robot.sys_launcher.startLaunchSequence(
-                                GameCommandsConstants.PASSING_RPS, GameCommandsConstants.PASSING_HOOD_ANGLE,
-                                robot.sys_feeder
-                        ),
-
                         Commands.waitUntil(robot.sys_launcher::isLauncherAtSpeed),
 
                         robot.sys_launcher.serializeFuel(robot.sys_feeder, robot.sys_serializer)
@@ -97,8 +92,11 @@ public class GameCommands {
                         // Commands.waitTime(GameCommandsConstants.WAIT_TIME_BEFORE_AGITATE),
 
                         // agitateThenRetract(robot)
-                )
-
+                ),
+                robot.sys_launcher.startLaunchSequence(
+                        () -> GameCommandsConstants.PASSING_RPS, () -> GameCommandsConstants.PASSING_HOOD_ANGLE,
+                        robot.sys_feeder
+                ).repeatedly()
         );
     }
 
