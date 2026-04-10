@@ -394,7 +394,10 @@ public class RobotContainer {
                                 () -> kField.RIGHT_HALF.contains(sys_drive.getPose().getTranslation()),
                                 () -> -primaryController.getLeftY(),
                                 () -> -primaryController.getLeftX(),
-                                this));
+                                this))
+                        .onFalse(
+                            GameCommands.stopLaunching(this)
+                        );
 
         primaryController.x()
                         .onTrue(
