@@ -122,8 +122,8 @@ public class RobotContainer {
                         new IntakeIOTalonFX(DeviceID.INTAKE_ROLLER_MOTOR, DeviceID.INTAKE_ROLLER_MOTOR_2, DeviceID.INTAKE_EXTENSION_MOTOR));
 
                 sys_serializer = new Serializer(
-                        new SerializerIOTalonFX(DeviceID.SERIALIZER_MOTOR, DeviceID.FEEDER_MOTOR_BOTTOM));
-                sys_feeder = new Feeder(new FeederIOTalonFX(DeviceID.FEEDER_MOTOR_TOP));
+                        new SerializerIOTalonFX(DeviceID.SERIALIZER_MOTOR));
+                sys_feeder = new Feeder(new FeederIOTalonFX(DeviceID.FEEDER_MOTOR_TOP, DeviceID.FEEDER_MOTOR_BOTTOM));
                 sys_vision = new Vision(new VisionIOLimelight(DeviceID.LIMELIGHT_NAME));
 
                 sys_drive = new Drive(

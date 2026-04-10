@@ -7,7 +7,6 @@ import static edu.wpi.first.units.Units.Volts;
 
 public class SerializerIOSim implements SerializerIO {
     private double indexerVoltage      = 0.0;
-    private double bottomFeederVoltage = 0.0;
 
     public SerializerIOSim() {
     }
@@ -15,13 +14,11 @@ public class SerializerIOSim implements SerializerIO {
     @Override
     public void setVoltage(double voltage) {
         indexerVoltage = voltage;
-        bottomFeederVoltage = voltage;
     }
 
     @Override
     public void stopMotors() {
         indexerVoltage = 0.0;
-        bottomFeederVoltage = 0.0;
     }
 
     @Override
@@ -34,9 +31,5 @@ public class SerializerIOSim implements SerializerIO {
         inputs.isSerializerConnected = true;
         inputs.serializerVoltage = Volts.of(indexerVoltage);
         inputs.serializerVelocity = getVelocity();
-
-        inputs.isLowerFeederConnected = true;
-        inputs.lowerFeederVoltage = Volts.of(bottomFeederVoltage);
-        inputs.lowerFeederVelocity = getVelocity();
     }
 }

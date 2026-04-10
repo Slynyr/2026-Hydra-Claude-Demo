@@ -3,6 +3,7 @@ package frc.robot.subsystems.launcher;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.Timer;
@@ -17,12 +18,18 @@ import frc.robot.Constants.kField;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.feeder.Feeder;
+import frc.robot.subsystems.feeder.FeederConstants;
 import frc.robot.subsystems.feeder.FeederIO;
 import frc.robot.subsystems.launcher.LauncherConstants.Hood;
 import frc.robot.subsystems.launcher.interpolator.LaunchConfig;
 import frc.robot.subsystems.launcher.interpolator.LaunchStrategy;
+import frc.robot.subsystems.serializer.Serializer;
+import frc.robot.subsystems.serializer.SerializerConstants;
+import frc.robot.subsystems.serializer.SerializerIO;
 import frc.robot.util.Checkmate;
 import frc.robot.util.MathUtils;
+
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.Set;
@@ -64,7 +71,10 @@ public class Launcher extends SubsystemBase {
                     var config = strategy.interpolate(d);
 
                     // launch fuel with dummy IO for feeder; it doesn't matter if the feeder spins
-                    CommandScheduler.getInstance().schedule(this.launchFuel(() -> d, new Feeder(new FeederIO() {})));
+                    CommandScheduler.getInstance().schedule(this.launchFuel(
+                            () -> d,
+                            new Feeder(new FeederIO() {})
+                    ));
 
                     return MathUtils.withinTolerance(
                             getVelocity().in(RotationsPerSecond), config.speed().in(RotationsPerSecond), 5) ?
@@ -163,10 +173,31 @@ public class Launcher extends SubsystemBase {
                     AngularVelocity launchSpeed = c.speed().plus(getSpeedOffset());
                     logInterpolation(distance.get(), c, launchSpeed);
 
-                    return runVelocity(() -> launchSpeed)
-                            .alongWith(setHoodExtension(c::hoodExtension)) // set hood hoodExtension
-                            .alongWith(feeder.runVelocity(() -> launchSpeed)); // run feeder at same vel.
+                    return startLaunchSequence(launchSpeed, c.hoodExtension(), feeder);
                 }, Set.of(this));
+    }
+
+    public Command startLaunchSequence(AngularVelocity launchSpeed, Distance hoodExt, Feeder feeder) {
+        return runVelocity(() -> launchSpeed)
+                .alongWith(setHoodExtension(() -> hoodExt)) // set hood hoodExtension
+                .alongWith(feeder.setUpperFeederVelocity(this::calculateUpperFeederVelocity)); // run upper feeder at same vel.
+    }
+
+    public Command serializeFuel(Feeder feeder, Serializer serializer) {
+        // TODO: if the lower feeder is too slow, hardcode this to a faster number (i.e. 20 000 RPM)
+        return feeder.setLowerFeederVelocity(
+                        () -> calculateLowerFeederVelocity(this.getSurfaceVelocity(), serializer.getBeltSpeed()))
+                     .alongWith(serializer.setVoltage(SerializerConstants.SERIALIZING_VOLTAGE));
+    }
+
+    private AngularVelocity calculateUpperFeederVelocity() {
+        return MathUtils.calculateAngularVelocity(getSurfaceVelocity(), FeederConstants.FEEDER_ROLLER_CIRCUMFERENCE);
+    }
+
+    private AngularVelocity calculateLowerFeederVelocity(LinearVelocity launcherRollerSpeed, LinearVelocity serializerBeltSpeed) {
+        return MathUtils.calculateAngularVelocity(
+                launcherRollerSpeed.plus(MetersPerSecond.of(25)).div(2),
+                FeederConstants.FEEDER_ROLLER_CIRCUMFERENCE);
     }
 
     /**
@@ -196,6 +227,11 @@ public class Launcher extends SubsystemBase {
 
     public AngularVelocity getVelocity() {
         return io.getVelocity();
+    }
+
+    @AutoLogOutput(key = "Launcher/SurfaceVelocity", unit = "m/s")
+    public LinearVelocity getSurfaceVelocity() {
+        return MathUtils.calculateSurfaceSpeed(getVelocity(), LauncherConstants.Launcher.ROLLER_CIRCUMFERENCE);
     }
 
     // Stops

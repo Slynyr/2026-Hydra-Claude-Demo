@@ -19,13 +19,6 @@ public interface SerializerIO {
         public Angle           serializerPosition    = Degrees.of(0.0);
         public AngularVelocity serializerVelocity    = RotationsPerSecond.of(0.0);
 
-        public boolean         isLowerFeederConnected = false;
-        public Voltage         lowerFeederVoltage     = Volts.of(0.0);
-        public Current         lowerFeederCurrent     = Amps.of(0.0);
-        public double          lowerFeederTemperature = 0.0;
-        public Angle           lowerFeederPosition    = Degrees.of(0.0);
-        public AngularVelocity lowerFeederVelocity    = RotationsPerSecond.of(0.0);
-
         public Voltage targetVoltage = Volts.of(0);
     }
 

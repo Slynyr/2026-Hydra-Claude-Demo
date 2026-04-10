@@ -14,93 +14,155 @@ import java.util.function.Supplier;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 public class FeederIOTalonFX implements FeederIO {
-    private final TalonFX motor;
+    private final TalonFX upperMotor;
+    private final TalonFX lowerMotor;
 
-    private final StatusSignal<AngularVelocity> velocity;
-    private final StatusSignal<Angle>           position;
-    private final StatusSignal<Voltage>         voltage;
-    private final StatusSignal<Current>         current;
-    private final StatusSignal<Temperature>     temperature;
+    private final StatusSignal<AngularVelocity> velocityUpper;
+    private final StatusSignal<Angle>           positionUpper;
+    private final StatusSignal<Voltage>         voltageUpper;
+    private final StatusSignal<Current>         currentUpper;
+    private final StatusSignal<Temperature>     temperatureUpper;
 
-    private Supplier<AngularVelocity> setpoint = () -> RotationsPerSecond.of(0.0);
+    private final StatusSignal<AngularVelocity> velocityLower;
+    private final StatusSignal<Angle>           positionLower;
+    private final StatusSignal<Voltage>         voltageLower;
+    private final StatusSignal<Current>         currentLower;
+    private final StatusSignal<Temperature>     temperatureLower;
 
-    public FeederIOTalonFX(int feederID) {
-        motor = new TalonFX(feederID);
-        TalonFXConfigurator config = motor.getConfigurator();
+    private Supplier<AngularVelocity> upperSetpoint = () -> RotationsPerSecond.of(0.0);
+    private Supplier<AngularVelocity> lowerSetpoint = () -> RotationsPerSecond.of(0.0);
 
-        config.apply(new CurrentLimitsConfigs()
-                             .withSupplyCurrentLimit(FeederConstants.CURRENT_LIMIT)
-                             .withSupplyCurrentLimitEnable(true));
+    public FeederIOTalonFX(int feederId, int lowerFeederId) {
+        upperMotor = new TalonFX(feederId);
+        lowerMotor = new TalonFX(lowerFeederId);
 
-        config.apply(new FeedbackConfigs().withSensorToMechanismRatio(FeederConstants.GEARING));
+        TalonFXConfigurator upperConfig = upperMotor.getConfigurator();
+        TalonFXConfigurator lowerConfig = lowerMotor.getConfigurator();
 
-        config.apply(new Slot0Configs()
+        var currentLimits = new CurrentLimitsConfigs()
+                .withSupplyCurrentLimit(FeederConstants.CURRENT_LIMIT)
+                .withSupplyCurrentLimitEnable(true);
+
+        upperConfig.apply(currentLimits);
+        lowerConfig.apply(currentLimits);
+
+        var gearing = new FeedbackConfigs().withSensorToMechanismRatio(FeederConstants.GEARING);
+        upperConfig.apply(gearing);
+        lowerConfig.apply(gearing);
+
+        var pid = new Slot0Configs()
                              .withKP(FeederConstants.TALONFX_PID.kP)
                              .withKI(FeederConstants.TALONFX_PID.kI)
                              .withKD(FeederConstants.TALONFX_PID.kD)
                              .withKV(FeederConstants.kV)
-                             .withKS(FeederConstants.kS));
+                             .withKS(FeederConstants.kS);
+        upperConfig.apply(pid);
+        lowerConfig.apply(pid);
 
-        config.apply(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
+        upperConfig.apply(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
+        lowerConfig.apply(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
 
-        motor.setNeutralMode(NeutralModeValue.Coast);
+        upperMotor.setNeutralMode(NeutralModeValue.Coast);
+        lowerMotor.setNeutralMode(NeutralModeValue.Coast);
 
-        velocity = motor.getVelocity();
-        position = motor.getPosition();
-        voltage = motor.getMotorVoltage();
-        current = motor.getSupplyCurrent();
-        temperature = motor.getDeviceTemp();
+        velocityUpper = upperMotor.getVelocity();
+        positionUpper = upperMotor.getPosition();
+        voltageUpper = upperMotor.getMotorVoltage();
+        currentUpper = upperMotor.getSupplyCurrent();
+        temperatureUpper = upperMotor.getDeviceTemp();
+
+        velocityLower = lowerMotor.getVelocity();
+        positionLower = lowerMotor.getPosition();
+        voltageLower = lowerMotor.getMotorVoltage();
+        currentLower = lowerMotor.getSupplyCurrent();
+        temperatureLower = lowerMotor.getDeviceTemp();
 
         BaseStatusSignal.setUpdateFrequencyForAll(
                 50,
-                position,
-                velocity,
-                voltage,
-                current,
-                temperature);
 
-        motor.optimizeBusUtilization();
+                positionUpper,
+                velocityUpper,
+                voltageUpper,
+                currentUpper,
+                temperatureUpper,
+
+                positionLower,
+                velocityLower,
+                voltageLower,
+                currentLower,
+                temperatureLower
+        );
+
+        upperMotor.optimizeBusUtilization();
+        lowerMotor.optimizeBusUtilization();
     }
 
     @Override
-    public void setMotorVoltage(double voltage) {
-        motor.setVoltage(voltage);
+    public void setVoltage(double voltage) {
+        upperMotor.setVoltage(voltage);
     }
 
     @Override
-    public void runVelocity(Supplier<AngularVelocity> velocity) {
-        setpoint = velocity;
-        VelocityVoltage velocityVoltage = new VelocityVoltage(velocity.get())
-                .withSlot(0)
-                .withFeedForward(0);
-        motor.setControl(velocityVoltage);
+    public void setUpperFeederVelocity(Supplier<AngularVelocity> velocity) {
+        upperSetpoint = velocity;
+        upperMotor.setControl(new VelocityVoltage(velocity.get())
+                                      .withSlot(0)
+                                      .withFeedForward(0));
     }
 
     @Override
-    public void stopMotor() {
-        motor.stopMotor();
+    public void setLowerFeederVelocity(Supplier<AngularVelocity> velocity) {
+        lowerSetpoint = () -> velocity.get();
+        lowerMotor.setControl(new VelocityVoltage(lowerSetpoint.get())
+                                      .withSlot(0)
+                                      .withFeedForward(0));
     }
 
     @Override
-    public AngularVelocity getVelocity() {
-        return velocity.getValue();
+    public void stopMotors() {
+        upperMotor.stopMotor();
+        lowerMotor.stopMotor();
+    }
+
+    @Override
+    public AngularVelocity getUpperFeederVelocity() {
+        return velocityUpper.getValue();
+    }
+
+    @Override
+    public AngularVelocity getLowerFeederVelocity() {
+        return velocityLower.getValue();
     }
 
     @Override
     public void updateInputs(FeederInputs inputs) {
-        inputs.isMotorConnected = BaseStatusSignal.refreshAll(
-                position,
-                velocity,
-                voltage,
-                current,
-                temperature
+        inputs.isUpperMotorConnected = BaseStatusSignal.refreshAll(
+                positionUpper,
+                velocityUpper,
+                voltageUpper,
+                currentUpper,
+                temperatureUpper
         ).isOK();
-        inputs.position = position.getValue();
-        inputs.velocity = velocity.getValue();
-        inputs.voltage = voltage.getValue();
-        inputs.current = current.getValue();
-        inputs.temperature = temperature.getValueAsDouble();
-        inputs.setpoint = setpoint.get();
+        inputs.upperPosition = positionUpper.getValue();
+        inputs.upperVelocity = velocityUpper.getValue();
+        inputs.upperVoltage = voltageUpper.getValue();
+        inputs.upperCurrent = currentUpper.getValue();
+        inputs.upperTemperature = temperatureUpper.getValueAsDouble();
+        inputs.upperSetpoint = upperSetpoint.get();
+
+        inputs.isLowerMotorConnected = BaseStatusSignal.refreshAll(
+                positionLower,
+                velocityLower,
+                voltageLower,
+                currentLower,
+                temperatureLower
+        ).isOK();
+        inputs.lowerPosition = positionLower.getValue();
+        inputs.lowerVelocity = velocityLower.getValue();
+        inputs.lowerVoltage = voltageLower.getValue();
+        inputs.lowerCurrent = currentLower.getValue();
+        inputs.lowerTemperature = temperatureLower.getValueAsDouble();
+        inputs.lowerSetpoint = lowerSetpoint.get();
     }
 }
 

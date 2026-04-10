@@ -2,9 +2,11 @@ package frc.robot.util;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.*;
 
 /**
  * Basic math utility functions for use throughout robot code
@@ -60,5 +62,23 @@ public class MathUtils {
             difference -= 2 * Math.PI;
 
         return Radians.of(Math.abs(difference));
+    }
+
+    /**
+     * Calculates linear surface velocity from a rotational velocity given the circumference of the mechanism.
+     *
+     * @return surface speed
+     */
+    public static LinearVelocity calculateSurfaceSpeed(AngularVelocity speed, Distance mechCircumference) {
+        return MetersPerSecond.of(speed.in(RotationsPerSecond) * mechCircumference.in(Meters));
+    }
+
+    /**
+     * Calculates rotational velocity from a linear surface velocity given the circumference of the mechanism.
+     *
+     * @return surface speed
+     */
+    public static AngularVelocity calculateAngularVelocity(LinearVelocity speed, Distance mechCircumference) {
+        return RotationsPerSecond.of(speed.in(MetersPerSecond) / mechCircumference.in(Meters));
     }
 }

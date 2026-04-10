@@ -30,45 +30,45 @@ public class FeederIOSim implements FeederIO {
     }
 
     @Override
-    public void setMotorVoltage(double voltage) {
+    public void setVoltage(double voltage) {
         flywheel.setInputVoltage(voltage);
         running = true;
     }
 
     @Override
-    public void runVelocity(Supplier<AngularVelocity> velocity) {
+    public void setUpperFeederVelocity(Supplier<AngularVelocity> velocity) {
         controller.setSetpoint(velocity.get().in(RotationsPerSecond));
         setpoint = velocity.get().in(RotationsPerSecond);
         running = true;
     }
 
     @Override
-    public void stopMotor() {
+    public void stopMotors() {
         controller.setSetpoint(0.0);
         running = false;
     }
 
     @Override
-    public AngularVelocity getVelocity() {
+    public AngularVelocity getUpperFeederVelocity() {
         return RotationsPerSecond.of(flywheel.getAngularVelocityRPM() / 60);
     }
 
     @Override
     public void updateInputs(FeederInputs inputs) {
         double volts = running
-                       ? MathUtil.clamp(controller.calculate(getVelocity().in(RotationsPerSecond)),
+                       ? MathUtil.clamp(controller.calculate(getUpperFeederVelocity().in(RotationsPerSecond)),
                                         -RoboRioSim.getVInVoltage(), RoboRioSim.getVInVoltage())
                        : 0.0;
 
         flywheel.setInputVoltage(volts);
         flywheel.update(0.02);
 
-        inputs.isMotorConnected = true;
-        inputs.voltage = Volts.of(flywheel.getInputVoltage());
-        inputs.velocity = getVelocity();
-        inputs.current = Amps.of(flywheel.getCurrentDrawAmps());
-        revolutions += getVelocity().in(RotationsPerSecond) * 0.02;
-        inputs.position = Rotations.of(revolutions);
-        inputs.setpoint = RotationsPerSecond.of(setpoint);
+        inputs.isUpperMotorConnected = true;
+        inputs.upperVoltage = Volts.of(flywheel.getInputVoltage());
+        inputs.upperVelocity = getUpperFeederVelocity();
+        inputs.upperCurrent = Amps.of(flywheel.getCurrentDrawAmps());
+        revolutions += getUpperFeederVelocity().in(RotationsPerSecond) * 0.02;
+        inputs.upperPosition = Rotations.of(revolutions);
+        inputs.upperSetpoint = RotationsPerSecond.of(setpoint);
     }
 }

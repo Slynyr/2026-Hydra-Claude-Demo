@@ -6,8 +6,7 @@ import edu.wpi.first.units.measure.Distance;
 import frc.robot.subsystems.launcher.interpolator.BilinearStrategy;
 import frc.robot.subsystems.launcher.interpolator.LaunchStrategy;
 
-import static edu.wpi.first.units.Units.Millimeters;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.*;
 
 public class LauncherConstants {
     public static class Launcher {
@@ -21,6 +20,10 @@ public class LauncherConstants {
         public static final LaunchStrategy DEFAULT_LAUNCH_STRATEGY = new BilinearStrategy();
 
         public static final AngularVelocity LAUNCHER_IDLE_SPEED = RotationsPerSecond.of(40);
+
+        public static final Distance ROLLER_DIAMETER = Inches.of(4);
+
+        public static final Distance ROLLER_CIRCUMFERENCE = ROLLER_DIAMETER.times(Math.PI);
     }
 
     public static class Hood {

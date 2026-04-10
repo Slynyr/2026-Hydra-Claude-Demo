@@ -44,7 +44,7 @@ public class GameCommands {
                         Commands.waitUntil(DriveCommands::isAligned),
                         Commands.waitUntil(robot.sys_launcher::isLauncherAtSpeed),
 
-                        robot.sys_serializer.setVoltage(SerializerConstants.SERIALIZING_VOLTAGE),
+                        robot.sys_launcher.serializeFuel(robot.sys_feeder, robot.sys_serializer),
 
                         Commands.waitTime(GameCommandsConstants.WAIT_TIME_BEFORE_AGITATE),
 
@@ -60,7 +60,7 @@ public class GameCommands {
         return Commands.sequence(
                 Commands.waitUntil(robot.sys_launcher::isLauncherAtSpeed),
 
-                robot.sys_serializer.setVoltage(SerializerConstants.SERIALIZING_VOLTAGE),
+                robot.sys_launcher.serializeFuel(robot.sys_feeder, robot.sys_serializer),
 
                 Commands.waitTime(GameCommandsConstants.WAIT_TIME_BEFORE_AGITATE),
 
@@ -85,15 +85,14 @@ public class GameCommands {
                         () -> DriveCommands.getRotationToPassingPosition(robot.sys_drive, isRightHalf)
                 ),
                 Commands.sequence(
-                        Commands.parallel(
-                                robot.sys_launcher.runVelocity(() -> GameCommandsConstants.PASSING_RPS),
-                                robot.sys_launcher.setHoodExtension(() -> GameCommandsConstants.PASSING_HOOD_ANGLE),
-                                robot.sys_feeder.runVelocity(() -> GameCommandsConstants.PASSING_RPS)
+                        robot.sys_launcher.startLaunchSequence(
+                                GameCommandsConstants.PASSING_RPS, GameCommandsConstants.PASSING_HOOD_ANGLE,
+                                robot.sys_feeder
                         ),
 
                         Commands.waitUntil(robot.sys_launcher::isLauncherAtSpeed),
 
-                        robot.sys_serializer.setVoltage(SerializerConstants.SERIALIZING_VOLTAGE),
+                        robot.sys_launcher.serializeFuel(robot.sys_feeder, robot.sys_serializer),
 
                         Commands.waitTime(GameCommandsConstants.WAIT_TIME_BEFORE_AGITATE),
 
@@ -110,10 +109,10 @@ public class GameCommands {
                 Commands.parallel(
                         robot.sys_intake.extend(),
                         Commands.waitUntil(
-                                () -> robot.sys_intake.getPosition()
-                                                        .gte(IntakeConstants.Extension.EXTENSION_MAX_DISTANCE.div(2))
-                        )
-                        .andThen(robot.sys_intake.setRollerVoltage(IntakeConstants.Roller.INTAKE_VOLTAGE))
+                                        () -> robot.sys_intake.getPosition()
+                                                              .gte(IntakeConstants.Extension.EXTENSION_MAX_DISTANCE.div(2))
+                                )
+                                .andThen(robot.sys_intake.setRollerVoltage(IntakeConstants.Roller.INTAKE_VOLTAGE))
                 )
         );
     }

@@ -13,25 +13,38 @@ import static edu.wpi.first.units.Units.*;
 public interface FeederIO {
     @AutoLog
     class FeederInputs {
-        public boolean isMotorConnected = false;
+        public boolean         isUpperMotorConnected = false;
+        public Voltage         upperVoltage          = Volts.of(0.0);
+        public Current         upperCurrent          = Amps.of(0.0);
+        public double          upperTemperature      = 0.0;
+        public Angle           upperPosition         = Degrees.of(0.0);
+        public AngularVelocity upperVelocity         = RotationsPerSecond.of(0.0);
+        public AngularVelocity upperSetpoint         = RotationsPerSecond.of(0.0);
 
-        public Voltage         voltage     = Volts.of(0.0);
-        public Current         current     = Amps.of(0.0);
-        public double          temperature = 0.0;
-        public Angle           position    = Degrees.of(0.0);
-        public AngularVelocity velocity    = RotationsPerSecond.of(0.0);
-        public AngularVelocity setpoint    = RotationsPerSecond.of(0.0);
+        public boolean         isLowerMotorConnected = false;
+        public Voltage         lowerVoltage          = Volts.of(0.0);
+        public Current         lowerCurrent          = Amps.of(0.0);
+        public double          lowerTemperature      = 0.0;
+        public Angle           lowerPosition         = Degrees.of(0.0);
+        public AngularVelocity lowerVelocity         = RotationsPerSecond.of(0.0);
+        public AngularVelocity lowerSetpoint         = RotationsPerSecond.of(0.0);
     }
 
     default void updateInputs(FeederInputs inputs) {}
 
-    default void setMotorVoltage(double voltage) {}
+    default void setVoltage(double voltage) {}
 
-    default void runVelocity(Supplier<AngularVelocity> velocity) {}
+    default void setUpperFeederVelocity(Supplier<AngularVelocity> velocity) {}
 
-    default void stopMotor() {}
+    default void setLowerFeederVelocity(Supplier<AngularVelocity> velocity) {}
 
-    default AngularVelocity getVelocity() {
+    default void stopMotors() {}
+
+    default AngularVelocity getUpperFeederVelocity() {
+        return RotationsPerSecond.of(0);
+    }
+
+    default AngularVelocity getLowerFeederVelocity() {
         return RotationsPerSecond.of(0);
     }
 }
