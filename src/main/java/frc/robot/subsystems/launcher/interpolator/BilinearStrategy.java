@@ -45,11 +45,17 @@ public class BilinearStrategy extends LaunchStrategy {
     }
 
     static {
-        addData(Millimeters.of(45), RotationsPerSecond.of(40), Meters.of(1.83));
-        addData(Millimeters.of(50), RotationsPerSecond.of(42), Meters.of(2.310));
-        addData(Millimeters.of(65), RotationsPerSecond.of(43.5), Meters.of(2.802));
-        addData(Millimeters.of(70), RotationsPerSecond.of(45.5), Meters.of(3.16));
-        addData(Millimeters.of(75), RotationsPerSecond.of(54), Meters.of(4.730));
-        addData(Millimeters.of(75), RotationsPerSecond.of(57), Meters.of(5.006));
+        // PREVIOUS TUNING FEB/MAR
+//        addData(Millimeters.of(45), RotationsPerSecond.of(40), Meters.of(1.83));
+//        addData(Millimeters.of(50), RotationsPerSecond.of(42), Meters.of(2.310));
+//        addData(Millimeters.of(65), RotationsPerSecond.of(43.5), Meters.of(2.802));
+//        addData(Millimeters.of(70), RotationsPerSecond.of(45.5), Meters.of(3.16));
+//        addData(Millimeters.of(75), RotationsPerSecond.of(54), Meters.of(4.730));
+//        addData(Millimeters.of(75), RotationsPerSecond.of(57), Meters.of(5.006));
+
+        // ONCMP TUNING APR 14 2026
+        addData(Millimeters.of(45), RotationsPerSecond.of(3.95), Meters.of(1.7));
+        addData(Millimeters.of(60), RotationsPerSecond.of(53.5), Meters.of(2.81));
+        addData(Millimeters.of(68), RotationsPerSecond.of(57), Meters.of(4.5));
     }
 }

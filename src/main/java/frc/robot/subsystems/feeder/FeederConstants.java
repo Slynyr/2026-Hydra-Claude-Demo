@@ -9,10 +9,15 @@ import static edu.wpi.first.units.Units.Inches;
 
 public final class FeederConstants {
     public static final PIDConstants SIM_PID     = new PIDConstants(1, 0, 0);
-    public static final PIDConstants TALONFX_PID = new PIDConstants(0.1, 0.05, 0.0);
+    public static final PIDConstants TALONFX_PID_UPPER = new PIDConstants(0.2, 0.0, 0.0);
+    public static final PIDConstants TALONFX_PID_LOWER = new PIDConstants(0.025, 0.0, 0.0);
 
-    public static final double kV      = 0.035;
-    public static final double kS      = 0.31;
+    public static final double kV_UPPER      = 0.035;
+    public static final double kS_UPPER      = 0.31;
+
+    public static final double kV_LOWER      = 0.035;
+    public static final double kS_LOWER      = 0.31;    
+
     public static final double GEARING = 1.0 / 3.0;
 
     public static final Current CURRENT_LIMIT = Amps.of(30);

@@ -12,7 +12,7 @@ public class LauncherConstants {
     public static class Launcher {
         public static final double       kS  = 0.4;
         public static final double       kV  = 0.17;
-        public static final PIDConstants PID = new PIDConstants(0.15, 0.05, 0);
+        public static final PIDConstants PID = new PIDConstants(0.7, 0.0, 0.0);
 
         public static final double SENSOR_RATIO  = 1.0 / 1.5;
         public static final int    CURRENT_LIMIT = 60;

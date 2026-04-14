@@ -50,14 +50,19 @@ public class FeederIOTalonFX implements FeederIO {
         upperConfig.apply(gearing);
         lowerConfig.apply(gearing);
 
-        var pid = new Slot0Configs()
-                             .withKP(FeederConstants.TALONFX_PID.kP)
-                             .withKI(FeederConstants.TALONFX_PID.kI)
-                             .withKD(FeederConstants.TALONFX_PID.kD)
-                             .withKV(FeederConstants.kV)
-                             .withKS(FeederConstants.kS);
-        upperConfig.apply(pid);
-        lowerConfig.apply(pid);
+        upperConfig.apply(new Slot0Configs()
+                             .withKP(FeederConstants.TALONFX_PID_UPPER.kP)
+                             .withKI(FeederConstants.TALONFX_PID_UPPER.kI)
+                             .withKD(FeederConstants.TALONFX_PID_UPPER.kD)
+                             .withKV(FeederConstants.kV_UPPER)
+                             .withKS(FeederConstants.kS_UPPER));
+        
+        lowerConfig.apply(new Slot0Configs()
+                             .withKP(FeederConstants.TALONFX_PID_LOWER.kP)
+                             .withKI(FeederConstants.TALONFX_PID_LOWER.kI)
+                             .withKD(FeederConstants.TALONFX_PID_LOWER.kD)
+                             .withKV(FeederConstants.kV_LOWER)
+                             .withKS(FeederConstants.kS_LOWER));
 
         upperConfig.apply(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
         lowerConfig.apply(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));

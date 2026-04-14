@@ -98,7 +98,9 @@ public class Launcher extends SubsystemBase {
 
                 if (launchEstimate.hoodExtension().minus(hoodSetpoint.get()).abs(Millimeters) >=
                     Hood.HOOD_INVALIDATION_THRESHOLD_MM) {
-                    hoodSetpoint.set(launchEstimate.hoodExtension());
+                    // hoodSetpoint.set(launchEstimate.hoodExtension());
+                    //TODO: debug cmd
+                    hoodSetpoint.set(Millimeter.of(SmartDashboard.getNumber("Hood Angle [mm]", 0)));
                 }
             }
 
@@ -111,8 +113,10 @@ public class Launcher extends SubsystemBase {
     }
 
     public Command runVelocity(Supplier<AngularVelocity> velocity) {
-        realLaunchSpeedRps = velocity.get().in(RotationsPerSecond);
-        return Commands.runOnce(() -> io.runVelocity(velocity));
+        return Commands.runOnce(() -> {
+            realLaunchSpeedRps = velocity.get().in(RotationsPerSecond);
+            io.runVelocity(velocity);
+        });
     }
 
     /**
@@ -191,10 +195,14 @@ public class Launcher extends SubsystemBase {
                      .alongWith(serializer.setVoltage(SerializerConstants.SERIALIZING_VOLTAGE));
     }
 
+    // TODO: try setting upper feeder to the same as lower feeder velocities (smooth accerlation)
+    @AutoLogOutput(key = "Launcher/CalculatedUpperFeederVelocity")
     private AngularVelocity calculateUpperFeederVelocity() {
-        return MathUtils.calculateAngularVelocity(getSurfaceVelocity(), FeederConstants.FEEDER_ROLLER_CIRCUMFERENCE);
+        // overshoot of 7.5%
+        return MathUtils.calculateAngularVelocity(getSurfaceVelocity().times(1.075), FeederConstants.FEEDER_ROLLER_CIRCUMFERENCE);
     }
 
+    @AutoLogOutput(key = "Launcher/CalculatedLowerFeederVelocity")
     private AngularVelocity calculateLowerFeederVelocity(LinearVelocity launcherRollerSpeed, LinearVelocity serializerBeltSpeed) {
         return MathUtils.calculateAngularVelocity(
                 launcherRollerSpeed.plus(MetersPerSecond.of(25)).div(2),
@@ -218,7 +226,6 @@ public class Launcher extends SubsystemBase {
         Logger.recordOutput(
                 "Launcher/Interpolator/TargetAngle",
                 config == null ? Millimeters.of(0) : config.hoodExtension());
-        Logger.recordOutput("Launcher/Interpolator/RealLaunchSpeed", realLaunchSpeed);
         realLaunchSpeedRps = realLaunchSpeed.in(RotationsPerSecond);
     }
 
@@ -259,6 +266,7 @@ public class Launcher extends SubsystemBase {
         Logger.recordOutput("Components/Hood", new Pose3d());
         Logger.recordOutput("Launcher/Interpolator/OperatorSpeedOffset", getSpeedOffset());
         Logger.recordOutput("Launcher/IsAtSpeed", isLauncherAtSpeed());
+        Logger.recordOutput("Launcher/RealLaunchSpeed", RotationsPerSecond.of(realLaunchSpeedRps));
         Logger.processInputs("Launcher", inputs);
     }
 }
