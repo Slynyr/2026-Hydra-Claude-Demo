@@ -98,9 +98,9 @@ public class Launcher extends SubsystemBase {
 
                 if (launchEstimate.hoodExtension().minus(hoodSetpoint.get()).abs(Millimeters) >=
                     Hood.HOOD_INVALIDATION_THRESHOLD_MM) {
-                    // hoodSetpoint.set(launchEstimate.hoodExtension());
-                    //TODO: debug cmd
-                    hoodSetpoint.set(Millimeter.of(SmartDashboard.getNumber("Hood Angle [mm]", 0)));
+                     hoodSetpoint.set(launchEstimate.hoodExtension());
+                    // uncomment for tuning debug cmd
+//                    hoodSetpoint.set(Millimeter.of(SmartDashboard.getNumber("Hood Angle [mm]", 0)));
                 }
             }
 
