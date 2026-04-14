@@ -54,7 +54,7 @@ public class BilinearStrategy extends LaunchStrategy {
 //        addData(Millimeters.of(75), RotationsPerSecond.of(57), Meters.of(5.006));
 
         // ONCMP TUNING APR 14 2026
-        addData(Millimeters.of(45), RotationsPerSecond.of(3.95), Meters.of(1.7));
+        addData(Millimeters.of(45), RotationsPerSecond.of(39.5), Meters.of(1.7));
         addData(Millimeters.of(60), RotationsPerSecond.of(53.5), Meters.of(2.81));
         addData(Millimeters.of(68), RotationsPerSecond.of(57), Meters.of(4.5));
     }
