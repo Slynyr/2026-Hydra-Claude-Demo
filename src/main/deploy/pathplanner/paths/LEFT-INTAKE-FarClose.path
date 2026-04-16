@@ -8,24 +8,24 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.192724661842806,
-        "y": 7.2412753209700425
+        "x": 6.159405122139084,
+        "y": 6.46851094850352
       },
       "isLocked": false,
       "linkedName": "LEFT-INTAKE-START-Point"
     },
     {
       "anchor": {
-        "x": 7.48074179742606,
-        "y": 7.082054208269515
+        "x": 7.172624156396713,
+        "y": 6.743417831205986
       },
       "prevControl": {
-        "x": 7.351355206841182,
-        "y": 7.327888730380783
+        "x": 6.745927965625433,
+        "y": 6.843016758842961
       },
       "nextControl": {
-        "x": 7.597178405634216,
-        "y": 6.860824652674018
+        "x": 7.6115423268779345,
+        "y": 6.640966063306925
       },
       "isLocked": false,
       "linkedName": null
@@ -46,7 +46,11 @@
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 1.3944562899786395,
+      "waypointRelativePos": 0.8983444940476191,
+      "rotationDegrees": -59.99999999999999
+    },
+    {
+      "waypointRelativePos": 1.4856903698979589,
       "rotationDegrees": -90.0
     }
   ],

@@ -102,7 +102,7 @@ public class Autos {
 
 		autoPaths.add(
 				new AutoPath(
-					"LEFT-DoublePass",
+					"LEFT-DoublePass-Short",
 
 					LEFT_BUMP_STARTING_POSE,
 
@@ -127,24 +127,54 @@ public class Autos {
 							GameCommands.autoLaunch(() -> DriveCommands.distToHub(robot.sys_drive), () -> 0, () -> 0, robot)
 					).andThen(GameCommands.stopLaunching(robot)),
 
-					// ALIGN BACK TO BUMP TRAVERSE STARTING POSE
-					DriveCommands.alignToPoint(
-							robot.sys_drive,
-							() -> LEFT_BUMP_STARTING_POSE,
-							() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY,
-							() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
-					),
-
-					//	GO BACK OVER BUMP
+					// GO BACK OVER BUMP
                     Commands.deadline(
-    					Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Alliance-Neutral")),
+					    Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Score-Neutral")),
                         GameCommands.startIntake(robot)
                     ),
 
-                    // FOLLOW INTAKE PATH, FROM LEFT OF FIELD TOWARDS CENTER OF FIELD (ENDING VELOCITY OF 1.5 m/s)
+                    // FOLLOW INTAKE PATH, FROM LEFT OF FIELD TOWARDS CENTER OF FIELD
                     Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-FarClose"))
 				)
 		);
+
+        autoPaths.add(
+                new AutoPath(
+                        "LEFT-DoublePass-Long",
+
+                        LEFT_BUMP_STARTING_POSE,
+
+                        // CROSS LEFT BUMP FROM ALLIANCE ZONE TO NEUTRAL ZONE
+                        Commands.deadline(
+                                Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Alliance-Neutral")),
+                                GameCommands.startIntake(robot)
+                        ),
+
+                        // FOLLOW INTAKE PATH, FROM LEFT OF FIELD TOWARDS CENTER OF FIELD (ENDING VELOCITY OF 1.5 m/s)
+                        Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-FarClose")),
+
+                        // GO FROM ENDING OF INTAKE POSITION BACK TO BUMP POSITION
+                        Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-END-FarClose-To-BUMP")),
+
+                        // Go from NEUTRAL zone to ALLIANCE zone over LEFT BUMP
+                        Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Neutral-Alliance")),
+
+                        // LAUNCH FOR AUTO_LAUNCH_WAIT_TIME amount of time before moving on
+                        Commands.deadline(
+                                Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME),
+                                GameCommands.autoLaunch(() -> DriveCommands.distToHub(robot.sys_drive), () -> 0, () -> 0, robot)
+                        ).andThen(GameCommands.stopLaunching(robot)),
+
+                        // GO BACK OVER BUMP
+                        Commands.deadline(
+                                Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Score-Neutral")),
+                                GameCommands.startIntake(robot)
+                        ),
+
+                        // FOLLOW INTAKE PATH, FROM LEFT OF FIELD TOWARDS CENTER OF FIELD
+                        Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-FarClose-Long"))
+                )
+        );
 
 		// RIGHT SIDE AUTOS:
         autoPaths.add(
@@ -176,7 +206,7 @@ public class Autos {
 
 		autoPaths.add(
 				new AutoPath(
-						"RIGHT-DoublePass",
+						"RIGHT-DoublePass-Short",
 
 						RIGHT_BUMP_STARTING_POSE,
 
@@ -201,24 +231,54 @@ public class Autos {
 								GameCommands.autoLaunch(() -> DriveCommands.distToHub(robot.sys_drive), () -> 0, () -> 0, robot)
 						).andThen(GameCommands.stopLaunching(robot)),
 
-						// ALIGN BACK TO BUMP TRAVERSE STARTING POSE
-						DriveCommands.alignToPoint(
-								robot.sys_drive,
-								() -> RIGHT_BUMP_STARTING_POSE,
-								() -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY,
-								() -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION
-						),
-
-						//	GO BACK OVER BUMP
+                        // GO BACK OVER BUMP
                         Commands.deadline(
-						    Objects.requireNonNull(AutoPath.followPath("RIGHT-BUMP-Alliance-Neutral")),
-                            GameCommands.startIntake(robot)
+                                Objects.requireNonNull(AutoPath.followPath("RIGHT-BUMP-Score-Neutral")),
+                                GameCommands.startIntake(robot)
                         ),
 
-						// follow INTAKE PATH, from RIGHT of field TOWARDS CENTER of field (ENDING VELOCITY OF 1.5 m/s)
+						// follow INTAKE PATH, from RIGHT of field TOWARDS CENTER of field
                         Objects.requireNonNull(AutoPath.followPath("RIGHT-INTAKE-FarClose"))
 				)
 		);
+
+        autoPaths.add(
+                new AutoPath(
+                        "RIGHT-DoublePass-Long",
+
+                        RIGHT_BUMP_STARTING_POSE,
+
+                        // cross RIGHT BUMP from ALLIANCE zone to NEUTRAL zone
+                        Commands.deadline(
+                                Objects.requireNonNull(AutoPath.followPath("RIGHT-BUMP-Alliance-Neutral")),
+                                GameCommands.startIntake(robot)
+                        ),
+
+                        // follow INTAKE PATH, from RIGHT of field TOWARDS CENTER of field (ENDING VELOCITY OF 1.5 m/s)
+                        Objects.requireNonNull(AutoPath.followPath("RIGHT-INTAKE-FarClose")),
+
+                        // GO FROM ENDING OF INTAKE POSITION BACK TO BUMP POSITION
+                        Objects.requireNonNull(AutoPath.followPath("RIGHT-INTAKE-END-FarClose-To-BUMP")),
+
+                        // Go from NEUTRAL zone to ALLIANCE zone over RIGHT BUMP
+                        Objects.requireNonNull(AutoPath.followPath("RIGHT-BUMP-Neutral-Alliance")),
+
+                        // LAUNCHES for AUTO_LAUNCH_WAIT_TIME amount of time
+                        Commands.deadline(
+                                Commands.waitTime(GameCommandsConstants.AUTO_LAUNCH_WAIT_TIME),
+                                GameCommands.autoLaunch(() -> DriveCommands.distToHub(robot.sys_drive), () -> 0, () -> 0, robot)
+                        ).andThen(GameCommands.stopLaunching(robot)),
+
+                        // GO BACK OVER BUMP
+                        Commands.deadline(
+                                Objects.requireNonNull(AutoPath.followPath("RIGHT-BUMP-Score-Neutral")),
+                                GameCommands.startIntake(robot)
+                        ),
+
+                        // follow INTAKE PATH, from RIGHT of field TOWARDS CENTER of field
+                        Objects.requireNonNull(AutoPath.followPath("RIGHT-INTAKE-FarClose-Long"))
+                )
+        );
 
         if (Constants.IS_TUNING)
             autoPaths.add(
