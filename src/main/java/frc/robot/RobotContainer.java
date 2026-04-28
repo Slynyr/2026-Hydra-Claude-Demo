@@ -351,6 +351,14 @@ public class RobotContainer {
                         Commands.runOnce(() -> sys_drive.runTurnSetpoint(Rotation2d.fromDegrees(45)))
                             .withTimeout(3.0));
 
+        SmartDashboard.putData(
+                "Drive/ResetPose180",
+                Commands.runOnce(() -> {
+                            sys_drive.setPose(new Pose2d(0, 0, Rotation2d.k180deg));
+                            sys_drive.resetGyro();
+                }).ignoringDisable(true)  
+        );
+
         sys_drive.setDefaultCommand(
                 DriveCommands.joystickDrive(
                         sys_drive,
@@ -407,6 +415,9 @@ public class RobotContainer {
         primaryController.b()
                         .onTrue(sys_intake.setRollerVoltage(0));
 
+        secondaryController.b()
+                         .onTrue(sys_intake.setRollerVoltage(0));
+
         primaryController.a()
                          .onTrue(Commands.runOnce(() -> {
                             DriveCommands.setTranslationSpeed(1.0); 
@@ -451,8 +462,8 @@ public class RobotContainer {
                     .onTrue(sys_intake.setExtensionVoltage(3))
                     .onFalse(sys_intake.setExtensionVoltage(0));
 
-        secondaryController.b().multiPress(2, 1)
-                    .onTrue(sys_intake.zeroExtension());
+//        secondaryController.b().multiPress(2, 1)
+//                    .onTrue(sys_intake.zeroExtension());
 
         secondaryController.povRight()
                         .onTrue(sys_serializer.setVoltage(SerializerConstants.SERIALIZING_VOLTAGE))

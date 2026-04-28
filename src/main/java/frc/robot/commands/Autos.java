@@ -3,6 +3,8 @@ package frc.robot.commands;
 import com.pathplanner.lib.events.EventTrigger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.Constants.GameCommandsConstants;
@@ -19,7 +21,8 @@ public class Autos {
     public static final EventTrigger autoPoseUpdate = new EventTrigger("Vision_Trigger");
 	public static final Pose2d LEFT_BUMP_STARTING_POSE = new Pose2d(3.496, 5.585, Rotation2d.fromDegrees(-45));
 	public static final Pose2d RIGHT_BUMP_STARTING_POSE = new Pose2d(3.560,2.461, Rotation2d.fromDegrees(45));
-    // public static final Pose2d 
+	public static final Pose2d MIDDLE_STARTING_POSE = new Pose2d(3.565,4.011,Rotation2d.k180deg);
+	public static final Pose2d MIDDLE_SHOOT_END = new Pose2d(2.627,4.011,Rotation2d.k180deg);
 
 	public static ArrayList<AutoPath> getAutoPaths(RobotContainer robot) {
 		ArrayList<AutoPath> autoPaths = new ArrayList<>();
@@ -299,10 +302,10 @@ public class Autos {
         autoPaths.add(
             new AutoPath(
                 "Leave-Shoot", 
-                new Pose2d(3.565,4.011,Rotation2d.k180deg), 
+                MIDDLE_STARTING_POSE, 
                 DriveCommands.alignToPoint(
                     robot.sys_drive,
-                    () -> new Pose2d(3.127,4.011,Rotation2d.k180deg), 
+                    () -> MIDDLE_SHOOT_END, 
                     () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY, 
                     () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION),
 
@@ -362,8 +365,67 @@ public class Autos {
             )
         );
 
+        autoPaths.add(
+            new AutoPath(
+                "LEFT-CROSS-PARK", 
+                MIDDLE_STARTING_POSE,
+                // leaveShoot(Seconds.of(5), robot), 
+                Commands.waitSeconds(0.5),
+                Objects.requireNonNull(AutoPath.followPath("LEFT-CROSS-PARK"))
+                )
+        );
+
+        autoPaths.add(
+            new AutoPath(
+                "RIGHT-CROSS-PARK", 
+                MIDDLE_STARTING_POSE,
+                // leaveShoot(Seconds.of(5), robot), 
+                Commands.waitSeconds(0.5),
+                Objects.requireNonNull(AutoPath.followPath("RIGHT-CROSS-PARK"))
+                )
+        );
+
+        autoPaths.add(
+                new AutoPath(
+                        "LO-ELLEN-LEFT",
+                        LEFT_BUMP_STARTING_POSE,
+                        Commands.deadline(
+                            Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Alliance-Neutral")),
+                            GameCommands.startIntake(robot)
+                        ),
+                        Commands.waitTime(Seconds.of(3)),
+                        Objects.requireNonNull(AutoPath.followPath("LEFT-INTAKE-FarClose-Long")),
+                        Objects.requireNonNull(AutoPath.followPath("LEFT-BUMP-Neutral-Alliance")),
+                        GameCommands.autoLaunch(() -> DriveCommands.distToHub(robot.sys_drive), () -> 0, () -> 0, robot)
+                        )
+        );
+
+        autoPaths.add(
+                new AutoPath(
+                        "LO-ELLEN-RIGHT",
+                        RIGHT_BUMP_STARTING_POSE,
+                        Commands.deadline(
+                                Objects.requireNonNull(AutoPath.followPath("RIGHT-BUMP-Alliance-Neutral")),
+                                GameCommands.startIntake(robot)
+                        ),
+                        Commands.waitTime(Seconds.of(3)),
+                        Objects.requireNonNull(AutoPath.followPath("RIGHT-INTAKE-FarClose-Long")),
+                        Objects.requireNonNull(AutoPath.followPath("RIGHT-BUMP-Neutral-Alliance")),
+                        GameCommands.autoLaunch(() -> DriveCommands.distToHub(robot.sys_drive), () -> 0, () -> 0, robot)
+                )
+        );
+
+
 		return autoPaths;
 	}
+
+    public static Command leaveShoot(Time launchTime, RobotContainer robot){
+        return Commands.sequence(
+            Objects.requireNonNull(AutoPath.followPath("LEAVE-SHOOT")),
+            Commands.deadline(Commands.waitTime(launchTime), 
+            GameCommands.autoLaunch(() -> DriveCommands.distToHub(robot.sys_drive), () -> 0, () -> 0, robot))
+        );
+    }
 	
 }
 

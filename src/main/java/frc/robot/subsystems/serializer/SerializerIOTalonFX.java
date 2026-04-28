@@ -12,6 +12,8 @@ import edu.wpi.first.units.measure.*;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import org.littletonrobotics.junction.Logger;
+
 public class SerializerIOTalonFX implements SerializerIO {
 
     private final TalonFX motor;
@@ -20,6 +22,7 @@ public class SerializerIOTalonFX implements SerializerIO {
     private final StatusSignal<Angle>           indexerDevicePosition;
     private final StatusSignal<Voltage>         indexerDeviceVoltage;
     private final StatusSignal<Current>         indexerDeviceCurrent;
+    private final StatusSignal<Current>         indexerDeviceCurrentStator;
     private final StatusSignal<Temperature>     indexerDeviceTemp;
 
     private Voltage targetVoltage = Volts.of(0);
@@ -34,7 +37,9 @@ public class SerializerIOTalonFX implements SerializerIO {
 
         final CurrentLimitsConfigs currentConfigs = new CurrentLimitsConfigs()
                 .withSupplyCurrentLimit(SerializerConstants.CURRENT_LIMIT)
-                .withSupplyCurrentLimitEnable(true);
+                .withSupplyCurrentLimitEnable(true)
+                .withStatorCurrentLimit(80)
+                .withStatorCurrentLimitEnable(true);
         upperMotorConfig.apply(currentConfigs);
 
         upperMotorConfig.apply(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
@@ -45,6 +50,7 @@ public class SerializerIOTalonFX implements SerializerIO {
         indexerDevicePosition = motor.getPosition();
         indexerDeviceVoltage = motor.getMotorVoltage();
         indexerDeviceCurrent = motor.getSupplyCurrent();
+        indexerDeviceCurrentStator = motor.getStatorCurrent();
         indexerDeviceTemp = motor.getDeviceTemp();
 
         BaseStatusSignal.setUpdateFrequencyForAll(
@@ -53,7 +59,8 @@ public class SerializerIOTalonFX implements SerializerIO {
                 indexerDeviceVelocity,
                 indexerDeviceVoltage,
                 indexerDeviceCurrent,
-                indexerDeviceTemp
+                indexerDeviceTemp,
+                indexerDeviceCurrentStator
         );
 
         motor.optimizeBusUtilization();
@@ -78,12 +85,14 @@ public class SerializerIOTalonFX implements SerializerIO {
     @Override
     public void updateInputs(SerializerInputs inputs) {
         inputs.isSerializerConnected = BaseStatusSignal.refreshAll(
-                indexerDevicePosition,
-                indexerDeviceVelocity,
-                indexerDeviceVoltage,
-                indexerDeviceCurrent,
-                indexerDeviceTemp
-        ).isOK();
+            indexerDevicePosition,
+            indexerDeviceVelocity,
+            indexerDeviceVoltage,
+            indexerDeviceCurrent,
+            indexerDeviceTemp,
+            indexerDeviceCurrentStator
+            ).isOK();
+        Logger.recordOutput("Serializer/StatorCurrent", indexerDeviceCurrentStator.getValue());
         inputs.serializerPosition = indexerDevicePosition.getValue();
         inputs.serializerVelocity = indexerDeviceVelocity.getValue();
         inputs.serializerVoltage = indexerDeviceVoltage.getValue();

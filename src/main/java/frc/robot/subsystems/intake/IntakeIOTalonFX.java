@@ -30,18 +30,21 @@ public final class IntakeIOTalonFX implements IntakeIO {
     private final StatusSignal<Temperature>     rollerTemperature;
     private final StatusSignal<Voltage>         rollerVoltage;
     private final StatusSignal<Current>         rollerCurrent;
+    private final StatusSignal<Current>         rollerStatorCurrent;
     private final StatusSignal<AngularVelocity> rollerVelocity;
 
     private final StatusSignal<Angle>           rollerFollowerPosition;
     private final StatusSignal<Temperature>     rollerFollowerTemperature;
     private final StatusSignal<Voltage>         rollerFollowerVoltage;
     private final StatusSignal<Current>         rollerFollowerCurrent;
+    private final StatusSignal<Current>         rollerFollowerStatorCurrent;
     private final StatusSignal<AngularVelocity> rollerFollowerVelocity;
 
     private final StatusSignal<Angle>           extensionPosition;
     private final StatusSignal<Temperature>     extensionTemperature;
     private final StatusSignal<Voltage>         extensionVoltage;
     private final StatusSignal<Current>         extensionCurrent;
+    private final StatusSignal<Current>         extensionStatorCurrent;
     private final StatusSignal<AngularVelocity> extensionVelocity;
     private final StatusSignal<Current>         extensionTorqueCurrent;
 
@@ -59,7 +62,9 @@ public final class IntakeIOTalonFX implements IntakeIO {
                 .withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive))
                 .withCurrentLimits(new CurrentLimitsConfigs()
                                            .withSupplyCurrentLimit(Extension.CURRENT_LIMIT)
-                                           .withSupplyCurrentLimitEnable(true));
+                                           .withSupplyCurrentLimitEnable(true)
+                                           .withStatorCurrentLimit(25)
+                                           .withStatorCurrentLimitEnable(true));
 
         extensionConfig.Slot0 = new Slot0Configs()
                 .withKP(Extension.TALONFX_PID.kP)
@@ -71,7 +76,10 @@ public final class IntakeIOTalonFX implements IntakeIO {
                 .withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive))
                 .withCurrentLimits(new CurrentLimitsConfigs()
                                            .withSupplyCurrentLimit(Roller.CURRENT_LIMIT)
-                                           .withSupplyCurrentLimitEnable(true));
+                                           .withSupplyCurrentLimitEnable(true)
+                                           .withStatorCurrentLimit(75)
+                                           .withStatorCurrentLimitEnable(true)
+                );
 
         extensionMotor.getConfigurator().apply(extensionConfig);
 
@@ -83,6 +91,7 @@ public final class IntakeIOTalonFX implements IntakeIO {
         extensionTemperature = extensionMotor.getDeviceTemp();
         extensionVoltage = extensionMotor.getMotorVoltage();
         extensionCurrent = extensionMotor.getSupplyCurrent();
+        extensionStatorCurrent = extensionMotor.getStatorCurrent();
         extensionVelocity = extensionMotor.getVelocity();
         extensionTorqueCurrent = extensionMotor.getTorqueCurrent();
 
@@ -90,11 +99,13 @@ public final class IntakeIOTalonFX implements IntakeIO {
         rollerTemperature = rollerMotor.getDeviceTemp();
         rollerVoltage = rollerMotor.getMotorVoltage();
         rollerCurrent = rollerMotor.getSupplyCurrent();
+        rollerStatorCurrent = rollerMotor.getStatorCurrent();
         rollerVelocity = rollerMotor.getVelocity();
 
         rollerFollowerPosition = rollerFollowerMotor.getPosition();
         rollerFollowerTemperature = rollerFollowerMotor.getDeviceTemp();
         rollerFollowerVoltage = rollerFollowerMotor.getMotorVoltage();
+        rollerFollowerStatorCurrent = rollerFollowerMotor.getStatorCurrent();
         rollerFollowerCurrent = rollerFollowerMotor.getSupplyCurrent();
         rollerFollowerVelocity = rollerFollowerMotor.getVelocity();
 
@@ -105,22 +116,26 @@ public final class IntakeIOTalonFX implements IntakeIO {
                 extensionTemperature,
                 extensionVoltage,
                 extensionCurrent,
+                extensionStatorCurrent,
 
                 rollerPosition,
                 rollerTemperature,
                 rollerVoltage,
                 rollerCurrent,
+                rollerStatorCurrent,
 
                 rollerFollowerPosition,
                 rollerFollowerTemperature,
                 rollerFollowerVoltage,
                 rollerFollowerCurrent,
+                rollerFollowerStatorCurrent,
                 rollerFollowerVelocity
         );
 
         extensionMotor.setPosition(0);
 
         rollerMotor.optimizeBusUtilization();
+        rollerFollowerMotor.optimizeBusUtilization();
         extensionMotor.optimizeBusUtilization();
     }
 
@@ -212,7 +227,9 @@ public final class IntakeIOTalonFX implements IntakeIO {
                 extensionTemperature,
                 extensionVoltage,
                 extensionCurrent,
-                extensionVelocity
+                extensionStatorCurrent,
+                extensionVelocity,
+                extensionTorqueCurrent
         ).isOK();
 
         inputs.isRollerConnected = BaseStatusSignal.refreshAll(
@@ -220,6 +237,7 @@ public final class IntakeIOTalonFX implements IntakeIO {
                 rollerTemperature,
                 rollerVoltage,
                 rollerCurrent,
+                rollerStatorCurrent,
                 rollerVelocity
         ).isOK();
 
@@ -228,11 +246,13 @@ public final class IntakeIOTalonFX implements IntakeIO {
                 rollerFollowerTemperature,
                 rollerFollowerVoltage,
                 rollerFollowerCurrent,
+                rollerFollowerStatorCurrent,
                 rollerFollowerVelocity
         ).isOK();
 
         inputs.extensionVolts = extensionVoltage.getValue();
         inputs.extensionCurrent = extensionCurrent.getValue();
+        inputs.extensionStatorCurrent = extensionStatorCurrent.getValue();
         inputs.extensionTorqueCurrent = extensionTorqueCurrent.getValue();
         inputs.extensionTemp = extensionTemperature.getValueAsDouble();
         inputs.extensionPosition = getPosition();
@@ -242,11 +262,13 @@ public final class IntakeIOTalonFX implements IntakeIO {
 
         inputs.rollerVolts = rollerVoltage.getValue();
         inputs.rollerCurrent = rollerCurrent.getValue();
+        inputs.rollerStatorCurrent = rollerStatorCurrent.getValue();
         inputs.rollerTemp = rollerTemperature.getValueAsDouble();
         inputs.rollerVelocity = rollerVelocity.getValue();
 
         inputs.rollerFollowerVolts = rollerFollowerVoltage.getValue();
         inputs.rollerFollowerCurrent = rollerFollowerCurrent.getValue();
+        inputs.rollerFollowerStatorCurrent = rollerFollowerStatorCurrent.getValue();
         inputs.rollerFollowerTemp = rollerFollowerTemperature.getValueAsDouble();
         inputs.rollerFollowerVelocity = rollerFollowerVelocity.getValue();
     }

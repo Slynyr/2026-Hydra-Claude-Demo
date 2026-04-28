@@ -14,11 +14,13 @@ public interface IntakeIO {
 
         public Voltage         rollerVolts    = Volts.of(0.0);
         public Current         rollerCurrent  = Amps.of(0.0);
+        public Current         rollerStatorCurrent  = Amps.of(0.0);
         public double          rollerTemp     = 0.0;
         public AngularVelocity rollerVelocity = RotationsPerSecond.of(0.0);
 
         public Voltage         rollerFollowerVolts    = Volts.of(0.0);
         public Current         rollerFollowerCurrent  = Amps.of(0.0);
+        public Current         rollerFollowerStatorCurrent  = Amps.of(0.0);
         public double          rollerFollowerTemp     = 0.0;
         public AngularVelocity rollerFollowerVelocity = RotationsPerSecond.of(0.0);
 
@@ -26,6 +28,7 @@ public interface IntakeIO {
         public boolean        isExtensionRunning     = false;
         public Voltage        extensionVolts         = Volts.of(0.0);
         public Current        extensionCurrent       = Amps.of(0.0);
+        public Current        extensionStatorCurrent       = Amps.of(0.0);
         public double         extensionTemp          = 0.0;
         public LinearVelocity extensionVelocity      = MetersPerSecond.of(0.0);
         public Distance       extensionPosition      = Meters.of(0.0);
