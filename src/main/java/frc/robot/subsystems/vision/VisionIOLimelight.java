@@ -41,8 +41,6 @@ public class VisionIOLimelight implements VisionIO {
         LimelightHelpers.SetThrottle(limelightName, VisionConstants.THROTTLE_DISABLED);
         LimelightHelpers.SetIMUMode(limelightName, IMUMode.FUSED.id);
 
-        LimelightHelpers.SetFiducialIDFiltersOverride(limelightName, VisionConstants.TAG_FILTER);
-
         // enable rewind
         LimelightHelpers.setRewindEnabled(limelightName, true);
 
@@ -182,8 +180,8 @@ public class VisionIOLimelight implements VisionIO {
      * Forward limelight ports (5800-5809) so it can be used over USB
      */
     public void forwardLimelightPorts() {
-        System.out.printf("Forwarding limelight ports 5800..5909 on %s.local", limelightName);
-        for (int i = 5800; i <= 5809; i++)
+        System.out.printf("Forwarding limelight ports 5800..5809 on %s.local", limelightName);
+        for (int i = 5800; i <= 5899; i++)
             PortForwarder.add(i, limelightName + ".local", i);
     }
 
