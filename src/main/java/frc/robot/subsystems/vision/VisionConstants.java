@@ -49,4 +49,7 @@ public class VisionConstants {
     );
 
     public static final double CAPTURE_VIDEO_DURATION = 60; // 1 minute
+
+    /** Reject pose estimates where the average tag distance exceeds this threshold */
+    public static final double MAX_TAG_DISTANCE_METERS = 6.0;
 }

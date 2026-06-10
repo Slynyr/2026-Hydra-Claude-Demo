@@ -46,6 +46,12 @@ public class Vision extends SubsystemBase {
         // if estimate is invalid, don't update pose
         if (estimate == null || estimate.tagCount < FIDUCIAL_TRUST_THRESHOLD) return;
 
+        // reject estimates from tags that are too far away to be reliable
+        if (estimate.avgTagDist > MAX_TAG_DISTANCE_METERS) {
+            Logger.recordOutput("Vision/RejectedReason", "TAG_TOO_FAR");
+            return;
+        }
+
         drive.addVisionMeasurement(estimate.pose, estimate.timestampSeconds, deriveStdDevs(estimate.avgTagDist));
     }
 
@@ -64,7 +70,7 @@ public class Vision extends SubsystemBase {
      */
     private Vector<N3> deriveStdDevs(double avgTagDist) {
         double xy = XY_STDDEV_BASE_METERS + XY_STDDEV_PER_METER * avgTagDist * avgTagDist;
-        double theta = Math.toRadians(THETA_STDDEV_BASE_DEG + THETA_STDDEV_PER_METER * avgTagDist * avgTagDist);
+        double theta = Math.toRadians(THETA_STDDEV_BASE_DEG + THETA_STDDEV_PER_METER * avgTagDist);
 
         Logger.recordOutput("Vision/TranslationalStdDev", Meters.of(xy));
         Logger.recordOutput("Vision/RotationalStdDev", Radians.of(theta));
@@ -90,6 +96,13 @@ public class Vision extends SubsystemBase {
 
     @Override
     public void periodic() {
+        // allow pipeline to settle before reading inputs
+        try {
+            Thread.sleep(20);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         io.updateInputs(inputs);
         Logger.processInputs("Vision", inputs);
 

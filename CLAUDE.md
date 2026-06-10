@@ -1,5 +1,17 @@
 # Team 5409 Robot Code — Standards
 
+## Repository Layout
+- `src/main/java/frc/robot/` — all Java source
+  - `Robot.java` / `RobotContainer.java` — entry points; RobotContainer wires subsystems and commands
+  - `Constants.java` — global tunable values (field-wide, robot-wide)
+  - `commands/` — `Autos.java` (auto routines), `DriveCommands.java`, `GameCommands.java`
+  - `subsystems/` — one folder per mechanism: `drive`, `elevator`, `feeder`, `fuelgauge`, `hopper`, `intake`, `launcher`, `serializer`, `vision`
+    - Each subsystem folder contains: `<Name>.java` (subsystem), `<Name>Constants.java`, `<Name>IO.java` (interface), `<Name>IOTalonFX.java` (real impl), `<Name>IOSim.java` (sim impl)
+  - `generated/TunerConstants.java` — CTRE Tuner X auto-generated swerve constants (do not hand-edit)
+  - `util/` — shared helpers (`FieldConstants`, `MathUtils`, `LogHelper`, `LimelightHelpers`, etc.)
+- `src/main/deploy/` — files deployed to the RoboRIO: AprilTag layouts (`apriltags/`), PathPlanner paths (`pathplanner/paths/`)
+- `AdvantageScope/` — robot log layout configs for AdvantageScope
+
 ## Framework
 - WPILib command-based (Java). Subsystems own hardware; commands declare requirements.
 - All tunable values live in `Constants`. No magic numbers in subsystem/command logic.
