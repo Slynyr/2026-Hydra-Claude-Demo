@@ -1,12 +1,19 @@
 name: Claude PR Review
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, reopened, ready_for_review]
+
 permissions:
   contents: read
   pull-requests: write
   issues: write
   id-token: write
+
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -17,20 +24,24 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
           prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
             Review this pull request. It's FRC robot code written by high-school
-            students. Post one consolidated PR review.
-            Be direct and solution-oriented: when you find a problem, name it,
-            explain briefly why it matters, and give the concrete fix (with code
-            when useful). Don't be Socratic — just resolve it efficiently.
+            students. Post inline comments on specific lines plus one top-level
+            summary comment.
+            Be direct and solution-oriented: name the problem, explain briefly
+            why it matters, and give the concrete fix. Don't be Socratic.
             Prioritize, in order:
-            - Command-based correctness: subsystem requirements, default commands, command composition leaks
+            - Command-based correctness: subsystem requirements, default commands, composition leaks
             - Unit bugs: degrees vs radians, meters vs inches, gear-ratio / encoder conversions
             - Blocking calls or sleeps inside periodic() or command execute() that risk watchdog overruns
             - Missing motor current limits and brownout / safety gaps
             - Magic numbers that belong in Constants
             - Null-safety and obvious concurrency issues
-            Skip pure style nitpicks unless they affect robot behavior.
+            Skip pure style nits unless they affect robot behavior.
           claude_args: |
-            --max-turns 15
+            --max-turns 20
             --model claude-sonnet-4-6
+            --allowedTools "Read,Glob,Grep,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),mcp__github_inline_comment__create_inline_comment"
