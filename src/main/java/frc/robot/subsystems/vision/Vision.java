@@ -3,6 +3,7 @@ package frc.robot.subsystems.vision;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -43,8 +44,15 @@ public class Vision extends SubsystemBase {
     public void addPoseEstimate(Drive drive) {
         LimelightHelpers.PoseEstimate estimate = io.estimatePose(drive);
 
+        // wait for NT tables to update before reading estimate
+        try {
+            Thread.sleep(5);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         // if estimate is invalid, don't update pose
-        if (estimate == null || estimate.tagCount < FIDUCIAL_TRUST_THRESHOLD) return;
+        if (estimate == null || estimate.tagCount <= FIDUCIAL_TRUST_THRESHOLD) return;
 
         // reject estimates from tags that are too far away to be reliable
         if (estimate.avgTagDist > MAX_TAG_DISTANCE_METERS) {
@@ -52,7 +60,10 @@ public class Vision extends SubsystemBase {
             return;
         }
 
-        drive.addVisionMeasurement(estimate.pose, estimate.timestampSeconds, deriveStdDevs(estimate.avgTagDist));
+        ChassisSpeeds speeds = drive.getChassisSpeeds();
+        double speed = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+
+        drive.addVisionMeasurement(estimate.pose, estimate.timestampSeconds, deriveStdDevs(estimate.avgTagDist, speed));
     }
 
     public void captureClip() {
@@ -62,15 +73,18 @@ public class Vision extends SubsystemBase {
 
     /**
      * Derives the standard deviation of background noise in the fiducial pose estimation given the factors from
-     * constants
+     * constants. Translational std dev is scaled up when the robot is moving to reduce vision influence during
+     * fast maneuvers.
      *
-     * @param avgTagDist average tag distance, retrieved from pose estimate
+     * @param avgTagDist          average tag distance, retrieved from pose estimate
+     * @param speedMetersPerSecond current robot translational speed
      *
      * @return standard deviations as a 3rd-degree matrix
      */
-    private Vector<N3> deriveStdDevs(double avgTagDist) {
-        double xy = XY_STDDEV_BASE_METERS + XY_STDDEV_PER_METER * avgTagDist * avgTagDist;
-        double theta = Math.toRadians(THETA_STDDEV_BASE_DEG + THETA_STDDEV_PER_METER * avgTagDist);
+    private Vector<N3> deriveStdDevs(double avgTagDist, double speedMetersPerSecond) {
+        double xy = (XY_STDDEV_BASE_METERS + XY_STDDEV_PER_METER * avgTagDist * avgTagDist)
+                    * (1.0 + SPEED_STDDEV_SCALE * speedMetersPerSecond);
+        double theta = THETA_STDDEV_BASE_DEG + THETA_STDDEV_PER_METER * avgTagDist;
 
         Logger.recordOutput("Vision/TranslationalStdDev", Meters.of(xy));
         Logger.recordOutput("Vision/RotationalStdDev", Radians.of(theta));

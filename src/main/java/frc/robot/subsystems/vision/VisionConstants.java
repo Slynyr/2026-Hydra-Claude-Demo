@@ -10,7 +10,7 @@ import static edu.wpi.first.units.Units.Inches;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class VisionConstants {
-    public static final int FIDUCIAL_TRUST_THRESHOLD = 1;
+    public static final int FIDUCIAL_TRUST_THRESHOLD = 2;
     public static final int DISCONNECTION_TIMEOUT    = 5;
     public static final int THROTTLE_DISABLED        = 200;
 
@@ -40,6 +40,9 @@ public class VisionConstants {
      */
     public static final double THETA_STDDEV_PER_METER = 1.5;
 
+    /** Scales translational std dev by (1 + SPEED_STDDEV_SCALE * speed) when robot is moving */
+    public static final double SPEED_STDDEV_SCALE = 2.0;
+
     public static final LoggedNetworkNumber MINIMUM_TARGET_AREA = new LoggedNetworkNumber("Vision/MinimumTargetArea", 0.12);
 
     // TODO: update these to camera offset (done) - Double check hoodExtension
@@ -51,5 +54,5 @@ public class VisionConstants {
     public static final double CAPTURE_VIDEO_DURATION = 60; // 1 minute
 
     /** Reject pose estimates where the average tag distance exceeds this threshold */
-    public static final double MAX_TAG_DISTANCE_METERS = 6.0;
+    public static final double MAX_TAG_DISTANCE_METERS = 60.0;
 }
