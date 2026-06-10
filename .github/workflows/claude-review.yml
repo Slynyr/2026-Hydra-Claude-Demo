@@ -1,0 +1,36 @@
+name: Claude PR Review
+on:
+  pull_request:
+    types: [opened, synchronize]
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  id-token: write
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review this pull request. It's FRC robot code written by high-school
+            students. Post one consolidated PR review.
+            Be direct and solution-oriented: when you find a problem, name it,
+            explain briefly why it matters, and give the concrete fix (with code
+            when useful). Don't be Socratic — just resolve it efficiently.
+            Prioritize, in order:
+            - Command-based correctness: subsystem requirements, default commands, command composition leaks
+            - Unit bugs: degrees vs radians, meters vs inches, gear-ratio / encoder conversions
+            - Blocking calls or sleeps inside periodic() or command execute() that risk watchdog overruns
+            - Missing motor current limits and brownout / safety gaps
+            - Magic numbers that belong in Constants
+            - Null-safety and obvious concurrency issues
+            Skip pure style nitpicks unless they affect robot behavior.
+          claude_args: |
+            --max-turns 15
+            --model claude-sonnet-4-6
